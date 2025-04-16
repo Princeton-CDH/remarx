@@ -68,7 +68,7 @@ def _(df, pl):
 def _(pl, quotes_df):
     quotes_df.group_by("FILE").agg(
         pl.col("TAGS").count().alias("count"),
-        pl.col("TAGS").unique_counts().alias("unique"),
+        pl.col("TAGS").unique().str.join("|"),
     )
     return
 
@@ -211,12 +211,14 @@ def _(quote_subset_pages):
     # iterate over quotes and output to check that we're getting the correct content
 
     for quote in quote_subset_pages.iter_rows(named=True):
-        print(f"{quote['TAGS']} ({quote['start_index']}:{quote['end_index']})")
         print(quote["QUOTE_TRANSCRIPTION"])
         page_start_index, page_end_index = (
             quote["start_index"] - quote["page_start"],
             quote["end_index"] - quote["page_start"],
         )
+        print(f"{quote['TAGS']} (article {quote['start_index']}:{quote['end_index']} / page {page_start_index}:{page_end_index}) ")
+        if page_end_index > len(quote['page_text']):
+            print("*** quote end index is larger than page content")
         print(quote["page_text"][page_start_index:page_end_index])
         print("\n")
     return page_end_index, page_start_index, quote
@@ -233,6 +235,7 @@ def _(pl, quote_subset_pages):
     # which pages have more than one quote?
     quote_subset_pages.group_by("page_index").agg(
         pl.col("TAGS").count().alias("count"),
+        pl.col("TAGS").unique().str.join("|"),
     ).filter(pl.col("count").gt(1))
     return
 
@@ -243,7 +246,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo, quote_subset_pages):
     quote_slider = mo.ui.slider(
         start=0,
@@ -263,15 +266,15 @@ def _(mo, quote_slider, quote_subset_pages):
             quote["end_index"] - quote["page_start"],
         )
         # at least one page includes an asterisk; escape so we don't get unintentional italics
-        before_quote = quote["page_text"][0:page_start_index].replace("*", "\*")
+        before_quote = quote["page_text"][0:page_start_index].replace("*", r"\*")
         quote_text = quote["page_text"][page_start_index:page_end_index].replace(
-            "*", "\*"
+            "*", r"\*"
         )
-        after_quote = quote["page_text"][page_end_index:].replace("*", "\*")
+        after_quote = quote["page_text"][page_end_index:].replace("*", r"\*")
 
         return mo.md(f"""
         Tag: {quote["TAGS"]}<br/>
-        Page index: {quote["page_index"]} ({page_start_index}:{page_end_index})
+        Page index: {quote["page_index"]} (article: {page_start_index}:{page_end_index} page: {page_start_index}:{page_end_index})
 
         {before_quote}**{quote_text}**{after_quote}
         """)
@@ -295,7 +298,7 @@ def _(quote_subset_pages):
 
 @app.cell
 def _(quote_subset_pages):
-    quote_subset_pages.write_csv("data/subset/direct_quotes.csv")
+    quote_subset_pages.write_csv("data/subset/direct_quotes.csv", include_bom=True)
     return
 
 
