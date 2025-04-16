@@ -1,3 +1,7 @@
+# project-specific
+# - referenced by direct quote notebook but we don't want to check into git
+data/text/1896-97aCLEAN.txt  
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
