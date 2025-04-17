@@ -19,6 +19,7 @@ classifiers = [
 ]
 dependencies = [
   "marimo",
+  "marimo[lsp]", # marimo language server protocol
   "ruff",
   "nbconvert",
   "polars",
@@ -48,3 +49,19 @@ select = [
 ]
 # Can use to ignore specific rules within above selection
 ignore = []
+
+[tool.marimo.display]
+cell_output = "below"
+
+[tool.marimo.runtime]
+# Add project source directory to Python path
+pythonpath = ["src"]
+
+[tool.marimo.save]
+format_on_save = true
+
+[tool.marimo.diagnostics]
+enabled = true
+
+[tool.marimo.experimental]
+lsp = true
