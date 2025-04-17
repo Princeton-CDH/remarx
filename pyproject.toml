@@ -60,5 +60,8 @@ pythonpath = ["src"]
 [tool.marimo.save]
 format_on_save = true
 
+[tool.marimo.diagnostics]
+enabled = true
+
 [tool.marimo.experimental]
 lsp = true
