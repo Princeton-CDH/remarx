@@ -1,4 +1,0 @@
-marimo
-ruff
-nbconvert
-polars
