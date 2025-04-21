@@ -23,6 +23,15 @@ pre-commit install
 This branch contains code and data for preliminary experiments with
 Princeton's AI Sandbox.
 
+### AI Sandbox API key setup
+
+In order to use the AI Sandbox API, you must have a API key. You must set the
+environment variable `AI_SANDBOX_KEY` to your API key value. Do this by creating
+a `.env` file in the same directory as the `pyproject.toml` with the following
+line:
+```
+AI_SANDBOX_KEY=[your_api_key]
+```
 
 ### Marimo notebook setup
 
