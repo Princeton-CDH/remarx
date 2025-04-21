@@ -24,14 +24,14 @@ def create_client() -> AzureOpenAI:
     )
 
 
-def run_basic_text_prompt(
+def submit_prompt(
     task_prompt,
     user_prompt,
     model="gpt-4o",
 ) -> ChatCompletion:
     """
-    Run basic text prompt using given model with task- and user-level prompts.
-    Returns resulting response object.
+    Submits basic text prompt using given model with task- and user-level
+    prompts. Returns resulting response object.
     """
     # Establish a connection to your Azure OpenAI instance
     client = create_client()
