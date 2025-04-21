@@ -10,7 +10,7 @@ from openai.types.chat import ChatCompletion
 # AI Sandbox variables
 SANDBOX_API_KEY = os.environ["AI_SANDBOX_KEY"]
 SANDBOX_ENDPOINT = "https://api-ai-sandbox.princeton.edu"
-SANDBOX_API_VERSION = "2024-02-01"
+SANDBOX_API_VERSION = "2025-03-01-preview"
 
 
 def create_client() -> AzureOpenAI:
