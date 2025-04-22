@@ -575,7 +575,7 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    mo.md(r"""### AI sandbox - gpt-4o-min""")
+    mo.md(r"""### AI sandbox - gpt-4o-mini""")
     return
 
 
