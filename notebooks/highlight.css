@@ -1,0 +1,52 @@
+mark {
+	/* override default styles for mark; remove highlight/color, add underline */
+	background-color: transparent;
+	color: currentColor;
+
+	/* set separate styles so it is easier to override */
+	text-decoration-line: underline;
+	text-decoration-style: solid;
+	text-decoration-color: yellow;
+	text-decoration-thickness: 1.5px;
+    text-underline-offset: 2px;
+}
+
+
+.span-compare {
+	position: relative;
+	height: fit-content;
+}
+.span-compare > div {
+/*	white-space: pre-line;*/
+}
+
+.span-compare > div:not(:first-child) {
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+
+/* for any div after the first, make the text transparent to avoid artifacts
+ when text does not exactly align */
+.span-compare div:nth-child(n+2) {
+	color: transparent;
+}
+
+.span-compare div:nth-child(n+2) mark {
+	/* use wavy underlines for everything after the first div */
+	text-decoration-style: wavy;
+    text-underline-offset: 4px;		
+}
+.span-compare div:nth-child(2) mark {
+	text-decoration-color: cyan;
+    text-underline-offset: 4px;	
+}
+.span-compare div:nth-child(3) mark {
+	text-decoration-color: blue;	
+}
+.span-compare div:nth-child(4) mark {
+	text-decoration-color: green;	
+}
+.span-compare div:nth-child(5) mark {
+	text-decoration-color: orange;	
+}

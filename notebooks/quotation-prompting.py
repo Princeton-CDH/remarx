@@ -4,7 +4,7 @@ __generated_with = "0.12.10"
 app = marimo.App(
     width="medium",
     app_title="Quotation prompt demo",
-    auto_download=["ipynb", "html"],
+    css_file="highlight.css",
 )
 
 
@@ -106,7 +106,8 @@ def _(highlight_text_span, mo, page_text_i256, rows):
     # adjust by start of page
 
     page_i256_start = rows[0]["page_start"]
-    mo.md(
+    mo.Html(
+        # print(
         highlight_text_span(
             page_text_i256,
             rows[0]["start_index"] - page_i256_start,
