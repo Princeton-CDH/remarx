@@ -6,16 +6,16 @@ app = marimo.App()
 
 @app.cell
 def _():
-    # Notebook for exploring title mention prompts
-    return
-
-
-@app.cell
-def _():
     import marimo as mo
     from remarx.sandbox_utils import submit_prompt
     from remarx.notebook_utils import display_bracketed_response
     return display_bracketed_response, mo, submit_prompt
+
+
+@app.cell
+def _(mo):
+    mo.md("""# Notebook for exploring title mention prompts""")
+    return
 
 
 @app.cell(hide_code=True)
