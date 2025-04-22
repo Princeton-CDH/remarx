@@ -49,12 +49,16 @@ def highlight_bracketed_text(text: str, wrap: bool = True) -> mo.Html:
 
 
 def compare_highlighted_texts(*texts: list[str]) -> mo.Html:
+    # Displays two or more texts with overlapping highlights.
+    # MUST include highlight.css in notebook custom styles
     highlighted_texts = [highlight_bracketed_text(t, wrap=False) for t in texts]
     highlighted_divs = "\n".join([f"<div>{t}</div>" for t in highlighted_texts])
     return mo.Html(f"""<div class='compare multi'>{highlighted_divs}</div>""")
 
 
 def highlight_sidebyside(texta: str, textb: str) -> mo.Html:
+    # Displays two or more texts with highlighting side by side.
+    # MUST include highlight.css in notebook custom styles
     return mo.hstack(
         [
             mo.Html(
@@ -73,11 +77,12 @@ def remove_brackets(text: str) -> str:
 
 
 def texts_differ(texta: str, textb: str) -> bool:
-    # remove square brackets and then check if texts are the same
+    # check if two texts differ, ignoring any square brackets
     return remove_brackets(texta) != remove_brackets(textb)
 
 
 def html_diff(texta: str, textb: str) -> mo.Html:
+    # use python difflib to generate a side-by-side html diff of two texts
     return difflib.HtmlDiff().make_file(
         texta.split("\n"), textb.split("\n")
-    )  # , fromdesc='', todesc=''
+    )  # NOTE: could provide labels (~ filenames) for inputs fromdesc='', todesc=''
