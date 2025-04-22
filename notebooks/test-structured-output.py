@@ -1,7 +1,11 @@
 import marimo
 
 __generated_with = "0.12.10"
-app = marimo.App(width="medium", css_file="custom.css")
+app = marimo.App(
+    width="medium",
+    app_title="Test Structured Outputs",
+    css_file="custom.css",
+)
 
 
 @app.cell(hide_code=True)
@@ -32,10 +36,24 @@ def _(mo):
 
         > Support for structured outputs was first added in API version `2024-08-01-preview`. It is available in the latest preview APIs as well as the latest GA API: `2024-10-21`.
 
-        The API version in the AI Sandbox sample code we were given older than that (but I don't know how to tell if this is current):  
-        ```py
-        SANDBOX_API_VERSION = "2024-02-01"
-        ```
+        As of April 2025, the API version to use with AI Sandbox is **2025-03-01-preview**.
+
+        """
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+        * * *
+
+        Use a page of text from the quote data subset for testing.
+
+        This is the last entry in the quote data subset file. The expected quote based on annotation data: 
+
+        > „die Arbeiter¬ klasse nicht die fertige Staatsmaschine einfach in Besitz nehmen und für ihre eigenen Zwecke in Bewegung setzen kann“
         """
     )
     return
@@ -50,9 +68,9 @@ def _():
     Zinner,+etal._1896_15:01_388_Notizen,Feuilleton
     """
 
-    system_prompt = "You are a helpful research assistant fluent in German. You help researchers identify important content in text from German scholarship."
+    system_prompt = "You are a helpful research assistant fluent in German. You help researchers identify important content in text from German scholarship.  Identify and return any passages in this text provided by the user that quote from works by Karl Marx."
 
-    user_prompt = f"Identify and return any passages in this page of text that quote from texts by Karl Marx:\n{page_text}"
+    user_prompt = page_text
     return page_text, system_prompt, user_prompt
 
 
@@ -75,10 +93,16 @@ def _():
         title: Optional[str]
 
 
+    # Both APIs supports nested models; we need to support multiple quotes on a page, so return a list of quotes
+    # using the Quote model defined above
+    class QuoteList(BaseModel):
+        quotes: list[Quote]
+
+
     # initialize an api client for AI sandbox
 
     SANDBOX_ENDPOINT = "https://api-ai-sandbox.princeton.edu/"
-    SANDBOX_API_VERSION = "2024-02-01"
+    SANDBOX_API_VERSION = "2025-03-01-preview"
 
     client = AzureOpenAI(
         api_key=os.getenv("AI_SANDBOX_KEY"),
@@ -90,6 +114,7 @@ def _():
         BaseModel,
         Optional,
         Quote,
+        QuoteList,
         SANDBOX_API_VERSION,
         SANDBOX_ENDPOINT,
         client,
@@ -118,7 +143,7 @@ def _(mo):
 
 
 @app.cell
-def _(Quote, client, openai, system_prompt, user_prompt):
+def _(QuoteList, client, openai, system_prompt, user_prompt):
     gpt4o_completion = client.beta.chat.completions.parse(
         model="gpt-4o",
         # model="gpt-4o-mini",
@@ -127,9 +152,9 @@ def _(Quote, client, openai, system_prompt, user_prompt):
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
-        # response_format=Quote,  # not supported by our API version
+        # response_format=QuoteList.model_json_schema(),  # not supported by our API version or not being passed correctly
         tools=[
-            openai.pydantic_function_tool(Quote),
+            openai.pydantic_function_tool(QuoteList),
         ],
     )
     return (gpt4o_completion,)
@@ -162,14 +187,33 @@ def _(gpt4o_completion, mo):
     )
 
     mo.md(f"""
+    Returned {len(gpt4o_parsed.quotes)} quote(s).
+
     **quotation:**
 
-    {gpt4o_parsed.text}
+    {gpt4o_parsed.quotes[0].text}
+
 
     **title:**
-    {gpt4o_parsed.title}
+    {gpt4o_parsed.quotes[0].title}
+
+
     """)
     return (gpt4o_parsed,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+        **GPT4o** : ✅ quote  ⛔title
+
+        Correctly returns the full text of the expected quote and only that quote.
+
+        It looks like it is using the article title (?) at the top of the page text as the title.  The tag in the annotation data is "Manifest der Kommunistischen Partei"
+        """
+    )
+    return
 
 
 @app.cell(hide_code=True)
@@ -179,7 +223,7 @@ def _(mo):
 
 
 @app.cell
-def _(Quote, client, openai, system_prompt, user_prompt):
+def _(QuoteList, client, openai, system_prompt, user_prompt):
     gpt4omini_completion = client.beta.chat.completions.parse(
         model="gpt-4o-mini",
         # model="Meta-Llama-3-1-8B-Instruct-nwxcg",
@@ -189,7 +233,7 @@ def _(Quote, client, openai, system_prompt, user_prompt):
         ],
         # response_format=Quote,  # not supported by our API version
         tools=[
-            openai.pydantic_function_tool(Quote),
+            openai.pydantic_function_tool(QuoteList),
         ],
     )
     return (gpt4omini_completion,)
@@ -211,14 +255,31 @@ def _(gpt4omini_completion, mo):
     )
 
     mo.md(f"""
+    Returned {len(gpt4omini_parsed.quotes)} quote(s).
+
     **quotation:**
 
-    {gpt4omini_parsed.text}
+    {gpt4omini_parsed.quotes[0].text}
+
 
     **title:**
-    {gpt4omini_parsed.title}
+    {gpt4omini_parsed.quotes[0].title}
     """)
     return (gpt4omini_parsed,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+        **GPT4o-mini** : ⛔/✅quote  ⛔title
+
+        On a previous run it returned incorrect quote: a different set of text surrounded by „“.  This time it returned the correct quote.
+
+        Like GPT4o, it returns the text at the beginning of the page as a title.
+        """
+    )
+    return
 
 
 @app.cell(hide_code=True)
@@ -246,7 +307,6 @@ def _(mo):
         ```python
         response_format=Quote.model_json_schema()
         ```
-
         """
     )
     return
@@ -274,9 +334,10 @@ def _(mo):
 
         Testing with the Ollama python client based on a [blog post about structured outputs](https://ollama.com/blog/structured-outputs).
 
-        Setup requires installing [ollama](https://ollama.com/), and then start the server and download and run models.  (I did some version of this but it may not be the best way to do things, since I'm new to using Ollama. 😅)
+        Setup requires installing [ollama](https://ollama.com/), and then start the server and download (pull) and run models.
 
         ```console
+        pip install ollama
         ollama serve
         ollama run llama3.2
         ollama run mixtral
@@ -289,14 +350,8 @@ def _(mo):
 
 
 @app.cell
-def _(BaseModel, Quote, system_prompt, user_prompt):
+def _(QuoteList, system_prompt, user_prompt):
     from ollama import chat
-
-
-    # Supports nested models; we need to support multiple quotes on a page, so try a list of quotes
-    # using the Quote model defined earlier
-    class QuoteList(BaseModel):
-        quotes: list[Quote]
 
 
     def identify_quotes(page_text, model):
@@ -310,7 +365,7 @@ def _(BaseModel, Quote, system_prompt, user_prompt):
         )
 
         return QuoteList.model_validate_json(response.message.content)
-    return QuoteList, chat, identify_quotes
+    return chat, identify_quotes
 
 
 @app.cell(hide_code=True)
@@ -337,8 +392,20 @@ def _(llama_quotes, mo):
     **title:**
     {llama_q.title}""")
 
-    mo.md("\n\n".join(llama_quotes_md))
+    mo.md("\n\n\n".join(llama_quotes_md))
     return llama_q, llama_quotes_md
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+        **llama3.2** : ⛔/0️⃣ quote  ⛔/0️⃣title
+
+        On some runs it returned an incorrect quote and incorrect title. It was returning some text from the third line of the first paragraph. When I adjusted the prompt to move the instructions to the system prompt, it didn't return anything.
+        """
+    )
+    return
 
 
 @app.cell(hide_code=True)
@@ -364,19 +431,88 @@ def _(mixtral_quotes, mo):
     **title:**
     {mixtral_q.title}""")
 
-    mo.md("\n\n".join(mixtral_quotes_md))
+    mo.md("\n\n\n".join(mixtral_quotes_md))
     return mixtral_q, mixtral_quotes_md
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+        **mixtral** : ⛔quote  ⛔title
+
+        Returning multiple things, all of them wrong. On a previous run, before I modified the prompt, it returned some text near the beginning of the first paragraph (also incorrect).
+        """
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""Ollama server is [compatible with openai chat completions API](https://ollama.com/blog/openai-compatibility), including structured responses.""")
+    return
+
+
+@app.cell
+def _():
+    from openai import OpenAI
+
+
+    ollama_oaiclient = OpenAI(
+        base_url="http://localhost:11434/v1",
+        api_key="ollama",  # required, but unused
+    )
+    return OpenAI, ollama_oaiclient
+
+
+@app.cell
+def _(QuoteList, ollama_oaiclient, openai, system_prompt, user_prompt):
+    ollama_completion = ollama_oaiclient.beta.chat.completions.parse(
+        model="llama3.2",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        # response_format=QuoteList.model_json_schema(),  # this seems to be ignored
+        tools=[
+            openai.pydantic_function_tool(QuoteList),
+        ],
+    )
+    return (ollama_completion,)
+
+
+@app.cell
+def _(ollama_completion):
+    print(ollama_completion.model_dump_json(indent=2))
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""The API is not exactly compatible, since the `tool_calls` is null. The content looks like a json dump of the QuoteList object with associated quotes, so it is enforcing the structure.""")
+    return
 
 
 @app.cell
 def _(mo):
     mo.md(
         r"""
-        ## CSV output?
+        ## CSV output
 
         CSV output might be a simpler way to get structured output, but may be less reliable.
+
+        Testing with the last paragraph of page text from the quote subset (page index 661, two quotes).
+
+        The expected quote from this paragraph:
+        > „Zur Lösung dieses Widerspruchs" fährt er fort, „bedarf es noch vieler Mittelglieder.“ Er versprach, diese Lösung später zu geben. 
         """
     )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""### ollama - llama3.2""")
     return
 
 
@@ -402,6 +538,78 @@ def _(chat, system_prompt):
 @app.cell
 def _(csvresponse):
     print(csvresponse.message.content)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""### AI sandbox - gpt-4o""")
+    return
+
+
+@app.cell
+def _(client, csv_prompt, system_prompt):
+    # try ai sandbox gpt-4o with csv output
+
+    gpt4o_csv_completion = client.beta.chat.completions.parse(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": csv_prompt},
+        ],
+    )
+    return (gpt4o_csv_completion,)
+
+
+@app.cell
+def _(gpt4o_csv_completion):
+    print(gpt4o_csv_completion.choices[0].message.content)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""The second quote found is the expected one, but the full content is not returned.""")
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""### AI sandbox - gpt-4o-min""")
+    return
+
+
+@app.cell
+def _(client, csv_prompt, system_prompt):
+    gpt4omini_csv_completion = client.beta.chat.completions.parse(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": csv_prompt},
+        ],
+    )
+    return (gpt4omini_csv_completion,)
+
+
+@app.cell
+def _(gpt4omini_csv_completion):
+    print(gpt4omini_csv_completion.choices[0].message.content)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+        The second quote is the expected response. It doesn't return the full text, but returns more of the quote than GPT4o did. They seem to be stopping at punctuation - likely because this quote as annotated includes text _between_ and _after_ the parts of the quote.
+
+        > „Zur Lösung dieses Widerspruchs" fährt er fort, „bedarf es noch vieler Mittelglieder.“ Er versprach, diese Lösung später zu geben.
+
+        From google translate:
+
+        > "To resolve this contradiction," he continues, "many intermediate links are still needed." He promised to provide this solution later.
+        """
+    )
     return
 
 
