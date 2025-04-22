@@ -2,6 +2,7 @@
 Utility functions for marimo notebooks
 """
 
+import difflib
 import re
 
 import marimo as mo
@@ -30,7 +31,7 @@ def has_closed_brackets(text: str):
     return "[" not in new_str and "]" not in new_str
 
 
-def highlight_bracketed_text(text: str) -> mo.Html:
+def highlight_bracketed_text(text: str, wrap: bool = True) -> mo.Html:
     """
     Display text as markdown with square bracketed expressions highlighted
     and the square brackets removed.
@@ -44,4 +45,39 @@ def highlight_bracketed_text(text: str) -> mo.Html:
     # "Display" text as markdown
     output_text = text.replace("[", "<mark>")
     output_text = output_text.replace("]", "</mark>")
-    return mo.md(output_text)
+    return mo.md(output_text) if wrap else output_text
+
+
+def compare_highlighted_texts(*texts: list[str]) -> mo.Html:
+    highlighted_texts = [highlight_bracketed_text(t, wrap=False) for t in texts]
+    highlighted_divs = "\n".join([f"<div>{t}</div>" for t in highlighted_texts])
+    return mo.Html(f"""<div class='compare multi'>{highlighted_divs}</div>""")
+
+
+def highlight_sidebyside(texta: str, textb: str) -> mo.Html:
+    return mo.hstack(
+        [
+            mo.Html(
+                f"<div class='compare primary'>{highlight_bracketed_text(texta, wrap=False)}</div>"
+            ),
+            mo.Html(
+                f"<div class='compare secondary'>{highlight_bracketed_text(textb, wrap=False)}</div>"
+            ),
+        ],
+        widths="equal",
+    )
+
+
+def remove_brackets(text: str) -> str:
+    return text.replace("[", "").replace("]", "")
+
+
+def texts_differ(texta: str, textb: str) -> bool:
+    # remove square brackets and then check if texts are the same
+    return remove_brackets(texta) != remove_brackets(textb)
+
+
+def html_diff(texta: str, textb: str) -> mo.Html:
+    return difflib.HtmlDiff().make_file(
+        texta.split("\n"), textb.split("\n")
+    )  # , fromdesc='', todesc=''

@@ -1,7 +1,7 @@
 import marimo
 
-__generated_with = "0.12.9"
-app = marimo.App(width="medium", auto_download=["ipynb"])
+__generated_with = "0.12.10"
+app = marimo.App(width="medium", css_file="custom.css", html_head_file="")
 
 
 @app.cell(hide_code=True)
@@ -216,8 +216,10 @@ def _(quote_subset_pages):
             quote["start_index"] - quote["page_start"],
             quote["end_index"] - quote["page_start"],
         )
-        print(f"{quote['TAGS']} (article {quote['start_index']}:{quote['end_index']} / page {page_start_index}:{page_end_index}) ")
-        if page_end_index > len(quote['page_text']):
+        print(
+            f"{quote['TAGS']} (article {quote['start_index']}:{quote['end_index']} / page {page_start_index}:{page_end_index}) "
+        )
+        if page_end_index > len(quote["page_text"]):
             print("*** quote end index is larger than page content")
         print(quote["page_text"][page_start_index:page_end_index])
         print("\n")
@@ -258,7 +260,7 @@ def _(mo, quote_subset_pages):
     return (quote_slider,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo, quote_slider, quote_subset_pages):
     def show_page(quote):
         page_start_index, page_end_index = (
@@ -300,6 +302,38 @@ def _(quote_subset_pages):
 def _(quote_subset_pages):
     quote_subset_pages.write_csv("data/subset/direct_quotes.csv", include_bom=True)
     return
+
+
+@app.cell
+def _(mo, quote_slider, quote_subset_pages):
+    def show_page_html(quote):
+        page_start_index, page_end_index = (
+            quote["start_index"] - quote["page_start"],
+            quote["end_index"] - quote["page_start"],
+        )
+        # at least one page includes an asterisk; escape so we don't get unintentional italics
+        before_quote = quote["page_text"][
+            0:page_start_index
+        ]  # .replace("*", r"\*")
+        quote_text = quote["page_text"][
+            page_start_index:page_end_index
+        ]  # .replace(
+        # "*", r"\*"
+        # )
+        after_quote = quote["page_text"][page_end_index:]  # .replace("*", r"\*")
+
+        return mo.Html(f"""
+        <p>Page index: {quote["page_index"]} (article: {page_start_index}:{page_end_index} page: {page_start_index}:{page_end_index})</p>
+
+        <div class='span-compare'>
+        <div>{before_quote}<span class='hi'>{quote_text}</span>{after_quote}</div>
+        <div><span class='hi'>{before_quote}</span>{quote_text}{after_quote}</div>
+        </div>
+        """)
+
+
+    show_page_html(quote_subset_pages.row(quote_slider.value, named=True))
+    return (show_page_html,)
 
 
 if __name__ == "__main__":

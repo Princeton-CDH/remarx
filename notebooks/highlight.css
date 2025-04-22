@@ -12,41 +12,44 @@ mark {
 }
 
 
-.span-compare {
+.compare {
 	position: relative;
-	height: fit-content;
 }
-.span-compare > div {
-/*	white-space: pre-line;*/
+.compare.multi > div, .compare.primary, .compare.secondary {
+	/* this is useful but not being applied consistently; disable for now */
+	white-space: pre-line;
 }
 
-.span-compare > div:not(:first-child) {
+.compare.multi > div:not(:first-child) {
 	position: absolute;
 	top: 0;
 	left: 0;
 }
 
 /* for any div after the first, make the text transparent to avoid artifacts
- when text does not exactly align */
-.span-compare div:nth-child(n+2) {
+ when text does not exactly align (although beware of texts that differ too much!) */
+.compare.multi div:nth-child(n+2) {
+	/* comment color and uncomment opacity to test */
 	color: transparent;
+/*	opacity: 0.2;*/   
 }
 
-.span-compare div:nth-child(n+2) mark {
-	/* use wavy underlines for everything after the first div */
+.compare.multi div:nth-child(n+2) mark, .compare.secondary mark {
+	/* use wavy underlines for secondary highlights;
+	everything after the first div in a span-compare section, or secondary-span
+	 */
 	text-decoration-style: wavy;
-    text-underline-offset: 4px;		
-}
-.span-compare div:nth-child(2) mark {
+    text-underline-offset: 5px;
+	text-decoration-thickness: 1px;
 	text-decoration-color: cyan;
-    text-underline-offset: 4px;	
 }
-.span-compare div:nth-child(3) mark {
-	text-decoration-color: blue;	
+
+.compare.multi  div:nth-child(3) mark {
+	text-decoration-color: blue;
 }
-.span-compare div:nth-child(4) mark {
-	text-decoration-color: green;	
+.compare.multi  div:nth-child(4) mark {
+	text-decoration-color: green;
 }
-.span-compare div:nth-child(5) mark {
-	text-decoration-color: orange;	
+.compare.multi  div:nth-child(5) mark {
+	text-decoration-color: orange;
 }
