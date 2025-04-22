@@ -4,7 +4,8 @@ __generated_with = "0.12.10"
 app = marimo.App(
     width="medium",
     app_title="Test Structured Outputs",
-    css_file="custom.css",
+    css_file="",
+    auto_download=["ipynb", "html"],
 )
 
 
@@ -37,7 +38,6 @@ def _(mo):
         > Support for structured outputs was first added in API version `2024-08-01-preview`. It is available in the latest preview APIs as well as the latest GA API: `2024-10-21`.
 
         As of April 2025, the API version to use with AI Sandbox is **2025-03-01-preview**.
-
         """
     )
     return
@@ -504,7 +504,7 @@ def _(mo):
         Testing with the last paragraph of page text from the quote subset (page index 661, two quotes).
 
         The expected quote from this paragraph:
-        > „Zur Lösung dieses Widerspruchs" fährt er fort, „bedarf es noch vieler Mittelglieder.“ Er versprach, diese Lösung später zu geben. 
+        > „Zur Lösung dieses Widerspruchs" fährt er fort, „bedarf es noch vieler Mittelglieder.“ Er versprach, diese Lösung später zu geben.
         """
     )
     return
