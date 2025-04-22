@@ -5,7 +5,6 @@ app = marimo.App(
     width="medium",
     app_title="Test Structured Outputs",
     css_file="",
-    auto_download=["ipynb", "html"],
 )
 
 
@@ -210,7 +209,7 @@ def _(mo):
 
         Correctly returns the full text of the expected quote and only that quote.
 
-        It looks like it is using the article title (?) at the top of the page text as the title.  The tag in the annotation data is "Manifest der Kommunistischen Partei"
+        In some cases it returns the article title (?) from the running header at the top of the page text as the title; in other cases it returns `None`.  The tag in the annotation data is "Manifest der Kommunistischen Partei"
         """
     )
     return
@@ -276,7 +275,7 @@ def _(mo):
 
         On a previous run it returned incorrect quote: a different set of text surrounded by „“.  This time it returned the correct quote.
 
-        Like GPT4o, it returns the text at the beginning of the page as a title.
+        Like GPT4o, in a previous run it returned the text at the beginning of the page as a title; now it returns `None`.
         """
     )
     return
@@ -402,7 +401,7 @@ def _(mo):
         r"""
         **llama3.2** : ⛔/0️⃣ quote  ⛔/0️⃣title
 
-        On some runs it returned an incorrect quote and incorrect title. It was returning some text from the third line of the first paragraph. When I adjusted the prompt to move the instructions to the system prompt, it didn't return anything.
+        On some runs it returned an incorrect quote and incorrect title. It was returning some text from the third line of the first paragraph. When I adjusted the prompt to move the instructions to the system prompt, it didn't return anything. On another run, it returned two empty quotations with the titles "nicht vorhanden" and "Karl Marx."
         """
     )
     return
@@ -441,7 +440,7 @@ def _(mo):
         r"""
         **mixtral** : ⛔quote  ⛔title
 
-        Returning multiple things, all of them wrong. On a previous run, before I modified the prompt, it returned some text near the beginning of the first paragraph (also incorrect).
+        On a previous run it returned multiple things, all of them wrong. On a previous run, before I modified the prompt, it returned some text near the beginning of the first paragraph (also incorrect).
         """
     )
     return
@@ -567,13 +566,13 @@ def _(gpt4o_csv_completion):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""The second quote found is the expected one, but the full content is not returned.""")
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""### AI sandbox - gpt-4o-mini""")
     return
