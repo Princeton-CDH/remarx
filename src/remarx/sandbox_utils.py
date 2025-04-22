@@ -10,7 +10,7 @@ from openai.types.chat import ChatCompletion
 # AI Sandbox variables
 SANDBOX_API_KEY = os.environ["AI_SANDBOX_KEY"]
 SANDBOX_ENDPOINT = "https://api-ai-sandbox.princeton.edu"
-SANDBOX_API_VERSION = "2024-02-01"
+SANDBOX_API_VERSION = "2025-03-01-preview"
 
 
 def create_client() -> AzureOpenAI:
@@ -45,3 +45,19 @@ def submit_prompt(
         ],
     )
     return response
+
+
+def get_text_response(response: ChatCompletion) -> str:
+    """
+    Extract the text output from model response. Prints warning if the model
+    finished for an unexpected reason (i.e., length limit, content filtering)
+    """
+    # Assume the response contains a single output
+    output_object = response.choices[0]
+    # Check finish reason
+    finish_reason = output_object.finish_reason
+    if finish_reason == "length":
+        print("WARNING: Response stopped early due to length limits!")
+    elif finish_reason == "content_filter":
+        print("WARNING: Content filtering occurred for response!")
+    return output_object.message.content
