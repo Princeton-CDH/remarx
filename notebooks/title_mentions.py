@@ -1,15 +1,15 @@
 import marimo
 
 __generated_with = "0.12.10"
-app = marimo.App()
+app = marimo.App(width="medium")
 
 
 @app.cell
 def _():
     import marimo as mo
-    from remarx.sandbox_utils import submit_prompt
-    from remarx.notebook_utils import display_bracketed_response
-    return display_bracketed_response, mo, submit_prompt
+    from remarx.sandbox_utils import submit_prompt, get_text_response
+    from remarx.notebook_utils import highlight_bracketed_text
+    return get_text_response, highlight_bracketed_text, mo, submit_prompt
 
 
 @app.cell
@@ -20,7 +20,7 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""Below is a sample page of text with several title mentions including _Das Kapital_ and _The Communist Manifesto_.""")
+    mo.md(r"""Below is a sample page of text with several title mentions including _Das Kapital_ and _The Communist Manifesto_ with title mentions (with volume information) highlighted.""")
     return
 
 
@@ -197,8 +197,8 @@ def _(basic_response):
 
 
 @app.cell
-def _(basic_response, display_bracketed_response):
-    display_bracketed_response(basic_response)
+def _(basic_response, get_text_response, highlight_bracketed_text):
+    highlight_bracketed_text(get_text_response(basic_response))
     return
 
 
@@ -240,10 +240,10 @@ def _(one_shot_response):
 
 
 @app.cell
-def _(display_bracketed_response, one_shot_response):
+def _(get_text_response, highlight_bracketed_text, one_shot_response):
     # Finds the texts of interest but does not include volume-level information.
     # Misses the additional speech (https://www.marxists.org/deutsch/archiv/marx-engels/1864/10/inaugadr.htm) in the first paragraph
-    display_bracketed_response(one_shot_response)
+    highlight_bracketed_text(get_text_response(one_shot_response))
     return
 
 
@@ -267,36 +267,68 @@ def _(sample_page):
 
 
 @app.cell
-def _(basic_prompt, display_bracketed_response, submit_prompt, text_chunks):
-    # Skipped speech
-    display_bracketed_response(
-        submit_prompt(task_prompt=basic_prompt, user_prompt=text_chunks[0])
+def _(
+    basic_prompt,
+    get_text_response,
+    highlight_bracketed_text,
+    submit_prompt,
+    text_chunks,
+):
+    # Skips speech sometimes
+    highlight_bracketed_text(
+        get_text_response(
+            submit_prompt(task_prompt=basic_prompt, user_prompt=text_chunks[0])
+        )
     )
     return
 
 
 @app.cell
-def _(basic_prompt, display_bracketed_response, submit_prompt, text_chunks):
-    display_bracketed_response(
-        submit_prompt(task_prompt=basic_prompt, user_prompt=text_chunks[1])
+def _(
+    basic_prompt,
+    get_text_response,
+    highlight_bracketed_text,
+    submit_prompt,
+    text_chunks,
+):
+    highlight_bracketed_text(
+        get_text_response(
+            submit_prompt(task_prompt=basic_prompt, user_prompt=text_chunks[1])
+        )
     )
     return
 
 
 @app.cell
-def _(basic_prompt, display_bracketed_response, submit_prompt, text_chunks):
+def _(
+    basic_prompt,
+    get_text_response,
+    highlight_bracketed_text,
+    submit_prompt,
+    text_chunks,
+):
     # Skips volume information
-    display_bracketed_response(
-        submit_prompt(task_prompt=basic_prompt, user_prompt=text_chunks[2])
+    highlight_bracketed_text(
+        get_text_response(
+            submit_prompt(task_prompt=basic_prompt, user_prompt=text_chunks[2])
+        )
     )
     return
 
 
 @app.cell
-def _(basic_prompt, display_bracketed_response, submit_prompt, text_chunks):
+def _(
+    basic_prompt,
+    get_text_response,
+    highlight_bracketed_text,
+    submit_prompt,
+    text_chunks,
+):
     # Skips volume information
-    display_bracketed_response(
-        submit_prompt(task_prompt=basic_prompt, user_prompt=text_chunks[3])
+    highlight_bracketed_text(
+        get_text_response(
+            submit_prompt(task_prompt=basic_prompt, user_prompt=text_chunks[3])
+        )
     )
     return
 
@@ -312,7 +344,7 @@ def _(mo):
         - The newer prompt template appears to take a lot more time, but it seems to be relative to the length of the input passage.
         - Annotations do not appear to be particularly stable between runs.
             - Spurious annotations may appear in passages without any title references
-            - The speech written by Karl Marx is not necessarily identified
+            - Not all texts written by Karl Marx are necessarily identified (e.g., an inaugural address written by Marx)
         """
     )
     return
