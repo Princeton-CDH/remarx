@@ -38,8 +38,8 @@ def get_model_responses(
     Get the model responses for a given prompt and dataset. Yield results
     as dictionary amenable to saving as a CSV.
     """
-    for row in dataset_rows:
-        row.copy()
+    for _row in dataset_rows:
+        row = _row.copy()
         input_text = row.pop("input_text")
         try:
             response = submit_prompt(prompt, input_text, model=model, client=client)
@@ -55,13 +55,12 @@ def get_model_responses(
             else:
                 raise
 
-        print(row)  # temporary /debug
         yield row
 
 
 def save_responses(
     dataset_csv: pathlib.Path,
-    prompts_dir: pathlib.Path,
+    prompt_file: pathlib.Path,
     out_csv: pathlib.Path,
 ) -> None:
     """
@@ -94,38 +93,35 @@ def save_responses(
         n_examples = len(dataset_rows)
 
     # run on a subset of models
-    models = ["o3-mini", "gpt-4o-mini", "gpt-4o"]
+    # models = ["o3-mini",]
+    models = ["gpt-4o-mini", "gpt-4o"]
     client = create_client()
+
+    # single prompt file only
+    prompt_text = prompt_file.open().read()
+    prompt_name = prompt_file.stem
 
     with open(out_csv, mode="w", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=csv_fields)
         writer.writeheader()
 
-        prompt_files = list(prompts_dir.glob("basic.txt"))
-        prompt_progress = tqdm(prompt_files, position=0)
-        for prompt_file in prompt_progress:
-            prompt_name = prompt_file.stem
-            # Add prompt name to progress bar
-            prompt_progress.set_description_str(f"Prompts - {prompt_name}")
-            with open(prompt_file) as f:
-                prompt_text = f.read()
-            model_progress = tqdm(models, position=1)
-            for model in model_progress:
-                model_progress.set_description_str(f"Models - {model}")
-                row_pfx = {
-                    "model": model,
-                    "prompt": prompt_name,
-                }
+        model_progress = tqdm(models, position=1)
+        for model in model_progress:
+            model_progress.set_description_str(f"Models - {model}")
+            row_pfx = {
+                "model": model,
+                "prompt": prompt_name,
+            }
 
-                examples_progress = tqdm(
-                    get_model_responses(model, prompt_text, dataset_rows, client),
-                    total=n_examples,
-                    desc="Submitting examples",
-                    position=2,
-                )
-                for response in examples_progress:
-                    row = row_pfx | response
-                    writer.writerow(row)
+            examples_progress = tqdm(
+                get_model_responses(model, prompt_text, dataset_rows, client),
+                total=n_examples,
+                desc=f"Submitting examples to {model}",
+                position=2,
+            )
+            for response in examples_progress:
+                row = row_pfx | response
+                writer.writerow(row)
 
 
 def main():
@@ -140,8 +136,8 @@ def main():
         type=pathlib.Path,
     )
     parser.add_argument(
-        "prompts_dir",
-        help="Directory containing task-level prompts",
+        "prompt_file",
+        help="Path to task-level prompt file",
         type=pathlib.Path,
     )
     parser.add_argument(
@@ -156,9 +152,9 @@ def main():
     if not args.in_csv.is_file():
         print(f"Error: input csv {args.in_csv} does not exist", file=sys.stderr)
         sys.exit(1)
-    if not args.prompts_dir.is_dir():
+    if not args.prompt_file.exists():
         print(
-            f"Error: prompts directory {args.promts_dir} does not exist",
+            f"Error: prompt file {args.promts_file} does not exist",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -168,7 +164,7 @@ def main():
 
     save_responses(
         dataset_csv=args.in_csv,
-        prompts_dir=args.prompts_dir,
+        prompt_file=args.prompt_file,
         out_csv=args.out_csv,
     )
 
