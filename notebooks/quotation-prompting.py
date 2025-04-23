@@ -214,7 +214,7 @@ def _(basic_response_text_i256, highlight_bracketed_text):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""Substantial overlap with the annotated passage; it starts about a sentence later and does not include the citation.""")
+    mo.md(r"""Substantial overlap with the annotated passage; it includes the full quotation, but not the preceding text included in the manual annotation.  It also excludes the author+title citation included in the manual annotation.""")
     return
 
 
@@ -252,6 +252,14 @@ def _(
 
 
 @app.cell
+def _(basic_responses, get_text_response, mo):
+    response_1 = get_text_response(basic_responses[1])
+    assert response_1.count("[") == response_1.count("]")
+    mo.md(f"Found {response_1.count('[')} quotations")
+    return (response_1,)
+
+
+@app.cell
 def _(basic_response_text_i661, highlight_bracketed_text):
     highlight_bracketed_text(basic_response_text_i661)
     return
@@ -259,7 +267,7 @@ def _(basic_response_text_i661, highlight_bracketed_text):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""Matches the annotated text. Because of the way we're highlighting, I'm not sure if this is identified as one long quotation or two, as in the annotated data and as indicated by the quotes.""")
+    mo.md(r"""Matches the annotated text. The highlighting doesn't make it particularly clear, but the response does include two separate quotations.""")
     return
 
 
@@ -277,7 +285,7 @@ def _(
 def _(mo):
     mo.md(
         r"""
-        The annotated text in the response is often modified; sometimes slight variations (like whitespace or missing newlines), sometimes wildly different. 
+        The annotated text in the response is often modified; sometimes slight variations (like whitespace or missing newlines), sometimes wildly different.
 
         Check for differences (other than annotation brackets) and display a difflib comparison if they have.
         """
@@ -395,9 +403,14 @@ def _(
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""At least in some cases, the results from the one-shot prompt are exactly the same as the zero-shot. Because of the variability it's hard to tell if the example makes any difference.""")
+    mo.md(
+        r"""
+        In some runs, the results from the one-shot prompt are exactly the same as the zero-shot.  In other runs,
+        it includes spurious spans for both examples (including what appears to be quoted concepts as well as title references).
+        """
+    )
     return
 
 
