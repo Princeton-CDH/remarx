@@ -1,16 +1,16 @@
 """
 Script for saving the model responses for the quotations task for
-for all prompts and AI Sandbox models.
+for a single prompt and a subset of AI Sandbox models.
 
 Note: This script requires the AI Sandbox API key to the environment
 variable `AI_SANDBOX_KEY`.
 
 Examples:
 
-python get_quotations.py [dataset csv] [prompts dir] [out csv]
+python get_quotations.py [dataset csv] [prompt file] [out csv]
 
 export AI_SANDBOX_KEY=[your api key]; python get_title_mentions_responses.py \
-        [dataset csv] [prompts dir] [out csv]
+        [dataset csv] [prompt file] [out csv]
 
 """
 
