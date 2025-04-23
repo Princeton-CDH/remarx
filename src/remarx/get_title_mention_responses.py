@@ -1,6 +1,17 @@
 """
 Script for saving the model responses for the title mentions task for
 for all prompts and AI Sandbox models.
+
+Note: This script requires the AI Sandbox API key to the environment
+variable `AI_SANDBOX_KEY`.
+
+Examples:
+
+python get_title_mentions_responses.py [dataset csv] [prompts dir] [out csv]
+
+export AI_SANDBOX_KEY=[your api key]; python get_title_mentions_responses.py \
+        [dataset csv] [prompts dir] [out csv]
+
 """
 
 import argparse
