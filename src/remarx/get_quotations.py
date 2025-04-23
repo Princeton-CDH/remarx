@@ -93,8 +93,7 @@ def save_responses(
         n_examples = len(dataset_rows)
 
     # run on a subset of models
-    # models = ["o3-mini",]
-    models = ["gpt-4o-mini", "gpt-4o"]
+    models = ["o3-mini", "gpt-4o-mini", "gpt-4o"]
     client = create_client()
 
     # single prompt file only
