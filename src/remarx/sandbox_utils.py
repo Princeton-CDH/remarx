@@ -35,16 +35,15 @@ def create_client() -> AzureOpenAI:
 
 
 def submit_prompt(
-    task_prompt,
-    user_prompt,
-    model="gpt-4o",
+    task_prompt, user_prompt, model="gpt-4o", client=None
 ) -> ChatCompletion:
     """
     Submits basic text prompt using given model with task- and user-level
     prompts. Returns resulting response object.
     """
     # Establish a connection to your Azure OpenAI instance
-    client = create_client()
+    if client is None:
+        client = create_client()
 
     # TODO: Determine what optional parameters should be customizable
     response = client.chat.completions.create(
