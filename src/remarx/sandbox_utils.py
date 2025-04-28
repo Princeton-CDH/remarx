@@ -36,7 +36,10 @@ def create_client() -> AzureOpenAI:
 
 
 def submit_prompt(
-    task_prompt, user_prompt, model="gpt-4o", client: Optional[AzureOpenAI] = None
+    task_prompt: str,
+    user_prompt: str,
+    model: str = "gpt-4o",
+    client: Optional[AzureOpenAI] = None,
 ) -> ChatCompletion:
     """
     Submits basic text prompt using given model with task- and user-level
