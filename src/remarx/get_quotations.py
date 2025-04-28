@@ -9,8 +9,15 @@ Examples:
 
 python get_quotations.py [dataset csv] [prompt file] [out csv]
 
-export AI_SANDBOX_KEY=[your api key]; python get_title_mentions_responses.py \
+export AI_SANDBOX_KEY=[your api key]; python get_quotations.py \
         [dataset csv] [prompt file] [out csv]
+
+
+To run on the subset of quotation data in this branch with the basic prompt:
+
+python src/remarx/get_quotations.py data/direct_quotes_subset.csv \
+    prompts/quotations/basic.txt  data/model_responses/quotations.csv
+
 
 """
 
@@ -25,7 +32,6 @@ from tqdm import tqdm
 
 from remarx.sandbox_utils import (
     create_client,
-    # SANDBOX_MODELS,
     response_to_csv,
     submit_prompt,
 )
@@ -125,13 +131,13 @@ def save_responses(
 
 def main():
     parser = argparse.ArgumentParser(
-        "Run title mentions task for all prompts and models"
+        "Run quotation detection task for basic prompt and selected models"
     )
 
     # Required arguments
     parser.add_argument(
         "in_csv",
-        help="CSV containing title mentions annotated data",
+        help="CSV containing quotation mentions data",
         type=pathlib.Path,
     )
     parser.add_argument(

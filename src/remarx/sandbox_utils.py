@@ -4,6 +4,7 @@ Utility functions for working with the AI Sandbox
 
 import os
 from collections.abc import Mapping
+from typing import Optional
 
 from openai import AzureOpenAI
 from openai.types.chat import ChatCompletion
@@ -35,7 +36,7 @@ def create_client() -> AzureOpenAI:
 
 
 def submit_prompt(
-    task_prompt, user_prompt, model="gpt-4o", client=None
+    task_prompt, user_prompt, model="gpt-4o", client: Optional[AzureOpenAI] = None
 ) -> ChatCompletion:
     """
     Submits basic text prompt using given model with task- and user-level
