@@ -18,6 +18,12 @@ Princeton's AI Sandbox to extract Marx titles and quotations from sample project
 - `src/remarx/`: python package with utility code related to AI sandbox and notebooks
 
 
+Some notebooks may require additional manual setup. When that is the case, the
+notebook includes documentation on the steps needed to run the notebook.
+
+Most notebooks have been saved as snapshots (either Jupyter or static HTML),
+for viewing purposes. These can be found in the `notebooks/__marimo__/` folder.
+
 ## Models
 
 ### AI Sandbox models
@@ -66,18 +72,4 @@ line:
 ```
 AI_SANDBOX_KEY=[your_api_key]
 ```
-
-### Marimo notebook setup
-
-The notebook for selecting direct quote annotations requires
-that you manually add a copy of `1896-97aCLEAN.txt` to `/data/text/`.
-
-Use `marimo` to run notebook:
-
-```console
-marimo edit notebooks/quote-data.py
-```
-
-This notebook has been configured to save Jupyter notebook snapshots for
-viewing on GitHub.
 
