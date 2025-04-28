@@ -1,7 +1,7 @@
 import marimo
 
 __generated_with = "0.12.10"
-app = marimo.App(width="medium", css_file="custom.css", html_head_file="")
+app = marimo.App(width="medium", css_file="", html_head_file="")
 
 
 @app.cell(hide_code=True)
@@ -23,6 +23,28 @@ def _():
     import marimo as mo
     import polars as pl
     return mo, pl
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Manual Setup""")
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    import pathlib
+
+    input_textfile = pathlib.Path("data/1896-97aCLEAN.txt")
+
+
+    if input_textfile.exists():
+        setup_msg = "Input text is available; no further manual setup needed."
+    else:
+        setup_msg = "Please download a copy of `1896-97aCLEAN.txt` from Google Drive in the `Data/neue-zeit-full_transcriptions/Edited/` folder and put it in the `data/` directory."
+
+    mo.md(setup_msg)
+    return input_textfile, pathlib, setup_msg
 
 
 @app.cell
@@ -100,10 +122,10 @@ def _(mo):
 
 
 @app.cell
-def _(pl):
+def _(input_textfile, pl):
     # load text file and chunk into pages
 
-    with open("data/text/1896-97aCLEAN.txt") as inputfile:
+    with input_textfile.open() as inputfile:
         text = inputfile.read()
         pages = text.split("\n\n\n")
 
@@ -299,9 +321,16 @@ def _(quote_subset_pages):
 
 
 @app.cell
-def _(quote_subset_pages):
-    quote_subset_pages.write_csv("data/subset/direct_quotes.csv", include_bom=True)
-    return
+def _(mo, pathlib, quote_subset_pages):
+    quote_subset_datafile = pathlib.Path("data/direct_quotes_subset.csv")
+    if quote_subset_datafile.exists():
+        outputfile_msg = "Output data file already exists, not overwriting."
+    else:
+        quote_subset_pages.write_csv(quote_subset_datafile, include_bom=True)
+        outputfile_msg = f"Saving selected subset as {quote_subset_datafile}"
+
+    mo.md(outputfile_msg)
+    return outputfile_msg, quote_subset_datafile
 
 
 @app.cell
