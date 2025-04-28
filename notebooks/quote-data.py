@@ -39,7 +39,7 @@ def _(mo):
 
 
     if input_textfile.exists():
-        setup_msg = "Input text is available."
+        setup_msg = "Input text is available; no further manual setup needed."
     else:
         setup_msg = "Please download a copy of `1896-97aCLEAN.txt` from Google Drive in the `Data/neue-zeit-full_transcriptions/Edited/` folder and put it in the `data/` directory."
 
@@ -321,9 +321,16 @@ def _(quote_subset_pages):
 
 
 @app.cell
-def _(quote_subset_pages):
-    quote_subset_pages.write_csv("data/subset/direct_quotes.csv", include_bom=True)
-    return
+def _(mo, pathlib, quote_subset_pages):
+    quote_subset_datafile = pathlib.Path("data/direct_quotes_subset.csv")
+    if quote_subset_datafile.exists():
+        outputfile_msg = "Output data file already exists, not overwriting."
+    else:
+        quote_subset_pages.write_csv(quote_subset_datafile, include_bom=True)
+        outputfile_msg = f"Saving selected subset as {quote_subset_datafile}"
+
+    mo.md(outputfile_msg)
+    return outputfile_msg, quote_subset_datafile
 
 
 @app.cell
