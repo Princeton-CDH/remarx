@@ -23,6 +23,8 @@ dependencies = [
   "ruff",
   "nbconvert",
   "polars",
+  "stanza",
+  "flair",  # NOTE: could not install dependency sentencepiece on python 3.13
 ]
 
 [project.optional-dependencies]
