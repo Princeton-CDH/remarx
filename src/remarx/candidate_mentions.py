@@ -10,28 +10,38 @@ import stanza
 NLP = stanza.Pipeline(lang="de", processors="tokenize,mwt,pos,lemma")
 
 
-def get_lemmatized_form(text: str, drop_punct: bool = True) -> str:
+def lemmatize_sentence(sentence: stanza.Sentence, drop_punct: bool = True) -> str:
     """
-    Converts a text into its lemmatized form. By default, punctuation is removed.
+    Converts a stanza sentence into its lemmatized form with each word
+    separated by a space. By default, punctuation is removed.
     """
-    lemmas = []
+    return " ".join(
+        [w.lemma for w in sentence.words if w.pos != "PUNCT" or not drop_punct]
+    )
+
+
+def lemmatize_text(text: str, drop_punct: bool = True) -> str:
+    """
+    Lemmatizes a text using `lemmatize_sentence` with sentences separated
+    by a single space.
+    """
+    return " ".join(
+        [lemmatize_sentence(s, drop_punct=drop_punct) for s in NLP(text).sentences]
+    )
+
+
+def find_sentences_with_phrase(
+    search_phrases: list[str], text: str
+) -> Generator[str, None, None]:
+    """
+    Returns a generator of sentences within a given text that contains oen of the
+    given search phrases ignoring inflection.
+    """
+    # Lemmatize search phrase
+    lemmatized_phrases = {lemmatize_text(phrase) for phrase in search_phrases}
+
+    # Lemmatize & check if a sentence contains a search phrase
     for sentence in NLP(text).sentences:
-        for word in sentence.words:
-            if word.pos != "PUNCT" or not drop_punct:
-                lemmas.append(word.lemma)
-    return " ".join(lemmas)
-
-
-def get_sentences_with_key(key: str, text: str) -> Generator[str, None, None]:
-    """
-    Returns a generator of sentences within a given text that contain the
-    given search ignoring inflection.
-    """
-    # Lemmatize key
-    key_lemmas = get_lemmatized_form(key)
-
-    # Lemmatize & check each sentence
-    for sentence in NLP(text).sentences:
-        sent_lemmas = get_lemmatized_form(sentence.str)
-        if key_lemmas in sent_lemmas:
+        lemmatized_sent = lemmatize_sentence(sentence.str)
+        if any(phrase in lemmatized_sent for phrase in lemmatized_phrases):
             yield sentence.str
