@@ -90,7 +90,7 @@ def find_sentences_with_phrase(
     # Lemmatize & check if a sentence contains a search phrase
     for sentence in doc.sentences:
         lem_sent = lemmatize_sentence(sentence).lower()
-        if " " + lem_phrase + " " in " " + lem_sent + " ":
+        if f" {lem_phrase} " in f" {lem_sent} ":
             yield sentence
 
 
