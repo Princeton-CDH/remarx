@@ -33,15 +33,24 @@ def _(mo):
 @app.cell
 def _():
     import stanza
+    from stanza.pipeline.core import DownloadMethod
 
-    nlp_de = stanza.Pipeline("de", processors="tokenize,mwt,lemma,ner")
-    return nlp_de, stanza
+    nlp_de = stanza.Pipeline(
+        "de",
+        processors="tokenize,mwt,ner",
+        download_method=DownloadMethod.REUSE_RESOURCES,
+    )
+    return DownloadMethod, nlp_de, stanza
 
 
 @app.cell
 def _():
     # example sentence from the title mentions subset data
     sample1 = """Wie alles, was wir von Marx aus¬ jener Zeit besitzen, wie auch das „Kommunistische Manifest", zeigt seine Rede¬ über den Freihandel nur die gewaltigen äußeren Umrisse des Gebäudes, der innere Aufbau fehlt noch. Engels konnte sich 1888 schon auf die zwei ersten Bände des „Kapital" und noch vieles Andere stützen, doch fehlie der dritte, Band mit seinen wichtigen Untersuchungen über die Profitbildung, die Grund¬ rente und den Preis, die für die Lehre von der Konkurrenz und damit auch für die Beurtheilung der Handelspolitik unentbehrlich sind."""
+    sample1_expected_titles = [
+        '„Kommunistische Manifest"',
+    ]
+
     # english translation of the above, generated with google translate
     sample1_en = """Like everything we possess from Marx from that period, including the "Communist Manifesto," his speech on free trade shows only the massive outer outlines of the building; the inner structure is still missing. In 1888, Engels could already rely on the first two volumes of "Capital" and much else besides, but the third volume, with its important investigations into profit formation, ground rent, and price—which are indispensable for the theory of competition and thus also for the evaluation of trade policy—was missing."""
 
@@ -58,20 +67,35 @@ def _(nlp_de, sample1):
 @app.cell
 def _(mo):
     # define a method to display a sentence tagged with stanza nlp and the entities found
-
-
     def show_stanza_entities(text, nlpdoc):
         entity_data = [
             {"Text": ent.text, "Entity Type": ent.type} for ent in nlpdoc.ents
         ]
-        ent_table = mo.ui.table(data=entity_data, pagination=True, selection=None)
-        return mo.vstack([text, ent_table])
+        ent_table = mo.ui.table(
+            data=entity_data, pagination=False, selection=None, show_download=False
+        )
+        # use start/end character indices to highlight entities in the sentence
+        output_text = []
+        prev_start = 0
+        for ent in nlpdoc.ents:
+            output_text.append(text[prev_start : ent.start_char])
+            output_text.append(f"<mark>{ent.text}</mark>")
+            prev_start = ent.end_char
+        # add any remaining text after the last entity
+        output_text.append(text[prev_start:])
+        # for ent in nlpdocs.ents
+        return mo.vstack([mo.md("".join(output_text)), ent_table])
     return (show_stanza_entities,)
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""The first example sentence only identifies Marx and Engels as person entities, does not identify any titles.""")
+    mo.md(
+        r"""
+        The first example sentence only identifies Marx and Engels as person entities, does not identify any titles.
+        This passage mentions both Communist Manifesto and Das Kapital.
+        """
+    )
     return
 
 
@@ -104,10 +128,14 @@ def _(mo):
 
 
 @app.cell
-def _(stanza):
+def _(DownloadMethod, stanza):
     # try the same thing in English, for comparison...
 
-    nlp_en = stanza.Pipeline("en", processors="tokenize,mwt,lemma,ner")
+    nlp_en = stanza.Pipeline(
+        "en",
+        processors="tokenize,mwt,ner",
+        download_method=DownloadMethod.REUSE_RESOURCES,
+    )
     return (nlp_en,)
 
 
@@ -115,6 +143,70 @@ def _(stanza):
 def _(nlp_en, sample1_en, show_stanza_entities):
     doc1_en = nlp_en(sample1_en)
     show_stanza_entities(sample1_en, doc1_en)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""### Test Stanza NER on title mention subset data""")
+    return
+
+
+@app.cell
+def _():
+    import polars as pl
+
+    title_mention_subset = pl.read_csv("data/title_mentions_subset.csv")
+    title_mention_subset.select(pl.col("Text"), pl.col("Marx Title Mentions"))
+    return pl, title_mention_subset
+
+
+@app.cell
+def _(nlp_de):
+    # generate a deliomited string of the text of all entities tagged as "MISC"
+    def stanza_get_possible_titles(text):
+        processed_text = nlp_de(text)  # run annotation over a sentence
+        return " | ".join(
+            [ent.text for ent in processed_text.ents if ent.type == "MISC"]
+        )
+    return (stanza_get_possible_titles,)
+
+
+@app.cell
+def _(pl, stanza_get_possible_titles, title_mention_subset):
+    # get possible titles from stanza
+    title_mention_subset_ner = title_mention_subset.with_columns(
+        pl.col("Text").map_elements(stanza_get_possible_titles).alias("stanza")
+    )
+    return (title_mention_subset_ner,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""Of the 27 rows in the title mention subset, only 7 have 'MISC' entities identified.""")
+    return
+
+
+@app.cell
+def _(pl, title_mention_subset_ner):
+    # filter to those that had any misc entities found
+    stanza_misc_ents = title_mention_subset_ner.filter(pl.col("stanza").ne(""))
+    return (stanza_misc_ents,)
+
+
+@app.cell(hide_code=True)
+def _(mo, stanza_misc_ents, title_mention_subset):
+    mo.md(
+        f"Of the {title_mention_subset.height} rows in the title mention subset, only {stanza_misc_ents.height} have any 'MISC' entities identified by Stanza German NER."
+    )
+    return
+
+
+@app.cell
+def _(pl, stanza_misc_ents):
+    stanza_misc_ents.select(
+        pl.col("Text"), pl.col("Marx Title Mentions"), pl.col("stanza")
+    )
     return
 
 
@@ -164,18 +256,28 @@ def _(Sentence, mo, tagger):
         tagger.predict(sentence)
         entity_data = [
             {
-                # weirdly can't figure out a good way to get the text from the label;
-                # unidentified label looks like this:  Span[6:7]: "Marx"
-                "Text": label.unlabeled_identifier.rsplit(":", 1)[-1]
-                .strip()
-                .strip('"'),
-                "Entity Type": label.value,
-                "Confidence": label.score,
+                "Text": span.text,
+                "Entity Type": span.tag,  # tag = shortcut to value of the first label
+                "Confidence": span.labels[0].score,
             }
-            for label in sentence.get_labels(label_type="ner")
+            for span in sentence.get_spans(label_type="ner")
         ]
-        ent_table = mo.ui.table(data=entity_data, pagination=True, selection=None)
-        return mo.vstack([text, ent_table])
+
+        ent_table = mo.ui.table(
+            data=entity_data, pagination=False, selection=None, show_download=False
+        )
+
+        # use span start/end character indices to highlight entities in the sentence
+        output_text = []
+        prev_start = 0
+        for span in sentence.get_spans(label_type="ner"):
+            output_text.append(text[prev_start : span.start_position])
+            output_text.append(f"<mark>{span.text}</mark>")
+            prev_start = span.end_position
+        # add any remaining text after the last entity
+        output_text.append(text[prev_start:])
+        # for ent in nlpdocs.ents
+        return mo.vstack([mo.md("".join(output_text)), ent_table])
     return (show_flair_entities,)
 
 
@@ -188,6 +290,64 @@ def _(sample1, show_flair_entities):
 @app.cell
 def _(sample2, show_flair_entities):
     show_flair_entities(sample2)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""### Test Flair NER on title mention subset data""")
+    return
+
+
+@app.cell
+def _(Sentence, tagger):
+    # generate a deliomited string of the text of all entities tagged as "MISC"
+    def flair_get_possible_titles(text):
+        # make a sentence from the text
+        sentence = Sentence(text, language_code="de")
+        # run NER over sentence
+        tagger.predict(sentence)
+        return " | ".join(
+            [
+                span.text
+                for span in sentence.get_spans(label_type="ner")
+                if span.tag == "MISC"
+            ]
+        )
+    return (flair_get_possible_titles,)
+
+
+@app.cell
+def _(flair_get_possible_titles, pl, title_mention_subset_ner):
+    # get possible titles from flair
+    title_mention_subset_ner_both = title_mention_subset_ner.with_columns(
+        pl.col("Text").map_elements(flair_get_possible_titles).alias("flair")
+    )
+    return (title_mention_subset_ner_both,)
+
+
+@app.cell
+def _(pl, title_mention_subset_ner_both):
+    flair_misc_ents = title_mention_subset_ner_both.filter(pl.col("flair").ne(""))
+    return (flair_misc_ents,)
+
+
+@app.cell(hide_code=True)
+def _(flair_misc_ents, mo, title_mention_subset):
+    mo.md(
+        f"Of the {title_mention_subset.height} rows in the title mention subset, {flair_misc_ents.height} have any 'MISC' entities identified by Flair German NER."
+    )
+    return
+
+
+@app.cell
+def _(flair_misc_ents, pl):
+    flair_misc_ents.select(
+        pl.col("Text"),
+        pl.col("Marx Title Mentions"),
+        pl.col("flair"),
+        pl.col("stanza"),
+    )
     return
 
 
