@@ -95,7 +95,7 @@ def find_sentences_with_phrase(
 
 
 def save_candidate_sentences(
-    input_files: Iterable[pathlib.Path],
+    input_texts: Iterable[pathlib.Path],
     search_phrases: list[str],
     output_csv: pathlib.Path,
     case_sensitive: bool = False,
@@ -123,13 +123,18 @@ def save_candidate_sentences(
     with open(output_csv, mode="w", encoding="utf-8-sig", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
-        for text_file in tqdm(input_files):
+
+        file_progress = tqdm(input_texts)
+        for text_file in file_progress:
+            file_progress.set_description(f"Processing {text_file.stem}")
             doc = pipeline(text_file.read_text())
             for i, sent in enumerate(doc.sentences):
+                # Lemmatize & lowercase sentence
                 lem_sent = lemmatize_sentence(sent).lower()
                 # Determine which phrases the sentence contains
                 matches = []
                 for j, phrase in enumerate(lem_phrases):
+                    # Add spacing to ensure word-level boundaries
                     if f" {phrase} " in f" {lem_sent} ":
                         matches.append(search_phrases[j])
                 # Construct row if there are any matches
@@ -167,6 +172,7 @@ def main():
         action="extend",
         nargs="+",
         type=str,
+        required=True,
     )
 
     args = parser.parse_args()
