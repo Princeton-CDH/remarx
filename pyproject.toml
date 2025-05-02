@@ -24,6 +24,7 @@ dependencies = [
   "nbconvert",
   "polars",
   "stanza",
+  "orjsonl",
 ]
 
 [project.optional-dependencies]
