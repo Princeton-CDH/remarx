@@ -1,3 +1,17 @@
+"""
+Script to apply an XSL transformation to an XML file and save the result.
+Uses the free version of Saxon, which supports XSLT 3.0.
+
+To run, provide the input xml and xslt file and the name of the output
+file to be created.
+
+Examples:
+    python run_xslt.py input.xml transform.xsl output.xml
+    python run_xslt.py MEGA_A2_B005-00_ETX.xml tei-stylesheets/tei-to-text.xsl MEGA_A2_B005-00_ETX.txt
+
+
+"""
+
 import argparse
 import pathlib
 import sys
