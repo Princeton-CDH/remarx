@@ -24,7 +24,6 @@ import csv
 import pathlib
 import sys
 from collections.abc import Iterable
-from typing import Generator
 
 from stanza import DownloadMethod, Pipeline
 from stanza.models.common.doc import Document, Sentence
@@ -36,18 +35,25 @@ LANG = "de"
 PROCS = "tokenize,mwt,pos,lemma"
 
 
-def lemmatize_sentence(sentence: Sentence, drop_punct: bool = True) -> str:
+def lemmatize_sentence(
+    sentence: Sentence, drop_punct: bool = True, lowercase: bool = True
+) -> str:
     """
     Converts a stanza sentence into its lemmatized form with each word
-    separated by a space. By default, punctuation is removed.
+    separated by a space. By default, punctuation (as determined by part-of-speech)
+    is removed and resulting string is lowercased.
     """
-    return " ".join(
-        [w.lemma for w in sentence.words if w.pos != "PUNCT" or not drop_punct]
+    result = " ".join(
+        w.lemma for w in sentence.words if w.pos != "PUNCT" or not drop_punct
     )
+    return result.lower() if lowercase else result
 
 
 def lemmatize_text(
-    text: str | Document, pipeline: None | Pipeline = None, drop_punct: bool = True
+    text: str | Document,
+    pipeline: None | Pipeline = None,
+    drop_punct: bool = True,
+    lowercase: bool = True,
 ) -> str:
     """
     Lemmatizes a text using `lemmatize_sentence` with sentences separated
@@ -63,41 +69,45 @@ def lemmatize_text(
     doc = pipeline(text) if isinstance(text, str) else text
 
     return " ".join(
-        [lemmatize_sentence(s, drop_punct=drop_punct) for s in doc.sentences]
+        [
+            lemmatize_sentence(s, drop_punct=drop_punct, lowercase=lowercase)
+            for s in doc.sentences
+        ]
     )
 
 
-def find_sentences_with_phrase(
-    search_phrase: str,
-    text: str | Document,
-    pipeline: None | Pipeline = None,
-) -> Generator[Sentence, None, None]:
+def check_sentence_for_phrases(
+    sentence: Sentence,
+    lemmatized_phrases: Iterable[str],
+    ignore_punct: bool = True,
+    lowercase: bool = True,
+) -> list[str]:
     """
-    Returns a generator of sentences within a given text that contains the search phrase
-    ignoring inflection and capitalization.
+    Checks if a sentence contains any of the provided *lemmatized* phrases
+    ignoring inflection and capitalization. It returns a list of the matched
+    phrases. By default, punctuation (as determined by part-of-speech) is
+    ignored and the sentence is lowercased before performing the search.
+
+    NOTE: Search phrases must  processed (e.g., lemmatized, lowercased) in a
+    similar way as the sentence to produce meaningful results.
     """
-    # Intialize pipeline if one not given
-    if pipeline is None:
-        pipeline = Pipeline(
-            lang=LANG, processors=PROCS, download_method=DownloadMethod.REUSE_RESOURCES
-        )
-    # Lemmatize search phrase
-    lem_phrase = lemmatize_text(search_phrase, pipeline=pipeline).lower()
-
-    # Construct stanza document if needed
-    doc = pipeline(text) if isinstance(text, str) else text
-
-    # Lemmatize & check if a sentence contains a search phrase
-    for sentence in doc.sentences:
-        lem_sent = lemmatize_sentence(sentence).lower()
+    # Lemmatize & lowercase sentence
+    lem_sent = lemmatize_sentence(
+        sentence, drop_punct=ignore_punct, lowercase=lowercase
+    )
+    # Check if any of the phrases occur within the sentence
+    matches = []
+    for lem_phrase in lemmatized_phrases:
         if f" {lem_phrase} " in f" {lem_sent} ":
-            yield sentence
+            matches.append(lem_phrase)
+    return matches
 
 
 def save_candidate_sentences(
     input_texts: Iterable[pathlib.Path],
     search_phrases: list[str],
     output_csv: pathlib.Path,
+    ignore_punct: bool = True,
     case_sensitive: bool = False,
     delimiter: str = " | ",
 ) -> None:
@@ -110,16 +120,28 @@ def save_candidate_sentences(
     * char_idx: character-level index within text file
     * sentence: sentence text
     * phrases: list of matching phrases
+    * lem_phrases: list of matching lemmatized phrases (same order as phrases)
+
+    By default, punctuation (as determined by part-of-speech) is ignored and the
+    search is case insensitive.
     """
     # Initialize stanza pipeline
     pipeline = Pipeline(
         lang=LANG, processors=PROCS, download_method=DownloadMethod.REUSE_RESOURCES
     )
 
-    # Lemmatize & lowercase pharses (for efficiency)
-    lem_phrases = [lemmatize_text(p, pipeline=pipeline).lower() for p in search_phrases]
+    # Lemmatize search phrases, save as map from lemma to phrase
+    lem_phrases = {}
+    for phrase in search_phrases:
+        lem_phrase = lemmatize_text(
+            phrase,
+            pipeline=pipeline,
+            drop_punct=ignore_punct,
+            lowercase=not case_sensitive,
+        )
+        lem_phrases[lem_phrase] = phrase
 
-    fieldnames = ["file", "sent_idx", "char_idx", "sentence", "phrases"]
+    fieldnames = ["file", "sent_idx", "char_idx", "sentence", "phrases", "lem_phrases"]
     with open(output_csv, mode="w", encoding="utf-8-sig", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
@@ -128,23 +150,24 @@ def save_candidate_sentences(
         for text_file in file_progress:
             file_progress.set_description(f"Processing {text_file.stem}")
             doc = pipeline(text_file.read_text())
-            for i, sent in enumerate(doc.sentences):
-                # Lemmatize & lowercase sentence
-                lem_sent = lemmatize_sentence(sent).lower()
+            for i, sentence in enumerate(doc.sentences):
                 # Determine which phrases the sentence contains
-                matches = []
-                for j, phrase in enumerate(lem_phrases):
-                    # Add spacing to ensure word-level boundaries
-                    if f" {phrase} " in f" {lem_sent} ":
-                        matches.append(search_phrases[j])
+                lem_matches = check_sentence_for_phrases(
+                    sentence,
+                    lem_phrases.keys(),
+                    ignore_punct=ignore_punct,
+                    lowercase=not case_sensitive,
+                )
                 # Construct row if there are any matches
-                if matches:
+                if lem_matches:
+                    phrase_matches = [lem_phrases[lm] for lm in lem_matches]
                     entry = {
                         "file": text_file.stem,
                         "sent_idx": i,
-                        "char_idx": sent.tokens[0].start_char,
-                        "sentence": sent.text,
-                        "phrases": delimiter.join(matches),
+                        "char_idx": sentence.tokens[0].start_char,
+                        "sentence": sentence.text,
+                        "phrases": delimiter.join(phrase_matches),
+                        "lem_phrases": delimiter.join(lem_matches),
                     }
                     writer.writerow(entry)
 
