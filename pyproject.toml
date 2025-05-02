@@ -23,6 +23,7 @@ dependencies = [
   "ruff",
   "nbconvert",
   "polars",
+  "saxonche"
 ]
 
 [project.optional-dependencies]
