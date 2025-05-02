@@ -1,6 +1,6 @@
 """
 This script identifies candidate sentences within a collection of texts
-that contan phrases of interest (e.g., title or concept references)
+that contain phrases of interest (e.g., title or concept references)
 ignoring inflection and capitalization.
 
 This script takes as input:
