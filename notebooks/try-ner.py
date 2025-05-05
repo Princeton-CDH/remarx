@@ -167,7 +167,7 @@ def _():
 
 @app.cell
 def _(nlp_de):
-    # generate a deliomited string of the text of all entities tagged as "MISC"
+    # generate a delimited string of the text of all entities tagged as "MISC"
     def stanza_get_possible_titles(text):
         processed_text = nlp_de(text)  # run annotation over a sentence
         return " | ".join(
