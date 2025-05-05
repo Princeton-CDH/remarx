@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "remarx"
 description = "Code for identifying Marx citations associated with the CDH project Citing Marx"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.13"
 readme = "README.md"
 dynamic = ["version"]
 classifiers = [
@@ -24,7 +24,9 @@ dependencies = [
   "nbconvert",
   "polars",
   "stanza",
+  "orjsonl",  
   "flair",  # NOTE: could not install dependency sentencepiece on python 3.13
+  "saxonche",
 ]
 
 [project.optional-dependencies]
