@@ -369,7 +369,7 @@ def _(flair_misc_ents, mo, title_mention_subset):
         f"""
         ### Title candidates from Flair NER
 
-        Of the {title_mention_subset.height} rows in the title mention subset, {flair_misc_ents.height} have any 'MISC' entities identified by Flair German NER.
+        Of the {title_mention_subset.height} rows in the title mention subset, {flair_misc_ents.height} have 'MISC' entities identified by Flair German NER.
         """
     )
     return
