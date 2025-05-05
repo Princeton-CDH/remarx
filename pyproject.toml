@@ -23,6 +23,8 @@ dependencies = [
   "ruff",
   "nbconvert",
   "polars",
+  "stanza",
+  "orjsonl",
 ]
 
 [project.optional-dependencies]
