@@ -414,5 +414,26 @@ def _(pl, title_mention_subset_ner_both):
     return
 
 
+@app.cell
+def _(pl, title_mention_subset_ner_both):
+    # save flair NER results for later reference; only create file if it doesn't exist
+
+    import pathlib
+
+    # filter and save flair annotations
+    title_mention_flair_ner = (
+        title_mention_subset_ner_both.filter(pl.col("flair").ne(""))
+        .select(
+            pl.col("UUID"), pl.col("File"), pl.col("flair").alias("flair_ner_misc")
+        )
+        .with_columns(ner_model=pl.lit("de-ner-large"))
+    )
+
+    output_file = pathlib.Path("data/title_mentions_flair_ner.csv")
+    if not output_file.exists():
+        title_mention_flair_ner.write_csv(output_file)
+    return
+
+
 if __name__ == "__main__":
     app.run()
