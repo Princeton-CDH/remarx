@@ -3,11 +3,7 @@
 import marimo
 
 __generated_with = "0.13.3"
-app = marimo.App(
-    width="medium",
-    app_title="Try Stanza + Flair NER for titles",
-    auto_download=["html"],
-)
+app = marimo.App(width="medium", app_title="Try Stanza + Flair NER for titles")
 
 
 @app.cell
@@ -187,12 +183,6 @@ def _(pl, stanza_get_possible_titles, title_mention_subset):
     return (title_mention_subset_ner,)
 
 
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""Of the 27 rows in the title mention subset, only 7 have 'MISC' entities identified.""")
-    return
-
-
 @app.cell
 def _(pl, title_mention_subset_ner):
     # filter to those that had any misc entities found
@@ -352,7 +342,9 @@ def _(Sentence, tagger):
 def _(flair_get_possible_titles, pl, title_mention_subset_ner):
     # get possible titles from flair
     title_mention_subset_ner_both = title_mention_subset_ner.with_columns(
-        pl.col("Text").map_elements(flair_get_possible_titles).alias("flair")
+        pl.col("Text")
+        .map_elements(flair_get_possible_titles, return_dtype=pl.String)
+        .alias("flair")
     )
     return (title_mention_subset_ner_both,)
 
@@ -401,7 +393,7 @@ def _(flair_misc_ents, pl):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(
         r"""
