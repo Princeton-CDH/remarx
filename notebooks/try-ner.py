@@ -206,7 +206,7 @@ def _(mo, stanza_misc_ents, title_mention_subset):
         f"""
         ### Title candidates from Stanza NER
 
-        Of the {title_mention_subset.height} rows in the title mention subset, only {stanza_misc_ents.height} have any 'MISC' entities identified by Stanza German NER.
+        Of the {title_mention_subset.height} rows in the title mention subset, only {stanza_misc_ents.height} have 'MISC' entities identified by Stanza German NER.
         """
     )
     return
