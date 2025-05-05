@@ -3,7 +3,11 @@
 import marimo
 
 __generated_with = "0.13.3"
-app = marimo.App(width="medium")
+app = marimo.App(
+    width="medium",
+    app_title="Try Stanza + Flair NER for titles",
+    auto_download=["html"],
+)
 
 
 @app.cell
@@ -176,7 +180,9 @@ def _(nlp_de):
 def _(pl, stanza_get_possible_titles, title_mention_subset):
     # get possible titles from stanza
     title_mention_subset_ner = title_mention_subset.with_columns(
-        pl.col("Text").map_elements(stanza_get_possible_titles).alias("stanza")
+        pl.col("Text")
+        .map_elements(stanza_get_possible_titles, return_dtype=pl.String)
+        .alias("stanza")
     )
     return (title_mention_subset_ner,)
 
@@ -197,7 +203,11 @@ def _(pl, title_mention_subset_ner):
 @app.cell(hide_code=True)
 def _(mo, stanza_misc_ents, title_mention_subset):
     mo.md(
-        f"Of the {title_mention_subset.height} rows in the title mention subset, only {stanza_misc_ents.height} have any 'MISC' entities identified by Stanza German NER."
+        f"""
+        ### Title candidates from Stanza NER
+
+        Of the {title_mention_subset.height} rows in the title mention subset, only {stanza_misc_ents.height} have any 'MISC' entities identified by Stanza German NER.
+        """
     )
     return
 
@@ -206,6 +216,27 @@ def _(mo, stanza_misc_ents, title_mention_subset):
 def _(pl, stanza_misc_ents):
     stanza_misc_ents.select(
         pl.col("Text"), pl.col("Marx Title Mentions"), pl.col("stanza")
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+        ### Title mentions missed by Stanza NER
+
+        Here are the rows from the title mentions subset that don't have any MISC entity annotations identified by Stanza.  Unclear yet if there's any pattern why these are not found but the others are.
+        """
+    )
+    return
+
+
+@app.cell
+def _(pl, title_mention_subset_ner):
+    # filter to those that had no misc entities found, show only text and expected titles
+    title_mention_subset_ner.filter(pl.col("stanza").eq("")).select(
+        pl.col("Text"), pl.col("Marx Title Mentions")
     )
     return
 
@@ -335,7 +366,11 @@ def _(pl, title_mention_subset_ner_both):
 @app.cell(hide_code=True)
 def _(flair_misc_ents, mo, title_mention_subset):
     mo.md(
-        f"Of the {title_mention_subset.height} rows in the title mention subset, {flair_misc_ents.height} have any 'MISC' entities identified by Flair German NER."
+        f"""
+        ### Title candidates from Flair NER
+
+        Of the {title_mention_subset.height} rows in the title mention subset, {flair_misc_ents.height} have any 'MISC' entities identified by Flair German NER.
+        """
     )
     return
 
@@ -346,7 +381,43 @@ def _(flair_misc_ents, pl):
         pl.col("Text"),
         pl.col("Marx Title Mentions"),
         pl.col("flair"),
+    )
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""Do Stanza and Flair identify the same things, where they overlap?""")
+    return
+
+
+@app.cell
+def _(flair_misc_ents, pl):
+    flair_misc_ents.select(
+        pl.col("Marx Title Mentions"),
+        pl.col("flair"),
         pl.col("stanza"),
+    )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(
+        r"""
+        ### Title mentions missed by Flair NER
+
+        Here are the rows from the title mentions subset that don't have any MISC entity annotations identified by Flair.  Unclear yet if there's any pattern why these are not found but the others are.
+        """
+    )
+    return
+
+
+@app.cell
+def _(pl, title_mention_subset_ner_both):
+    # filter to those that had no misc entities found, show only text and expected titles
+    title_mention_subset_ner_both.filter(pl.col("flair").eq("")).select(
+        pl.col("Text"), pl.col("Marx Title Mentions")
     )
     return
 
