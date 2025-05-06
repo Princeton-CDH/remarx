@@ -24,7 +24,8 @@ dependencies = [
   "nbconvert",
   "polars",
   "stanza",
-  "orjsonl",
+  "orjsonl",  
+  "flair",  # NOTE: could not install dependency sentencepiece on python 3.13 with pip
   "saxonche",
 ]
 
