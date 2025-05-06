@@ -5,7 +5,7 @@ file, sent_idx, char_idx, sentence.
 
 Examples:
 
-    python get_ner_spans.py canidate_sentences.csv candidate_ner.csv
+    python get_ner_spans.py candidate_sentences.csv candidate_ner.csv
 
 """
 
