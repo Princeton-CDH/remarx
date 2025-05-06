@@ -51,9 +51,7 @@ def get_title_mentions(
         print(input_csv.stem)
         reader = csv.DictReader(f)
         for row in reader:
-            print(row)
             tags = row["TAGS"].split("|")
-            print(tags)
             mentions_kapital = has_title_mention(tags, "Kapital")
             mentions_manifest = has_title_mention(
                 tags, "Manifest der Kommunistischen Partei"
