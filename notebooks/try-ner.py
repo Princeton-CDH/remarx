@@ -3,11 +3,7 @@
 import marimo
 
 __generated_with = "0.13.3"
-app = marimo.App(
-    width="medium",
-    app_title="Try Stanza + Flair NER for titles",
-    auto_download=["html"],
-)
+app = marimo.App(width="medium", app_title="Try Stanza + Flair NER for titles")
 
 
 @app.cell
@@ -461,7 +457,7 @@ def _(flair_get_entities, pl, title_mention_subset):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""In a few cases, there are titles (_Kapital_, _Die Neue Zeit_) that are getting annotated as **ORG** entities rather than **MISC**.""")
+    mo.md(r"""A few records have titles (_Kapital_, _Die Neue Zeit_) that are getting annotated as **ORG** entities rather than **MISC**.""")
     return
 
 
