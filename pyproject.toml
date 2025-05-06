@@ -33,6 +33,10 @@ dev = [
   "pre-commit",
 ]
 
+[project.scripts]
+remarx-candidate-mentions = "remarx.candidate_mentions:main"
+remarx-run-xslt = "remarx.run_xslt:main"
+
 [tool.hatch.version]
 path = "src/remarx/__init__.py"
 
