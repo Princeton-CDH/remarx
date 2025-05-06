@@ -1,19 +1,28 @@
-UUID,File,flair_ner_misc,ner_model
-f4014c6d-838d-430b-9c6a-e55ca9394d4d,1900-01a.txt,Kommunistische Manifest | Kapital,de-ner-large
-8e04f865-e494-4fd7-8006-b07429bfb5c2,1900-01a.txt,Kommuni | Manifest,de-ner-large
-13683c5e-ba6c-4151-92ea-a5c77504dcf3,1900-01a.txt,Kapital,de-ner-large
-8e9be38a-bba7-4518-bfbd-052d23ce9232,1900-01a.txt,Kapital,de-ner-large
-becc5598-a71f-44e8-93a9-8cd78e2834d4,1900-01a.txt,Kommunistische Manifest,de-ner-large
-af6a713a-d125-4c09-9b2e-e1e3ae51f69f,1900-01a.txt,Collectivismef | Kommuinistische Manifest | Französischen Arbeiter¬ und Sozialistenkongresse,de-ner-large
-4562cc5c-22fb-4f31-8e80-6e2a943cd0e7,1897-98aCLEAN.txt,Kapital,de-ner-large
-978f3916-3f95-450f-8e8f-ac6219eef446,1897-98aCLEAN.txt,Eanifests,de-ner-large
-f04a6909-e3fd-4460-b053-a6801821c632,1897-98aCLEAN.txt,Kapital,de-ner-large
-96c8c9d2-0f9f-43e0-951d-94d083d40705,1897-98aCLEAN.txt,Kapital,de-ner-large
-4e56aacb-f4d4-41a4-b950-be24404612e3,1897-98aCLEAN.txt,Kapital,de-ner-large
-b730e110-9733-4a4b-a4f4-dcc029c98f7f,1899-00a.txt,Kapital | Kapital,de-ner-large
-3d8ed18c-347f-473a-89d4-382c8f1ce95a,1899-00a.txt,Kommunistischen Manifests,de-ner-large
-a3d2b5db-ddc4-426c-b26d-b92cebabbf52,1899-00a.txt,Kommunistischen Manifest,de-ner-large
-92302b85-f9c2-41c3-ae90-794544ca3c60,1899-00a.txt,Kapital,de-ner-large
-28b5ea90-efd2-472c-9c54-f309b1944c6d,1899-00a.txt,Kapital,de-ner-large
-06165224-9d83-4214-8891-e5326171208a,1899-00a.txt,Kapitals,de-ner-large
-c1cbe266-5f5a-42ed-8f2f-e7787b0613cb,1899-00a.txt,Kapital,de-ner-large
+UUID,PER,ORG,MISC,LOC,ner_model
+f4014c6d-838d-430b-9c6a-e55ca9394d4d,Marx | Engels,"",Kommunistische Manifest | Kapital,"",de-ner-large
+8e04f865-e494-4fd7-8006-b07429bfb5c2,"","",Kommuni | Manifest,"",de-ner-large
+13683c5e-ba6c-4151-92ea-a5c77504dcf3,Karl Marx,"",Kapital,"",de-ner-large
+8e9be38a-bba7-4518-bfbd-052d23ce9232,Marx | Robert Owen,"",Kapital,"",de-ner-large
+5ee6fd88-805d-4476-b0d7-9d84c0f33fdc,"","","","",de-ner-large
+286ec3e3-8b8b-4a2c-ac25-dc3413e881e7,"","","","",de-ner-large
+f50c3a30-897f-48c2-8e2c-393ecf5f8d35,Karl Marx | Byron | Mickiewicz,"","","",de-ner-large
+becc5598-a71f-44e8-93a9-8cd78e2834d4,Isegrim | Lassalle | Marx | Engels | Liebknecht,"",Kommunistische Manifest,"",de-ner-large
+af6a713a-d125-4c09-9b2e-e1e3ae51f69f,Vanderveldes,Bibliothéque Socialiste,Collectivismef | Kommuinistische Manifest | Französischen Arbeiter¬ und Sozialistenkongresse,"",de-ner-large
+1309eb17-2838-4dd0-b3d2-5d84b7cbd9b6,Marx | Prondhon | Lassalle | Rudolf Meyer,Internationalen,"","",de-ner-large
+4562cc5c-22fb-4f31-8e80-6e2a943cd0e7,Marx,"",Kapital,"",de-ner-large
+978f3916-3f95-450f-8e8f-ac6219eef446,Lassalle | Lassalle | Rodbertus,"",Eanifests,"",de-ner-large
+19922feb-0510-44ca-9f32-8e1ca1f57959,Lassalle | Marx | Rodbertus | Marx | Rodbertus | Andler,"","","",de-ner-large
+e0a9c18f-682d-4871-bfc1-1cccf25568fd,Bismarck | Wagener | Schweitzer,"","",Preußen,de-ner-large
+e8940409-3cc0-48c3-9312-d9c7d96d81aa,Engels | Marx | Vogt,I. Bb | Die Neue Zeit,"","",de-ner-large
+f04a6909-e3fd-4460-b053-a6801821c632,Marx | Marx,"",Kapital,"",de-ner-large
+96c8c9d2-0f9f-43e0-951d-94d083d40705,Platter | Marx,"",Kapital,"",de-ner-large
+4e56aacb-f4d4-41a4-b950-be24404612e3,Marx,"",Kapital,"",de-ner-large
+b730e110-9733-4a4b-a4f4-dcc029c98f7f,Marx | B. Justo,"",Kapital | Kapital,"",de-ner-large
+3d8ed18c-347f-473a-89d4-382c8f1ce95a,Ferdinand Gold¬ stein | Gibbons | Marx | Engels,Neuen Zeit,Kommunistischen Manifests,"",de-ner-large
+a3d2b5db-ddc4-426c-b26d-b92cebabbf52,Gibbons,"",Kommunistischen Manifest,"",de-ner-large
+92302b85-f9c2-41c3-ae90-794544ca3c60,Schmidt | Marx,"",Kapital,"",de-ner-large
+e7d6a412-0dea-4a40-b4f7-a7927a5b760f,"",Kapital,"","",de-ner-large
+28b5ea90-efd2-472c-9c54-f309b1944c6d,Marx,"",Kapital,"",de-ner-large
+06165224-9d83-4214-8891-e5326171208a,Marx,"",Kapitals,"",de-ner-large
+c1cbe266-5f5a-42ed-8f2f-e7787b0613cb,Lawroff | Marx,"",Kapital,"",de-ner-large
+06ec890f-18ef-4ed9-a808-ebb30a3d30b2,Marx | Engels | Lawroff,Kapital,"","",de-ner-large

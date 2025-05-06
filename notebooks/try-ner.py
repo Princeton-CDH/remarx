@@ -322,12 +322,23 @@ def _(mo):
 
 @app.cell
 def _(Sentence, tagger):
-    # generate a deliomited string of the text of all entities tagged as "MISC"
+    # generate a delimited string of the text of all entities tagged as "MISC"
     def flair_get_possible_titles(text):
         # make a sentence from the text
         sentence = Sentence(text, language_code="de")
         # run NER over sentence
         tagger.predict(sentence)
+        print("*non misc entities:")
+
+        print(
+            " | ".join(
+                [
+                    f"{span.text}:{span.tag}"
+                    for span in sentence.get_spans(label_type="ner")
+                    if span.tag != "MISC"
+                ]
+            )
+        )
         return " | ".join(
             [
                 span.text
@@ -399,7 +410,7 @@ def _(mo):
         r"""
         ### Title mentions missed by Flair NER
 
-        Here are the rows from the title mentions subset that don't have any MISC entity annotations identified by Flair.  Unclear yet if there's any pattern why these are not found but the others are.
+        Here are the rows from the title mentions subset that don't have any MISC entity annotations identified by Flair.  Unclear if there's any pattern why these are not found but the others are.
         """
     )
     return
@@ -414,24 +425,63 @@ def _(pl, title_mention_subset_ner_both):
     return
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+        In at least a few cases, titles (Kapital and Die Neue Zeit) are being tagged as ORGs rather than MISC.
+
+        Run flair and capture all the entities for all the title mention subset data, and save for later reference/comparison.
+        """
+    )
+    return
+
+
 @app.cell
-def _(pl, title_mention_subset_ner_both):
-    # save flair NER results for later reference; only create file if it doesn't exist
+def _(Sentence, tagger):
+    # get all NER entities returned by flair
+    # return as a dict keyed on entity type, value is a delimited string of entity text
+    def flair_get_entities(text):
+        # make a sentence from the text
+        sentence = Sentence(text, language_code="de")
+        # run NER over sentence
+        tagger.predict(sentence)
+
+        entities = {"PER": [], "ORG": [], "MISC": [], "LOC": []}
+
+        for span in sentence.get_spans(label_type="ner"):
+            entities[span.tag].append(span.text)
+        return {tag: " | ".join(text) for tag, text in entities.items()}
+    return (flair_get_entities,)
+
+
+@app.cell
+def _(flair_get_entities, pl, title_mention_subset):
+    # get all entities and then unnest them so we get a column for each entity type
+    title_mention_flair_ner = title_mention_subset.with_columns(
+        pl.col("Text")
+        .map_elements(flair_get_entities, return_dtype=pl.Struct)
+        .alias("result")
+    ).unnest("result")
+    title_mention_flair_ner
+    return (title_mention_flair_ner,)
+
+
+@app.cell
+def _(pl, title_mention_flair_ner):
+    # save flair NER results for title mentions subset data, for later reference;
+    # only create the output file if it doesn't already exist
 
     import pathlib
 
-    # filter and save flair annotations
-    title_mention_flair_ner = (
-        title_mention_subset_ner_both.filter(pl.col("flair").ne(""))
-        .select(
-            pl.col("UUID"), pl.col("File"), pl.col("flair").alias("flair_ner_misc")
-        )
-        .with_columns(ner_model=pl.lit("de-ner-large"))
-    )
+    # select columns for output and save
+    flair_ner_output = title_mention_flair_ner.select(
+        pl.col("UUID"), pl.col("PER"), pl.col("ORG"), pl.col("MISC"), pl.col("LOC")
+    ).with_columns(ner_model=pl.lit("de-ner-large"))
 
     output_file = pathlib.Path("data/title_mentions_flair_ner.csv")
     if not output_file.exists():
-        title_mention_flair_ner.write_csv(output_file)
+        flair_ner_output.write_csv(output_file)
     return
 
 
