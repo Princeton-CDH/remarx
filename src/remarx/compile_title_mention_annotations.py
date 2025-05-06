@@ -48,7 +48,6 @@ def get_title_mentions(
 
     """
     with open(input_csv, newline="") as f:
-        print(input_csv.stem)
         reader = csv.DictReader(f)
         for row in reader:
             tags = row["TAGS"].split("|")
