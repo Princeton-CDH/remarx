@@ -18,17 +18,26 @@ from typing import Generator
 def has_title_mention(tags: list[str], title: str) -> str:
     """
     Determines if the annotation tags indicate that the input title is mentioned.
-    This returns one of three possible strings: "Yes", "Maybe", "No".
+    This returns one of three possible strings:
+
+        * "Yes" if the tags indicate a title reference for the given title
+        * "Maybe" if the tags indicate a direct quotation for the given title
+          (since passages with direct quotations can mention the titles they quote)
+        * No if the tags do not relate to the title or correspond to other forms of
+          annotations (e.g. concept reference, allusion)
+
     """
     if title not in tags:
+        # The annotation tags do not relate to the given title
         return "No"
-    # If this is a title reference, return "Yes"
     if "Title Reference" in tags:
+        # A title reference for a work occurs when the annotation tags contain both
+        # (1) the title itself  and (2) the tag "Title Reference"
         return "Yes"
-    # If this is a direct quotation, return "Maybe"
     if len(tags) == 1:
+        # Annotation tags indicate a direct quotation if there is only one tag and
+        # it corresponds to the title itself.
         return "Maybe"
-    # For other annotations types (e.g., Concept or Allusion) assume there is no mention
     return "No"
 
 
