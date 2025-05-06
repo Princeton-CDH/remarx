@@ -422,9 +422,8 @@ def _(pl, title_mention_subset_ner_both):
 def _(mo):
     mo.md(
         r"""
-        In at least a few cases, titles (Kapital and Die Neue Zeit) are being tagged as ORGs rather than MISC.
-
-        Run flair and capture all the entities for all the title mention subset data, and save for later reference/comparison.
+        In at least a few cases, titles (Kapital and Die Neue Zeit) are being tagged with other NER tags.
+        So, let's run flair again and capture all identified NER entities for all the title mention subset data, and save for later reference/comparison.
         """
     )
     return
