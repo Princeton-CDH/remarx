@@ -3,7 +3,11 @@
 import marimo
 
 __generated_with = "0.13.3"
-app = marimo.App(width="medium", app_title="Try Stanza + Flair NER for titles")
+app = marimo.App(
+    width="medium",
+    app_title="Try Stanza + Flair NER for titles",
+    auto_download=["html"],
+)
 
 
 @app.cell
@@ -328,17 +332,6 @@ def _(Sentence, tagger):
         sentence = Sentence(text, language_code="de")
         # run NER over sentence
         tagger.predict(sentence)
-        print("*non misc entities:")
-
-        print(
-            " | ".join(
-                [
-                    f"{span.text}:{span.tag}"
-                    for span in sentence.get_spans(label_type="ner")
-                    if span.tag != "MISC"
-                ]
-            )
-        )
         return " | ".join(
             [
                 span.text
@@ -467,6 +460,26 @@ def _(flair_get_entities, pl, title_mention_subset):
     return (title_mention_flair_ner,)
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""In a few cases, there are titles (_Kapital_, _Die Neue Zeit_) that are getting annotated as **ORG** entities rather than **MISC**.""")
+    return
+
+
+@app.cell
+def _(pl, title_mention_flair_ner):
+    # filter to the rows with known titles in the ORG entity list
+    title_mention_flair_ner.filter(
+        pl.col("ORG").str.contains("Kapital") | pl.col("ORG").str.contains("Zeit")
+    ).select(
+        pl.col("Text"),
+        pl.col("Tags"),
+        pl.col("Marx Title Mentions"),
+        pl.col("ORG"),
+    )
+    return
+
+
 @app.cell
 def _(pl, title_mention_flair_ner):
     # save flair NER results for title mentions subset data, for later reference;
@@ -475,9 +488,18 @@ def _(pl, title_mention_flair_ner):
     import pathlib
 
     # select columns for output and save
-    flair_ner_output = title_mention_flair_ner.select(
-        pl.col("UUID"), pl.col("PER"), pl.col("ORG"), pl.col("MISC"), pl.col("LOC")
-    ).with_columns(ner_model=pl.lit("de-ner-large"))
+    flair_ner_output = (
+        title_mention_flair_ner.select(
+            pl.col("UUID"),
+            pl.col("PER"),
+            pl.col("ORG"),
+            pl.col("MISC"),
+            pl.col("LOC"),
+        )
+        .with_columns(ner_model=pl.lit("de-ner-large"))
+        # replace empty strings with None for cleaner CSV output
+        .with_columns(pl.col(pl.String).replace("", None))
+    )
 
     output_file = pathlib.Path("data/title_mentions_flair_ner.csv")
     if not output_file.exists():
