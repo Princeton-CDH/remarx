@@ -98,7 +98,9 @@ def compile_title_mentions(input_dir: pathlib.Path, output_csv: pathlib.Path):
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
 
-        for csv_file in input_dir.rglob("*.csv"):
+        # NOTE: Sorting files to prioritize output consistency over efficiency
+        csv_files = sorted(input_dir.rglob("*.csv", key=lambda x: x.stem))
+        for csv_file in csv_files:
             for row in get_title_mentions(csv_file):
                 writer.writerow(row)
 
