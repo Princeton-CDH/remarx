@@ -4,7 +4,7 @@ manual annotation data (CSVs) downloaded from Recogito.
 
 Example:
 
-    python compile_title_mention_annotations.py annotation_dir output_mentions.csv
+    python compile_title_annotations.py annotation_dir output_mentions.csv
 
 """
 
@@ -99,7 +99,7 @@ def compile_title_mentions(input_dir: pathlib.Path, output_csv: pathlib.Path):
         writer.writeheader()
 
         # NOTE: Sorting files to prioritize output consistency over efficiency
-        csv_files = sorted(input_dir.rglob("*.csv", key=lambda x: x.stem))
+        csv_files = sorted(input_dir.rglob("*.csv"), key=lambda x: x.stem)
         for csv_file in csv_files:
             for row in get_title_mentions(csv_file):
                 writer.writerow(row)
