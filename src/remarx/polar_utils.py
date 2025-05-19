@@ -30,6 +30,12 @@ def load_candidate_sentences(
     # Initial field munging
     df = df.with_columns(
         [
+            # Create sentence id
+            pl.concat_str(
+                pl.col("file"),
+                pl.col("sent_idx"),
+                separator=":",
+            ).alias("sent_id"),
             # Create starting index
             pl.col("char_idx").alias("start_idx"),
             # Create phrase list from phrases column
@@ -63,5 +69,50 @@ def load_candidate_sentences(
             ).alias("manifest_candidate"),
         ]
     )
-
     return df
+
+
+# TODO: Rename method
+def annotate_candidate_sentences(
+    candidate_sentences_df: pl.DataFrame, annotations_df: pl.DataFrame
+) -> pl.DataFrame:
+    """
+    Adds title mention annotations to candidate sentences dataframe. For a given
+    sentence without an annotation, the following values are set:
+        * uiud: "N/A"
+        * anno_start_idx: -1
+        * anno_end_idx: -1
+        * mentions_kapital: "No"
+        * mentions_manifest: "No"
+    """
+    # Sentences with annotations
+    annotated_sents = (
+        # Find sentences that overlap with annotations
+        candidate_sentences_df.join_where(
+            annotations_df,
+            pl.col("file") == pl.col("file_right"),
+            pl.col("start_idx") < pl.col("end_idx_right"),
+            pl.col("start_idx_right") < pl.col("end_idx"),
+        )
+        .rename(
+            {
+                "start_idx_right": "anno_start_idx",
+                "end_idx_right": "anno_end_idx",
+            }
+        )
+        .drop("file_right")
+    )
+
+    # Sentences without annotations
+    unannotated_sents = candidate_sentences_df.filter(
+        ~pl.col("sent_id").is_in(annotated_sents.get_column("sent_id").to_list())
+    ).with_columns(
+        # add annotation-related columns
+        pl.lit("N/A").alias("uuid"),
+        pl.lit(-1, dtype=pl.datatypes.Int64).alias("anno_start_idx"),
+        pl.lit(-1, dtype=pl.datatypes.Int64).alias("anno_end_idx"),
+        pl.lit("No").alias("mentions_kapital"),
+        pl.lit("No").alias("mentions_manifest"),
+    )
+
+    return annotated_sents.vstack(unannotated_sents).sort(["file", "sent_idx"])
