@@ -4,7 +4,7 @@ from collections import defaultdict
 import polars as pl
 
 
-def load_title_phrases(filename: str) -> dict[str, str]:
+def load_title_phrases(filename: str) -> dict[str, list[str]]:
     """
     Load title phrases from file. Returns a dictionary mapping
     a title (e.g., "Kapital") to a list of its search phrases
