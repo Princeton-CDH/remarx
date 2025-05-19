@@ -111,8 +111,8 @@ def join_candidates_annotation(
         pl.lit("N/A").alias("uuid"),
         pl.lit(-1, dtype=pl.datatypes.Int64).alias("anno_start_idx"),
         pl.lit(-1, dtype=pl.datatypes.Int64).alias("anno_end_idx"),
-        pl.lit("No").alias("mentions_kapital"),
-        pl.lit("No").alias("mentions_manifest"),
+        pl.lit("No").alias("anno_mentions_kapital"),
+        pl.lit("No").alias("anno_mentions_manifest"),
     )
 
     return annotated_sents.vstack(unannotated_sents).sort(["file", "sent_idx"])
