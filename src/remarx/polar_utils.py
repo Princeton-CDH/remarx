@@ -73,7 +73,7 @@ def load_candidate_sentences(
 
 
 # TODO: Rename method
-def annotate_candidate_sentences(
+def join_candidates_annotation(
     candidate_sentences_df: pl.DataFrame, annotations_df: pl.DataFrame
 ) -> pl.DataFrame:
     """
