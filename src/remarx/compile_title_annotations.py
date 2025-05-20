@@ -74,6 +74,7 @@ def get_title_mentions(
                     "file": input_csv.stem,
                     "start_idx": start_idx,
                     "end_idx": end_idx,
+                    "span_text": row["QUOTE_TRANSCRIPTION"],
                     "mentions_kapital": mentions_kapital,
                     "mentions_manifest": mentions_manifest,
                 }
@@ -90,6 +91,7 @@ def compile_title_mentions(input_dir: pathlib.Path, output_csv: pathlib.Path):
         "file",
         "start_idx",
         "end_idx",
+        "span_text",
         "mentions_kapital",
         "mentions_manifest",
     ]
