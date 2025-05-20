@@ -3,7 +3,7 @@
 import marimo
 
 __generated_with = "0.13.3"
-app = marimo.App(width="medium")
+app = marimo.App(width="full", css_file="highlight.css")
 
 
 @app.cell
@@ -213,30 +213,29 @@ def _(intspan):
     return (highlight_spans,)
 
 
-@app.cell(hide_code=True)
-def _(mo, quotes_pages):
-    quote_slider = mo.ui.slider(
-        start=0,
-        stop=quotes_pages.height - 1,
-        step=1,
-        label="Quote",
-    )
-
-    mo.vstack(
-        [
-            quote_slider,
-            mo.md("Move the slider to change which quote is displayed."),
-        ]
-    )
-    return (quote_slider,)
-
-
-@app.cell(hide_code=True)
+@app.cell
 def _(highlight_spans, mo, quote_slider, quotes_pages):
-    def show_page_html(quote):
+    def display_seq2seq_page(quote):
+        quote_info = {
+            field: quote[field]
+            for field in ["type", "speaker", "cue", "addressee"]
+            if quote[field]
+        }
+        quote_info_string = (
+            "<dl>"
+            + " ".join(
+                f"<dt>{field}</dt><dd>{value}</dd>"
+                for field, value in quote_info.items()
+            )
+            + "</dl>"
+        )
+
         return mo.Html(
-            f"<p>{quote['type']} quote; page index {quote['page_index']}</p>"
-            + highlight_spans(quote["page_text"], quote["quote_offsets_page"]),
+            "<section class='page'><header><h1>seq2seq quote</h2>"
+            + quote_info_string
+            + f"<p class='info'>page index {quote['page_index']}</p></header>"
+            + highlight_spans(quote["page_text"], quote["quote_offsets_page"])
+            + "</section>",
         )
         # page_start_index, page_end_index = (
         #     quote["start_index"] - quote["page_start"],
@@ -255,7 +254,112 @@ def _(highlight_spans, mo, quote_slider, quotes_pages):
         # """)
 
 
-    show_page_html(quotes_pages.row(quote_slider.value, named=True))
+    def current_seq2seq_page():
+        return display_seq2seq_page(
+            quotes_pages.row(quote_slider.value, named=True)
+        )
+
+
+    current_seq2seq_page()
+    return (current_seq2seq_page,)
+
+
+@app.cell(hide_code=True)
+def _(pl, quote_annotations):
+    # calculate page offsets, then turn into span
+    quote_page_spans = (
+        quote_annotations.with_columns(
+            start_index=pl.col("start_index").sub(pl.col("page_start")),
+            end_index=pl.col("end_index").sub(pl.col("page_start")),
+        )
+        .with_columns(
+            page_span=pl.concat_str(
+                [pl.col("start_index"), pl.col("end_index")], separator="-"
+            )
+        )
+        .select(
+            pl.col("page_index", "page_span", "page_text"),
+        )  # limit to just page index and quote span on the page
+        .group_by("page_index")  # group by pages
+        .all()
+    )
+
+    quote_page_spans = quote_page_spans.with_columns(
+        page_span=pl.col("page_span").list.join(
+            ","
+        ),  # combine multiple page spans
+        page_text=pl.col("page_text").list.first(),
+    )
+
+    quote_page_spans
+    return (quote_page_spans,)
+
+
+@app.cell(hide_code=True)
+def _(highlight_spans, mo, pl, quote_page_spans, quote_slider, quotes_pages):
+    # try annotation + seq2seq side by side
+
+
+    def display_annotation_page(annotation_page):
+        text = highlight_spans(
+            annotation_page["page_text"], annotation_page["page_span"]
+        )
+
+        return mo.Html(f"""<section class='page'><header><h1>annotated quote</h2>
+        <p class='info'>page index {annotation_page["page_index"]}</p></header>
+        {text}
+        </section>""")
+
+        # + highlight_spans(quote["page_text"], quote["quote_offsets_page"])
+        # + "</section>",
+
+        #     f"""
+        # <p>Page index: {quote["page_index"]} (article: {page_start_index}:{page_end_index} page: {page_start_index}:{page_end_index})</p>
+
+        # <div class='span-compare'>
+        # <div>{before_quote}<span class='hi'>{quote_text}</span>{after_quote}</div>
+        # </div>
+        # """)
+
+
+    def current_selected_annotation():
+        # get page index from quote pages row
+        page_index = quotes_pages.row(quote_slider.value, named=True)["page_index"]
+        # get annotation page by page index with text and spans as dict
+        annotation_page = quote_page_spans.filter(
+            pl.col("page_index").eq(page_index)
+        ).row(0, named=True)
+
+        return display_annotation_page(annotation_page)
+
+
+    current_selected_annotation()
+    return (current_selected_annotation,)
+
+
+@app.cell(hide_code=True)
+def _(mo, quotes_pages):
+    quote_slider = mo.ui.slider(
+        start=0,
+        stop=quotes_pages.height - 1,
+        step=1,
+        label="Quote",
+    )
+
+    mo.vstack(
+        [
+            quote_slider,
+            mo.md("Move the slider to change which quote is displayed."),
+        ]
+    )
+    return (quote_slider,)
+
+
+@app.cell
+def _(current_selected_annotation, current_seq2seq_page, mo):
+    mo.hstack(
+        [current_selected_annotation(), current_seq2seq_page()],
+    )
     return
 
 
