@@ -18,7 +18,7 @@ classifiers = [
   "Topic :: Text Processing",
 ]
 dependencies = [
-  "marimo",
+  "marimo>=0.13.11",
   "marimo[lsp]", # marimo language server protocol
   "ruff",
   "nbconvert",
