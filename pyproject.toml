@@ -27,6 +27,7 @@ dependencies = [
   "orjsonl",  
   "flair",  # NOTE: could not install dependency sentencepiece on python 3.13 with pip
   "saxonche",
+  "intspan",
 ]
 
 [project.optional-dependencies]
