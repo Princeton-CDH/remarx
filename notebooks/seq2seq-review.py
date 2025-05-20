@@ -147,14 +147,6 @@ def _(pl):
 
 
 @app.cell
-def _():
-    # get a unique list of pages from quote annotations (some pages have multiple quotes)
-    # then do a conditional join with seq2seq quotes to find a page where we have examples of both
-    # once we have that subset, display side by side
-    return
-
-
-@app.cell
 def _(pl, quote_annotations):
     # get a unique list of pages from quote annotations (some pages have multiple quotes)
     annotation_pages = quote_annotations.select(
@@ -237,21 +229,6 @@ def _(highlight_spans, mo, quote_slider, quotes_pages):
             + highlight_spans(quote["page_text"], quote["quote_offsets_page"])
             + "</section>",
         )
-        # page_start_index, page_end_index = (
-        #     quote["start_index"] - quote["page_start"],
-        #     quote["end_index"] - quote["page_start"],
-        # )
-        # before_quote = quote["page_text"][0:page_start_index]
-        # quote_text = quote["page_text"][page_start_index:page_end_index]
-        # after_quote = quote["page_text"][page_end_index:]
-
-        # return mo.Html(f"""
-        # <p>Page index: {quote["page_index"]} (article: {page_start_index}:{page_end_index} page: {page_start_index}:{page_end_index})</p>
-
-        # <div class='span-compare'>
-        # <div>{before_quote}<span class='hi'>{quote_text}</span>{after_quote}</div>
-        # </div>
-        # """)
 
 
     def current_seq2seq_page():
@@ -337,8 +314,19 @@ def _(highlight_spans, mo, pl, quote_page_spans, quote_slider, quotes_pages):
     return (current_selected_annotation,)
 
 
+@app.cell
+def _(mo):
+    show_annotations = mo.ui.switch(label="annotations", value=True)
+    show_seq2seq = mo.ui.switch(label="seq2seq", value=True)
+    show_heuristic = mo.ui.switch(label="heuristic")
+    switch_stack = mo.hstack(
+        [show_annotations, show_seq2seq, show_heuristic], justify="start"
+    )
+    return show_annotations, show_seq2seq, switch_stack
+
+
 @app.cell(hide_code=True)
-def _(mo, quotes_pages):
+def _(mo, quotes_pages, switch_stack):
     quote_slider = mo.ui.slider(
         start=0,
         stop=quotes_pages.height - 1,
@@ -349,17 +337,29 @@ def _(mo, quotes_pages):
     mo.vstack(
         [
             quote_slider,
-            mo.md("Move the slider to change which quote is displayed."),
+            mo.md("Move the slider to page through quotes."),
+            switch_stack,
         ]
     )
     return (quote_slider,)
 
 
-@app.cell
-def _(current_selected_annotation, current_seq2seq_page, mo):
-    mo.hstack(
-        [current_selected_annotation(), current_seq2seq_page()],
-    )
+@app.cell(hide_code=True)
+def _(
+    current_selected_annotation,
+    current_seq2seq_page,
+    mo,
+    show_annotations,
+    show_seq2seq,
+):
+    panels = []
+    if show_annotations.value:
+        panels.append(current_selected_annotation())
+    if show_seq2seq.value:
+        panels.append(current_seq2seq_page())
+    # heuristic TODO
+
+    mo.hstack(panels)
     return
 
 
