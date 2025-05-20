@@ -24,6 +24,12 @@ def _():
     return (pl,)
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Data prep and setup""")
+    return
+
+
 @app.cell
 def _(pl):
     import pathlib
@@ -39,11 +45,11 @@ def _(pl):
 def _(mo):
     mo.md(
         r"""
-        ## Adjust offsets to match annotated text files
+        ### Adjust offsets to match annotated text files
 
-        `seq2seq` can't handle longer files (memory limitations). For convenience, I fed it the articles that were split out from the first set of "cleaned" texts. If we can find the offset of these files in the cleaned text they come from, then we can adjust offsets and look at the quotation data in context — hopefully there are a few adjacent to annotated data.
+        `seq2seq` can't handle longer files, due to memory limitations. This data was run against text files that were chunked with `split` using the NEW_DOCUMENT delimiter added to the cleaned text.
 
-        Get a list of unique files referenced in the quotation data:
+        This is the logic for calculating offsets for the chunked filenames, so that seq2seq offsets can be mapped to the annotated file offsets. Running this requires a copy of the chunked files (not checked into version control), but should not re-run if the offset file is present.
         """
     )
     return
@@ -158,19 +164,12 @@ def _(pl, quote_annotations):
 
 @app.cell
 def _(adjust_span_offset, annotation_pages, mo, pl, quotes_adjusted):
-    # do a conditional join of annotation pages with seq2seq quotes to find a page where we have examples of both
+    # do a conditional join of annotation pages with seq2seq quotes to find pages where we have data from both methods for comparison
     quotes_pages = quotes_adjusted.join_where(
         annotation_pages,
         pl.col("quote_offset_start") >= pl.col("page_start"),
         pl.col("quote_offset_start") < pl.col("page_end"),
     )
-
-    # start with quote offsets and then figure out which others we need
-    # adjusted_offsets = quotes_source_text.select(
-    #     pl.col("quote_offsets", "file_offset")
-    # ).map_rows(
-    #     lambda row: adjust_span_offset(row[0], row[1]), return_dtype=pl.String
-    # )
 
     # adjust quote offset to make them relative to the page using page start
     page_offsets = quotes_pages.select(
@@ -187,7 +186,10 @@ def _(adjust_span_offset, annotation_pages, mo, pl, quotes_adjusted):
 
 @app.cell
 def _(intspan):
-    def highlight_spans(text: str, spans: str):
+    def highlight_spans(text: str, spans: str) -> str:
+        # method to add <mark> highlighting for one or more spans within a text string
+        # takes text and string with one or more spans in a format that can be parsed by intspan
+        # returns the text with <mark> tags around the highlighted regions
         spans = intspan(spans)
         previous_end = 0
         text_parts = []
@@ -201,7 +203,6 @@ def _(intspan):
         # append any text after the last highlighted portion
         text_parts.append(text[previous_end:])
         return "".join(text_parts)
-        # return f"<div>{before}<span class='hi'>{span}</span>{after}</div>"
     return (highlight_spans,)
 
 
@@ -235,14 +236,14 @@ def _(highlight_spans, mo, quote_slider, quotes_pages):
         return display_seq2seq_page(
             quotes_pages.row(quote_slider.value, named=True)
         )
-
-
-    current_seq2seq_page()
     return (current_seq2seq_page,)
 
 
 @app.cell(hide_code=True)
 def _(pl, quote_annotations):
+    # adjust annotation start/end indices to make them relative to the page, then convert to string page span notation
+    # then group annotations by page, with page text and list of all page spans for annotated quotes on that page
+
     # calculate page offsets, then turn into span
     quote_page_spans = (
         quote_annotations.with_columns(
@@ -274,10 +275,8 @@ def _(pl, quote_annotations):
 
 @app.cell(hide_code=True)
 def _(highlight_spans, mo, pl, quote_page_spans, quote_slider, quotes_pages):
-    # try annotation + seq2seq side by side
-
-
     def display_annotation_page(annotation_page):
+        # display an annotation page with page text and aggregated page spans
         text = highlight_spans(
             annotation_page["page_text"], annotation_page["page_span"]
         )
@@ -287,19 +286,9 @@ def _(highlight_spans, mo, pl, quote_page_spans, quote_slider, quotes_pages):
         {text}
         </section>""")
 
-        # + highlight_spans(quote["page_text"], quote["quote_offsets_page"])
-        # + "</section>",
-
-        #     f"""
-        # <p>Page index: {quote["page_index"]} (article: {page_start_index}:{page_end_index} page: {page_start_index}:{page_end_index})</p>
-
-        # <div class='span-compare'>
-        # <div>{before_quote}<span class='hi'>{quote_text}</span>{after_quote}</div>
-        # </div>
-        # """)
-
 
     def current_selected_annotation():
+        # display the annotation page based on current slider selection
         # get page index from quote pages row
         page_index = quotes_pages.row(quote_slider.value, named=True)["page_index"]
         # get annotation page by page index with text and spans as dict
@@ -308,21 +297,95 @@ def _(highlight_spans, mo, pl, quote_page_spans, quote_slider, quotes_pages):
         ).row(0, named=True)
 
         return display_annotation_page(annotation_page)
-
-
-    current_selected_annotation()
     return (current_selected_annotation,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""
+        ### Generate spans from heuristic method for comparison
+
+        Based on code from find-quotes notebook.
+        """
+    )
+    return
+
+
+@app.cell
+def _(pl, quote_page_spans):
+    import re
+    # generate heuristic search results for the pages in range
+
+
+    # adapted from find_quotes method in find-quotes notebook
+    def find_quotes_spans(text):
+        spans = []
+        # Find basic quotes of the form „ ... “ or „ ... "
+        for match in re.finditer(r"„[^“\"]+[“\"]", text):
+            start, end = match.span()
+            spans.append(f"{start}-{end}")
+        return ",".join(spans)
+
+
+    heuristic_quote_spans = quote_page_spans.select(
+        pl.col("page_index", "page_text")
+    ).with_columns(
+        heuristic_spans=pl.col("page_text").map_elements(
+            find_quotes_spans, return_dtype=pl.String
+        )
+    )
+    heuristic_quote_spans
+    return (heuristic_quote_spans,)
+
+
+@app.cell
+def _(
+    heuristic_quote_spans,
+    highlight_spans,
+    mo,
+    pl,
+    quote_slider,
+    quotes_pages,
+):
+    def display_heuristic_quotes_page(annotation_page):
+        text = highlight_spans(
+            annotation_page["page_text"], annotation_page["heuristic_spans"]
+        )
+
+        return mo.Html(f"""<section class='page'><header><h1>identified based on quotation marks</h1>
+        <p class='info'>page index {annotation_page["page_index"]}</p></header>
+        {text}
+        </section>""")
+
+
+    def current_page_heuristic_quotes():
+        # get page index from quote pages row
+        page_index = quotes_pages.row(quote_slider.value, named=True)["page_index"]
+        # get annotation page by page index with text and spans as dict
+        page = heuristic_quote_spans.filter(
+            pl.col("page_index").eq(page_index)
+        ).row(0, named=True)
+
+        return display_heuristic_quotes_page(page)
+    return (current_page_heuristic_quotes,)
 
 
 @app.cell
 def _(mo):
     show_annotations = mo.ui.switch(label="annotations", value=True)
     show_seq2seq = mo.ui.switch(label="seq2seq", value=True)
-    show_heuristic = mo.ui.switch(label="heuristic")
+    show_heuristic = mo.ui.switch(label="quotation marks")
     switch_stack = mo.hstack(
         [show_annotations, show_seq2seq, show_heuristic], justify="start"
     )
-    return show_annotations, show_seq2seq, switch_stack
+    return show_annotations, show_heuristic, show_seq2seq, switch_stack
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Compare quotation methods""")
+    return
 
 
 @app.cell(hide_code=True)
@@ -331,14 +394,16 @@ def _(mo, quotes_pages, switch_stack):
         start=0,
         stop=quotes_pages.height - 1,
         step=1,
-        label="Quote",
+        label="seq2seq quote",
     )
 
     mo.vstack(
         [
             quote_slider,
-            mo.md("Move the slider to page through quotes."),
             switch_stack,
+            mo.md(
+                "Use the slider to move through results. Use the toggles to control which panels are shown."
+            ),
         ]
     )
     return (quote_slider,)
@@ -346,18 +411,22 @@ def _(mo, quotes_pages, switch_stack):
 
 @app.cell(hide_code=True)
 def _(
+    current_page_heuristic_quotes,
     current_selected_annotation,
     current_seq2seq_page,
     mo,
     show_annotations,
+    show_heuristic,
     show_seq2seq,
 ):
     panels = []
-    if show_annotations.value:
-        panels.append(current_selected_annotation())
+    # show this one first, since the display is keyed to seq2seq pages
     if show_seq2seq.value:
         panels.append(current_seq2seq_page())
-    # heuristic TODO
+    if show_annotations.value:
+        panels.append(current_selected_annotation())
+    if show_heuristic.value:
+        panels.append(current_page_heuristic_quotes())
 
     mo.hstack(panels)
     return
