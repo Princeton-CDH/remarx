@@ -16,7 +16,18 @@ def _():
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""# Compare quotation detection results in context""")
+    mo.md(
+        r"""
+    # Quotation detection results 
+
+
+    [seq2seq-quotation-attribution](https://github.com/uhh-lt/seq2seq-quotation-attribution) is a software tool for "Fine-grained quotation detection and attribution in German news articles" by Fynn Petersen-Frey & Chris Biemann, published at KONVENS 2024. Implementation based on [Seq2seqCoref](https://github.com/WenzhengZhang/Seq2seqCoref).
+
+    We ran this tool on the text file **1896-97aCLEAN.txt**; this notebook shows some of the results alongside for pages with annotations. 
+
+    As an additional point of comparison, we also show results for a simple heuristic method based on quotation marks for the same pages.
+    """
+    )
     return
 
 
@@ -177,7 +188,7 @@ def _(highlight_spans, mo, quote_slider, quotes_pages):
         )
 
         return mo.Html(
-            "<section class='page'><header><h1>seq2seq quote</h2>"
+            "<section class='page'><header><h1>seq2seq</h2>"
             + quote_info_string
             + f"<p class='info'>page index {quote['page_index']}</p></header>"
             + highlight_spans(quote["page_text"], quote["quote_offsets_page"])
@@ -232,7 +243,7 @@ def _(highlight_spans, mo, pl, quote_page_spans, quote_slider, quotes_pages):
             annotation_page["page_text"], annotation_page["page_span"]
         )
 
-        return mo.Html(f"""<section class='page'><header><h1>annotated quote</h2>
+        return mo.Html(f"""<section class='page'><header><h1>annotations</h2>
         <p class='info'>page index {annotation_page["page_index"]}</p></header>
         {text}
         </section>""")
@@ -291,7 +302,7 @@ def _(
             annotation_page["page_text"], annotation_page["heuristic_spans"]
         )
 
-        return mo.Html(f"""<section class='page'><header><h1>identified based on quotation marks</h1>
+        return mo.Html(f"""<section class='page'><header><h1>quotation marks</h1>
         <p class='info'>page index {annotation_page["page_index"]}</p></header>
         {text}
         </section>""")
@@ -312,17 +323,24 @@ def _(
 @app.cell(hide_code=True)
 def _(mo):
     show_annotations = mo.ui.switch(label="annotations", value=True)
-    show_seq2seq = mo.ui.switch(label="seq2seq", value=True)
     show_heuristic = mo.ui.switch(label="quotation marks", value=True)
-    switch_stack = mo.hstack(
-        [show_annotations, show_seq2seq, show_heuristic], justify="start"
-    )
-    return show_annotations, show_heuristic, show_seq2seq, switch_stack
+    switch_stack = mo.hstack([show_annotations, show_heuristic], justify="start")
+    return show_annotations, show_heuristic, switch_stack
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(r"""## Compare quotation methods""")
+    mo.md(
+        r"""
+    Quotes detected by seq2seq-quotation-attribution include the type of quote (direct, indirect), and may include additional information such as speaker, addressee, and cue. 
+
+    This view provides detected information about a single quote with that quote in context on a page of text.  In many cases, multiple quotations are detected for each page; these are displayed one at a time.
+
+    For comparison, seq2seq results can be viewed alongside the same page of text with all manual annotations for that page and/or all quotes found based on quotation marks.  Use the toggles to control which versions of the page are shown.
+
+    Use the slider to move through this subset of seq2seq results.
+    """
+    )
     return
 
 
@@ -335,15 +353,7 @@ def _(mo, quotes_pages, switch_stack):
         label="seq2seq quote",
     )
 
-    mo.vstack(
-        [
-            quote_slider,
-            switch_stack,
-            mo.md(
-                "Use the slider to move through results. Use the toggles to control which panels are shown."
-            ),
-        ]
-    )
+    mo.vstack([quote_slider, switch_stack])
     return (quote_slider,)
 
 
@@ -355,18 +365,22 @@ def _(
     mo,
     show_annotations,
     show_heuristic,
-    show_seq2seq,
 ):
-    panels = []
-    # show this one first, since the display is keyed to seq2seq pages
-    if show_seq2seq.value:
-        panels.append(current_seq2seq_page())
+    # always show seq2seq
+    panels = [current_seq2seq_page()]
     if show_annotations.value:
         panels.append(current_selected_annotation())
     if show_heuristic.value:
         panels.append(current_page_heuristic_quotes())
 
-    mo.hstack(panels)
+    mo.hstack(panels, justify="center")
+    return
+
+
+@app.cell
+def _():
+    # todo: can we do an overlap view of the same content as above? (maybe only two at a time...)
+    # configure highlight colors above and below
     return
 
 
@@ -376,9 +390,11 @@ def _(mo):
         r"""
     ---
 
-    ## seq2seq raw output
+    ## seq2seq-quotation-attribution raw output
 
     In case it's useful, the table below shows the quotes data as output by seq2seq quotation detection.
+
+    (The tool was run on chunked sections of the original file due to memory limitations; offsets were remapped to the original file for comparison and display.)
     """
     )
     return
