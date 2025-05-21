@@ -243,7 +243,7 @@ def _(highlight_spans, mo, pl, quote_page_spans, quote_slider, quotes_pages):
             annotation_page["page_text"], annotation_page["page_span"]
         )
 
-        return mo.Html(f"""<section class='page'><header><h1>annotations</h2>
+        return mo.Html(f"""<section class='page highlight2'><header><h1>annotations</h2>
         <p class='info'>page index {annotation_page["page_index"]}</p></header>
         {text}
         </section>""")
@@ -302,7 +302,7 @@ def _(
             annotation_page["page_text"], annotation_page["heuristic_spans"]
         )
 
-        return mo.Html(f"""<section class='page'><header><h1>quotation marks</h1>
+        return mo.Html(f"""<section class='page highlight3'><header><h1>quotation marks</h1>
         <p class='info'>page index {annotation_page["page_index"]}</p></header>
         {text}
         </section>""")

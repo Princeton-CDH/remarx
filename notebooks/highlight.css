@@ -33,6 +33,7 @@ mark {
     text-underline-offset: 3px;
 }
 
+
 section.page {
 	white-space: pre-line;
 	position: relative;
@@ -96,6 +97,19 @@ dl dd {
 /*	opacity: 0.2;*/
 }
 
+.highlight2 mark {
+	text-decoration-color: light-dark(var(--light-highlight-color2), var(--dark-highlight-color2));
+	text-decoration-style: wavy;
+	text-decoration-thickness: 1px;	 /* 2px wavy looks too thick */
+}
+
+.highlight3 mark {
+	text-decoration-color: light-dark(var(--light-highlight-color3), var(--dark-highlight-color3));
+	text-decoration-style: dotted;
+	text-decoration-thickness: 4px;	 /* 2px dotted is hard to see*/
+    text-underline-offset: 4px;
+}
+
 .compare.multi div:nth-child(n+2) mark, .compare.secondary mark {
 	/* use wavy underlines for secondary highlights;
 	everything after the first div in a span-compare section, or secondary-span
@@ -107,6 +121,7 @@ dl dd {
 }
 
 .compare.multi  div:nth-child(3) mark {
+	text-decoration-style: dotted;
 	text-decoration-color: light-dark(var(--light-highlight-color3), var(--dark-highlight-color3));
 }
 .compare.multi  div:nth-child(4) mark {
