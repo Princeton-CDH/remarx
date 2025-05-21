@@ -180,7 +180,7 @@ def join_candidates_ner(
     Adds flair NER annotations to candidate sentences dataframe. Expects the flair
     NER annotations to have been loaded using `load_flair_ner` and candidate sentences
     to have been lodaded using `load_candidate_sentences` method. For a given
-    sentence without an annotation, teh following values are set:
+    sentence without an annotation, the following values are set:
         * flair_ner_spans: None
         * flair_contains_band: false
         * flair_contains_kapital: false
