@@ -1,0 +1,10 @@
+search_phrase,title,n_sents,n_title_candidates,n_title_anno_yes,n_title_anno_maybe,n_title_anno_no
+Manifest,Manifesto,84,84,29,7,48
+Kommunistische Manifest,Manifesto,36,36,23,4,9
+Das Manifest,Manifesto,30,30,3,2,25
+Manifest der Kommunistischen Partei,Manifesto,1,1,1,0,0
+Kapital,Kapital,314,314,13,8,293
+Band,Kapital,195,195,3,2,190
+Das Kapital,Kapital,133,133,10,3,120
+Erste Band,Kapital,15,15,2,1,12
+Erste Band das Kapital,Kapital,1,1,1,0,0
