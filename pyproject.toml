@@ -18,7 +18,7 @@ classifiers = [
   "Topic :: Text Processing",
 ]
 dependencies = [
-  "marimo",
+  "marimo>=0.13.11",
   "marimo[lsp]", # marimo language server protocol
   "ruff",
   "nbconvert",
@@ -27,6 +27,7 @@ dependencies = [
   "orjsonl",  
   "flair",  # NOTE: could not install dependency sentencepiece on python 3.13 with pip
   "saxonche",
+  "intspan",
 ]
 
 [project.optional-dependencies]
@@ -60,6 +61,7 @@ ignore = []
 
 [tool.marimo.display]
 cell_output = "below"
+theme = "system"  # honor user preference, including in static html exports
 
 [tool.marimo.runtime]
 # Add project source directory to Python path
