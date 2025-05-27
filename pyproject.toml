@@ -61,6 +61,7 @@ ignore = []
 
 [tool.marimo.display]
 cell_output = "below"
+theme = "system"  # honor user preference, including in static html exports
 
 [tool.marimo.runtime]
 # Add project source directory to Python path
