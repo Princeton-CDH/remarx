@@ -6,10 +6,12 @@
 	["#EE7733","#0077BB","#33BBEE","#EE3377","#CC3311","#009988"] */
 	--light-highlight-color1: #EE7733;
 	--light-highlight-color2: #0077BB;
-	--light-highlight-color3: #33BBEE;
-	--light-highlight-color4: #EE3377;
-	--light-highlight-color5: #CC3311;
-	--light-highlight-color6: #009988;
+	--light-highlight-color3: #009988;	
+	--light-highlight-color4: #EE3377;	
+	--light-highlight-color5: #33BBEE;	
+	--light-highlight-color6: #CC3311;		
+
+
 	/* qualitative bright
 ["#4477AA","#EE6677","#228833","#CCBB44","#66CCEE","#AA3377"]  */
 	--dark-highlight-color1: #4477AA;
@@ -18,6 +20,7 @@
 	--dark-highlight-color4: #CCBB44;
 	--dark-highlight-color5: #66CCEE;
 	--dark-highlight-color6: #AA3377;
+
 }
 
 mark {

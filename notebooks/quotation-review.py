@@ -10,8 +10,11 @@ app = marimo.App(
 
 @app.cell
 def _():
+    import re
+
     import marimo as mo
-    return (mo,)
+    import polars as pl
+    return mo, pl, re
 
 
 @app.cell(hide_code=True)
@@ -29,12 +32,6 @@ def _(mo):
     """
     )
     return
-
-
-@app.cell
-def _():
-    import polars as pl
-    return (pl,)
 
 
 @app.cell(hide_code=True)
@@ -84,8 +81,6 @@ def _(pl, quotes_source_text):
     def first_offset(span):
         return list(intspan(span))[0]
 
-
-    # df.select([pl.struct(["ham", "spam", "foo"]).apply(my_complicated_function)])
 
     # start with quote offsets and then figure out which others we need
     adjusted_offsets = quotes_source_text.select(
@@ -263,10 +258,8 @@ def _(highlight_spans, mo, pl, quote_page_spans, quote_slider, quotes_pages):
 
 
 @app.cell(hide_code=True)
-def _(pl, quote_page_spans):
-    import re
+def _(pl, quote_page_spans, re):
     # generate heuristic search results for the pages in range
-
 
     # adapted from find_quotes method in find-quotes notebook
     def find_quotes_spans(text):
