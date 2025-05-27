@@ -49,7 +49,7 @@ def _(mo, pl):
     #
     # Load seq2seq quotes output, and previously calculated offset adjustment to annotated file.
 
-    # public locaiton for compilation to wasm
+    # public location for compilation to wasm
     seq2seq_quotes_file = mo.notebook_location() / "public" / "seq2seq_quotes.csv"
 
     quotes_df = pl.read_csv(str(seq2seq_quotes_file))
