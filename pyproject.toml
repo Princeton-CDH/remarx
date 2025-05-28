@@ -25,6 +25,7 @@ dependencies = [
   "stanza",
   "orjsonl",  
   "intspan",
+  "sentence-transformers",
 ]
 
 [project.optional-dependencies]
