@@ -1,4 +1,3 @@
-# citing-marx
 # Citing Marx - Experiment 3: Embeddings
 
 This is work associated with the CDH project [Citing Marx](https://cdh.princeton.edu/projects/citing-marx)
