@@ -25,6 +25,7 @@ dependencies = [
   "stanza",
   "orjsonl",  
   "intspan",
+  "lxml",
 ]
 
 [project.optional-dependencies]
