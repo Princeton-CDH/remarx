@@ -9,11 +9,17 @@ in the input document.
 
 Example usage:
 
-    python tei_page.py tei_doc.xml  12 13 page12.txt
+    python tei_page.py tei_doc.xml  -s 12 -e 14 page12-13.txt
 
 
-This will extract all content between `<pb n="12"/>` and `<pb n="13"/>`
+This will extract text content between `<pb n="12"/>` and `<pb n="14"/>`
 as lines of text and save them to a new file named `page12.txt`.
+
+If the end page number is not specified, the script will assume
+end page is start page + 1 (only works for numeric pages). Example:
+
+    python tei_page.py tei_doc.xml  -s 12  page12.txt
+
 
 """
 
@@ -46,13 +52,17 @@ def text_between_pages(element: etree._Element, start: str, end: str) -> Iterabl
 
         # if we hit a pb tag, check the n attribute for start/ end condition
         if text.is_tail and parent.tag == "{%s}pb" % TEI_NAMESPACE:
-            # found the starting pb tag
-            if parent.get("n") == start:
-                # set flag to start yielding text content after this point
-                started = True
-            # found the ending pb tag; stop iterating
-            if parent.get("n") == end:
-                break
+            # for marx, limit to pb that are for the manuscript edition
+
+            # if parent.get("ed") == "manuscript":
+            if parent.get("ed") is None:
+                # found the starting pb tag
+                if parent.get("n") == start:
+                    # set flag to start yielding text content after this point
+                    started = True
+                # found the ending pb tag; stop iterating
+                if parent.get("n") == end:
+                    break
 
         # yield text if we are after the start page
         if started:
@@ -122,12 +132,20 @@ def main():
         help="Path to source TEI/XML file",
     )
     parser.add_argument(
-        "start_page",
+        "-s",
+        "--start",
+        dest="start_page",
         type=str,
         help="Page number (pb n attribute) to indicate start of text content",
+        required=True,
     )
     parser.add_argument(
-        "end_page", type=str, help="Page number for end of text content"
+        "-e",
+        "--end",
+        dest="end_page",
+        type=str,
+        help="Page number for end of text content; if unset, assumes start + 1",
+        required=False,
     )
     parser.add_argument(
         "output",
@@ -147,11 +165,22 @@ def main():
         )
         sys.exit(1)
 
+    # if end page is not specified, set end to start + 1
+    try:
+        end_page = args.end_page or str(int(args.start_page) + 1)
+    except ValueError:
+        # error if if end is unset and start cannot be converted to integer
+        print(
+            f"Error determining end page from start page '{args.start_page}'",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
     doc = etree.parse(args.tei_file)
 
     with args.output.open("w") as outfile:
         try:
-            outfile.write(get_pages(doc, args.start_page, args.end_page))
+            outfile.write(get_pages(doc, args.start_page, end_page))
         except ValueError as err:
             # display any error message, then continue on to cleanup
             print(err, file=sys.stderr)
