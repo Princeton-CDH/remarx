@@ -25,6 +25,8 @@ dependencies = [
   "stanza",
   "orjsonl",  
   "intspan",
+  "lxml",
+  "sentence-transformers",
   "transformers[torch]", # CPU-only version
 ]
 
