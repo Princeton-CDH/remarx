@@ -26,6 +26,7 @@ dependencies = [
   "orjsonl",  
   "intspan",
   "lxml",
+  "sentence-transformers",
 ]
 
 [project.optional-dependencies]
