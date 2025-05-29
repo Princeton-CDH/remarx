@@ -53,7 +53,7 @@ def save_sentence_embeddings(
     # Load sentence texts
     sents = []
     for row in orjsonl.stream(sentence_corpus):
-        sents.append(row["sentence"])
+        sents.append(row["text"])
 
     # Extract and save embeddings
     embeddings = extract_sentence_embeddings(
