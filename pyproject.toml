@@ -25,6 +25,7 @@ dependencies = [
   "stanza",
   "orjsonl",  
   "intspan",
+  "transformers[torch]", # CPU-only version
 ]
 
 [project.optional-dependencies]
