@@ -29,10 +29,11 @@ def get_sentences(
     file_progress = tqdm(input_dir.rglob("*.txt"))
 
     for text in file_progress:
-        file_progress.set_description_str(f"Processing {text.stem}")
+        file_progress.set_description_str(f"Processing {text.name}")
         for i, sentence in enumerate(pipeline(text.read_text()).sentences):
             entry = {
-                "file": text.stem,
+                "file": text.name,
+                "sent_id": f"{text.stem}:{i:04d}",
                 "sent_idx": i,
                 "char_idx": sentence.tokens[0].start_char,
                 "text": sentence.text,
@@ -58,10 +59,12 @@ def main():
     parser.add_argument(
         "input",
         help="Input directory containing texts to search",
+        metavar="input_dir",
         type=pathlib.Path,
     )
     parser.add_argument(
         "output",
+        metavar="output_file",
         help="Filename where resulting sentence corpus should be saved (JSONL; compressed or not)",
         type=pathlib.Path,
     )
