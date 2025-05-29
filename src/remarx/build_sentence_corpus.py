@@ -1,8 +1,13 @@
 """
-Parse documents into a sentence corpus file (JSONL).
+Parse text documents into a sentence corpus file (JSONL).
+Uses Stanza pipeline; language assumes German.
 
-NOTE: Not being used for title mentions because it's
-too slow (need to pass each "sentence" to stanza).
+Takes an input directory and an output file name.
+
+Example usage:
+
+  python build_sentence_corpus.py input_textdir/ sent.jsonl
+
 """
 
 import argparse
@@ -77,7 +82,7 @@ def main():
         sys.exit(1)
     if args.output.is_file():
         print(
-            f"Error: output file {args.output} exsts. Will not overwrite.",
+            f"Error: output file {args.output} exists. Will not overwrite.",
             file=sys.stderr,
         )
         sys.exit(1)
