@@ -5,7 +5,8 @@ save it to a file.  The script takes a path to an input TEI/XML file,
 start and end page numbers, and the name of an output file to create.
 
 The start and end page numbers should match n attributes on <pb> tags
-in the input document.
+in the input document. These <pb> tags indicate the bounds for the content
+to be included; content from the ending page is _not_ included.
 
 Example usage:
 
