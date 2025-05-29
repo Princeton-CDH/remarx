@@ -1,7 +1,10 @@
 """
 Script to build sentence embeddings for each sentence in a sentence-level
 corpus file (JSONL). The resulting embeddings are saved as a .npy binary
-file.
+file. By default the paraphrase-multilingual-mpnet-base-v2 model is used,
+but this can be changed to another model supported by Sentence Transformers.
+See https://sbert.net/docs/sentence_transformer/pretrained_models.html for
+more details.
 
 Example:
 
