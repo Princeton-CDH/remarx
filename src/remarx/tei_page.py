@@ -27,11 +27,18 @@ import argparse
 import pathlib
 import re
 import sys
+from collections import namedtuple
 from typing import Iterable
 
 from lxml import etree
 
 TEI_NAMESPACE = "http://www.tei-c.org/ns/1.0"
+
+# namespaced tags look like {http://www.tei-c.org/ns/1.0}tagname
+# create a named tuple of short tag name -> namespaced tag name
+_tei_tags = ["pb", "lb", "note", "add", "label"]
+TagNames = namedtuple("TagNames", _tei_tags)
+TEI_TAG = TagNames(**{tag: "{%s}%s" % (TEI_NAMESPACE, tag) for tag in _tei_tags})
 
 
 def text_between_pages(element: etree._Element, start: str, end: str) -> Iterable[str]:
@@ -42,19 +49,23 @@ def text_between_pages(element: etree._Element, start: str, end: str) -> Iterabl
     # start of desired content
     started = False
 
+    # add a newline to output before specific tags
+    newline_before_tags = [TEI_TAG.lb, TEI_TAG.note]
+
     # iterate and yield text between start and end pages
     for text in element.xpath(".//text()"):
         parent = text.getparent()
 
-        # yield newline for a line break tag
-        if started and text.is_tail and parent.tag == "{%s}lb" % TEI_NAMESPACE:
+        # yield newline for a line break tag or note
+        if started and text.is_tail and parent.tag in newline_before_tags:
             yield "\n"
 
         # if we hit a pb tag, check the n attribute for start/ end condition
-        if text.is_tail and parent.tag == "{%s}pb" % TEI_NAMESPACE:
+        if text.is_tail and parent.tag == TEI_TAG.pb:
             # for marx, limit to pb that are for the manuscript edition
 
-            # if parent.get("ed") == "manuscript":
+            # mega-specific: there are two sets of page numbers, we want
+            # the main pagination, not the editorial manuscript pagination
             if parent.get("ed") is None:
                 # found the starting pb tag
                 if parent.get("n") == start:
@@ -63,6 +74,16 @@ def text_between_pages(element: etree._Element, start: str, end: str) -> Iterabl
                 # found the ending pb tag; stop iterating
                 if parent.get("n") == end:
                     break
+
+        # check for editorial text content (e.g. original page numbers)
+        if started and (
+            parent.tag == TEI_TAG.add
+            or (parent.tag == TEI_TAG.label and parent.get("type") == "mpb")
+        ):
+            # omit if text is inside an editorial tag (is_text)
+            # OR if text comes immediately after (is_tail) and is whitespace only
+            if text.is_text or text.is_tail and re.match(r"^\s+$", text):
+                continue
 
         # yield text if we are after the start page
         if started:
@@ -144,7 +165,8 @@ def main():
         "--end",
         dest="end_page",
         type=str,
-        help="Page number for end of text content; if unset, assumes start + 1",
+        help="Page number indicating end of text content (not inclusive);"
+        + "if unset, assumes a single page (start + 1)",
         required=False,
     )
     parser.add_argument(
