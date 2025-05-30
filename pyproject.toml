@@ -27,6 +27,7 @@ dependencies = [
   "intspan",
   "lxml",
   "sentence-transformers",
+  "chromadb"
 ]
 
 [project.optional-dependencies]
