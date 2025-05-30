@@ -28,6 +28,7 @@ dependencies = [
   "lxml",
   "sentence-transformers",
   "transformers[torch]", # CPU-only version
+  "tqdm",
 ]
 
 [project.optional-dependencies]
