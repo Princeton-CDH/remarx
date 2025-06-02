@@ -44,7 +44,7 @@ def _(mo):
 @app.cell
 def _(np, pl):
     dnz_sentences = np.load(
-        "data/sentence-embeddings/dnz-sample-sents.npy", allow_pickle=True
+        "data/sentence-embeddings/dnz-sample-sents.npy"
     )
     # load newline-delimited json (aka JSON lines) into lazy frame, then collect
     df = pl.scan_ndjson("data/sentence-corpora/dnz-sample-sents.jsonl").collect()
