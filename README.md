@@ -6,7 +6,7 @@ This is work associated with the CDH project [Citing Marx](https://cdh.princeton
 
 This branch contains code and data for preliminary experiments using
 traditional NLP approaches and out-of-the-box software to identify
-titles and quotations in sample text content from the Citing Marx project.
+title mentions and quotations in sample text content from the Citing Marx project.
 
 ### Preliminary conclusions
 
