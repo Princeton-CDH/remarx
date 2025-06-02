@@ -44,7 +44,7 @@ title mentions and quotations in sample text content from the Citing Marx projec
    - `candidate_mentions.py`: script to run lemmatized search on directory of text files and generate a CSV of matching sentences
    - `compile_title_annotations.py`: script to compile and restructure title mention annotation data from Recogito to provide Yes/No/Maybe values for the two titles in current scope
    - `get_ner_spans.py`: script to run Flair NER on a CSV of candidate sentences and generate a CSV of identified entities, one entity per row
-   - `polar_utils.py`: utility method sfor loading and manipulating data related to title mentions and candidates
+   - `polar_utils.py`: utility methods for loading and manipulating data related to title mentions and candidates
    - `run_xslt.py`: script to run an XSLT transform on an XML file using SaxonCHE
 - `tei-stylesheets/`: copies of TEI-consorsium XSLT files for basic tei-to-text conversion
 
