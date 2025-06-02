@@ -37,13 +37,8 @@ def normalize_text(text: str) -> str:
     """
     Normalizes text so that it will align with its tokenized version.
     """
-    # Remove trailing whitespace
-    result_text = text.rstrip()
-    # Replace consecutive whitespace with a space
-    result_text = " ".join(result_text.split())
-    # Add leading space
-    result_text = " " + result_text
-    return result_text
+    # Remove any outer whitespace, consolidate multiple whitespace characters, and add a leading space
+     return " " + " ".join(text.strip().split())
 
 
 def get_term_spans(text: str, term: str) -> list[tuple[int, int]]:
