@@ -38,7 +38,7 @@ def normalize_text(text: str) -> str:
     Normalizes text so that it will align with its tokenized version.
     """
     # Remove any outer whitespace, consolidate multiple whitespace characters, and add a leading space
-     return " " + " ".join(text.strip().split())
+    return " " + " ".join(text.strip().split())
 
 
 def get_term_spans(text: str, term: str) -> list[tuple[int, int]]:
@@ -90,7 +90,7 @@ def get_subtoken_alignment(
         sub_end = (
             subtoken_starts[i_subtoken + 1]
             if i_subtoken < len(subtokens) - 1
-            else len(subtokens)
+            else len(sentence)
         )
 
         token_start, token_end = spans[j_token]
