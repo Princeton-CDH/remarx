@@ -10,7 +10,7 @@ title mentions and quotations in sample text content from the Citing Marx projec
 
 ### Preliminary conclusions
 
-- lemmatized search is decent, but doesn't find variants with OCR errors, typos, hyphenation
+- lemmatized search is decent, but doesn't find variants with OCR errors, typos, hyphenation (without additional interventions)
 - Flair worked better than Stanza for our use cases; Flair NER does identify some instances of titles with OCR errors ("Eanifests", "Mauifests") but does not find all titles
   - Available NER models for German only have 4 categories (PER, LOC, ORG, MISC) compared to the richer 18-category ontology available for English
 
