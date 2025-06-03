@@ -1,10 +1,12 @@
 """
 Script to build embeddings of a specific term for each sentence in a
 sentence-level corpus file (JSONL). The resulting embeddings are saves as a .npy
-binary file. By default the  MT5-XL model (google/mt5-xl) is used, but this can
-be changed to another pretrained model. Since term instances and sentences are
+binary file. By default the MT5-XL model (google/mt5-xl) is used, but this can
+be changed to another MT5 variants. Since term instances and sentences are
 unlikely to have a one-to-one correspondence, a metadata file (CSV) identifying
 each embedding is also generated.
+
+Note: Embeddings are extracted from the model's initial token embedding layer
 
 See https://huggingface.co/docs/transformers/main/en/model_doc/mt5 for more on MT5.
 
@@ -25,11 +27,13 @@ import numpy as np
 import numpy.typing as npt
 import orjsonl
 from tqdm import tqdm
+
+# NOTE: mypy typing fails on these paths, but succeeds with the fine-grained ones
 from transformers import (
-    FeatureExtractionPipeline,
+    MT5EncoderModel,
+    PreTrainedModel,
     PreTrainedTokenizer,
     T5Tokenizer,
-    pipeline,
 )
 
 
@@ -59,7 +63,7 @@ def get_term_spans(text: str, term: str) -> list[tuple[int, int]]:
 
 
 def get_subtoken_alignment(
-    tokenizer: PreTrainedTokenizer,
+    tokenizer: T5Tokenizer,
     sentence: str,
     spans: list[tuple[int, int]],
 ) -> list[list[int]]:
@@ -77,7 +81,7 @@ def get_subtoken_alignment(
       * Spans are consecutive and non-overlapping
     """
     # Note: this does not include the special tokens added when encoding
-    subtokens = tokenizer.tokenize(sentence)
+    subtokens = tokenizer.tokenize(sentence)  # type: ignore
 
     # Check that tokenized text aligns with original
     if len("".join(subtokens)) != len(sentence):
@@ -126,19 +130,51 @@ def get_subtoken_alignment(
     return span2subtokens
 
 
+def extract_subtoken_embeddings(
+    tokenizer: PreTrainedTokenizer,
+    model: PreTrainedModel,
+    sentence: str,
+    layer: int = -1,
+):
+    """
+    For a sentence, extract its subtoken embeddings (i.e., hiddens states) from
+    a specific layer of a given model. By default, this is the final layer.
+    Returns a numpy array of the resulting subtoken embeddings.
+
+    Note that the first (0) layer will correspond to the initial token embedding
+    layer and so the hidden states of the model layers are offset by one.
+
+    """
+    # Note: assuming the encoded sentence is shorter than the model's max length
+    input_ids = tokenizer(sentence, return_tensors="pt")
+
+    if layer == -1:
+        return model(input_ids).last_hidden_state[0].cpu().detach().numpy()  # type: ignore
+
+    hidden_states = model(input_ids, output_hidden_states=True).hidden_states  # type: ignore
+    return hidden_states[layer][0].cpu().detach().numpy()
+
+
 def extract_span_embeddings(
-    extractor: FeatureExtractionPipeline,
+    tokenizer: PreTrainedTokenizer,
+    model: PreTrainedModel,
     sentence: str,
     span_to_subtokens: list[list[int]],
+    layer: int = -1,
 ) -> npt.NDArray:
     """
-    For a sentence, extract the span embeddings using a given Hugging Face feature
-    extraction pipeline. The spans of interest are represented by a list of their
+    For a sentence, extract the span embeddings using a given pretrained Hugging Face
+    tokenizer and model. The spans of interest are represented by a list of their
     subtokens which were determined using `get_subtoken_alignment`. A span's
-    embedding is the average of its subtokens' embeddings.
+    embedding is the average of its subtokens' embeddings. The extracted subtoken
+    embeddings correspond to the hidden states of a specific layer of the model. By
+    default, this is the final layer.
     Returns a numpy array of the resulting span embeddings.
     """
-    subtoken_embeddings = extractor(sentence)
+    # Using the initial token embedding layer
+    subtoken_embeddings = extract_subtoken_embeddings(
+        tokenizer, model, sentence, layer=layer
+    )
 
     # Build the specific token embeddings
     token_embeddings = []
@@ -161,14 +197,15 @@ def extract_span_embeddings(
 
 
 def get_term_embeddings(
-    extractor: FeatureExtractionPipeline,
+    tokenizer: T5Tokenizer,
+    model: MT5EncoderModel,
     sentence: str,
     term: str,
 ):
     """
     For a sentence, extract the token-level embeddings for each instance of a
-    given term within the sentence using a given Hugging Face feature extraction
-    pipeline.
+    given term within the sentence using a given pretrained T5 tokenizer and MT5
+    encoder model (loaded from Hugging Face).
     Returns a numpy array of the resulting token embeddings
 
     Note:
@@ -181,25 +218,22 @@ def get_term_embeddings(
     # Identify indices for term's tokens (if any)
     term_spans = get_term_spans(sent, term)
     # Determine how these term spans align with T5's (sub)tokenization
-    span2subtokens = get_subtoken_alignment(
-        cast(PreTrainedTokenizer, extractor.tokenizer),  # for mypy
-        sent,
-        term_spans,
-    )
-    # Extract the term embeddings
-    return extract_span_embeddings(extractor, sent, span2subtokens)
+    span2subtokens = get_subtoken_alignment(tokenizer, sent, term_spans)
+    # Extract the term embeddings from the initial token embedding layer
+    # per Wen-Yi & Mimno (EMNLP 2023) findings.
+    return extract_span_embeddings(tokenizer, model, sent, span2subtokens, layer=0)  # type: ignore
 
 
 def save_token_embeddings(
     sentence_corpus: pathlib.Path,
     term: str,
     output_pfx: pathlib.Path,
-    model: str = "google/mt5-xl",
+    model_name: str = "google/mt5-xl",
     show_progress: bool = True,
 ):
     """
     Extracts and saves the embeddings of each instance of a given term within
-    each sentence (if any) for a pretrained Hugging Face model (by default MT5-XL).
+    each sentence (if any) for a pretrained MT5 model (by default MT5-XL).
     Since there may not be a one-to-one correspondence between sentences and
     term instances, a CSV containing metadata to identify these embeddings is also
     saved.
@@ -207,17 +241,19 @@ def save_token_embeddings(
     Note:
        * Assumes that the pretrained model uses T5's tokenizer.
     """
-    # Construct feature extractor
-    # Note: We have to explicitly build the tokenizer to get the fixed T5
-    # tokenizer. Set the following link for more details:
+    # Check model name has correct prefix
+    if not model_name.startswith("google/mt5-"):
+        raise ValueError(
+            f"Pretrained model {model_name} is not part of the MT5 family."
+            " These models begin with 'google/mt5-'"
+        )
+
+    # Construct the tokenizer and model
+    # Note: We have to use the not-fast, not-legacy version of the T5 tokenizer to
+    # use the fixed version. For more details, see the following link:
     # https://github.com/huggingface/transformers/pull/24565
-    extractor = pipeline(
-        model=model,
-        # Explicitly setting legacy flag suppresses warning
-        tokenizer=T5Tokenizer.from_pretrained(model, legacy=False),
-        task="feature-extraction",
-    )
-    extractor = cast(FeatureExtractionPipeline, extractor)  # for mypy
+    tokenizer = T5Tokenizer.from_pretrained(model_name, legacy=False)
+    model = MT5EncoderModel.from_pretrained(model_name)
 
     # Output CSV containing metadata to identify the resulting embeddings
     out_meta = output_pfx / ".csv"
@@ -236,7 +272,7 @@ def save_token_embeddings(
         for row in sent_progress:
             row = cast(dict[str, str], row)  # for mypy
             # Extract the term embeddings
-            term_embeddings = get_term_embeddings(extractor, row["text"], term)
+            term_embeddings = get_term_embeddings(tokenizer, model, row["text"], term)
 
             # Write term's metadata to the output CSV
             n_instances = term_embeddings.shape[0]
@@ -333,7 +369,7 @@ def main():
         args.input,
         args.term,
         out_pfx,
-        model=args.model,
+        model_name=args.model,
         show_progress=args.progress,
     )
 
