@@ -17,7 +17,7 @@ title mentions and quotations in sample text content from the Citing Marx projec
     - Fine-grained NER annotation datasets exist for German but these may not include a relevant category (e.g., work of art) and likely require building our own NER pipeline.
 - Quotation detection 
   - seq2seq-quotation-attribution : some overlap with manual annotation (often detected as multiple different quotations), but also detected many irrelevant quotations (not a perfect fit for our content or our question)
-  - rule-based quotation detection : ran as a baseline to compare with seq2seq results and manual annotation; finds many non-relevant quotations and is brittle when quotes are not closed or span page breaks
+  - rule-based quotation detection : ran as a baseline to compare with seq2seq results and manual annotation; finds many non-relevant quotations (as well as some title mentions) and is brittle when quotes are not closed or span page breaks
 
 
 ### Contents
