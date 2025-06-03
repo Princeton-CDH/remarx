@@ -10,7 +10,7 @@ to be included; content from the ending page is _not_ included.
 
 Example usage:
 
-    python tei_page.py tei_doc.xml  -s 12 -e 14 page12-13.txt
+    python tei_page.py tei_doc.xml -s 12 -e 14 -o page12-13.txt
 
 
 This will extract text content between `<pb n="12"/>` and `<pb n="14"/>`
@@ -19,7 +19,10 @@ as lines of text and save them to a new file named `page12.txt`.
 If the end page number is not specified, the script will assume
 end page is start page + 1 (only works for numeric pages). Example:
 
-    python tei_page.py tei_doc.xml  -s 12  page12.txt
+    python tei_page.py tei_doc.xml -s 12 -o page12.txt
+
+Additional options:
+- `-l` or `--line-numbers`: include XML line numbers at the beginning of each line
 
 
 """
@@ -37,13 +40,23 @@ TEI_NAMESPACE = "http://www.tei-c.org/ns/1.0"
 
 # namespaced tags look like {http://www.tei-c.org/ns/1.0}tagname
 # create a named tuple of short tag name -> namespaced tag name
-_tei_tags = ["pb", "lb", "note", "add", "label"]
+_tei_tags = ["pb", "lb", "note", "add", "label", "ref", "div3"]
 TagNames = namedtuple("TagNames", _tei_tags)
 TEI_TAG = TagNames(**{tag: "{%s}%s" % (TEI_NAMESPACE, tag) for tag in _tei_tags})
 
 
+def is_footnote_content(el: etree._Element) -> bool:
+    if el.tag in [TEI_TAG.ref, TEI_TAG.note] and el.attrib["type"] == "footnote":
+        return True
+    return any([is_footnote_content(el) for el in el.iterancestors()])
+
+
 def text_between_pages(
-    element: etree._Element, start: str, end: str, line_numbers: bool = False
+    element: etree._Element,
+    start: str,
+    end: str,
+    line_numbers: bool = False,
+    include_footnotes: bool = True,
 ) -> Iterable[str]:
     """generator of text strings between this page beginning tag and
     the next one"""
@@ -61,10 +74,16 @@ def text_between_pages(
 
         # yield newline for a line break tag or note
         if started and text.is_tail:
-            if parent.tag in newline_before_tags:
+            if parent.tag in newline_before_tags and (
+                include_footnotes or not is_footnote_content(parent)
+            ):
                 yield "\n"
-            if line_numbers and parent.tag == TEI_TAG.lb:
-                yield f"{parent.attrib['n']:>2}  "
+
+                if line_numbers and parent.tag == TEI_TAG.lb:
+                    # when line numbers are requested, output right-justified line number
+                    # with two spaces before the line of text
+
+                    yield f"{parent.attrib['n']:>2}  "
 
         # if we hit a pb tag, check the n attribute for start/ end condition
         if text.is_tail and parent.tag == TEI_TAG.pb:
@@ -93,6 +112,16 @@ def text_between_pages(
 
         # yield text if we are after the start page
         if started:
+            # if include footnotes has been turned off, check if content should be skipped
+            if not include_footnotes:
+                # if text is directly inside something under a footnote element
+                # or if text is nested under a a footnote element
+                if (text.is_text and is_footnote_content(parent)) or (
+                    text.is_tail and is_footnote_content(parent.getparent())
+                ):
+                    # skip this text content
+                    continue
+
             # remove trailing whitespace if it includes a newline
             # (i.e., space between indented tags in the XML)
             yield re.sub(r"\s*\n\s*", " ", text)
@@ -112,7 +141,11 @@ def find_common_ancestor(el1: etree._Element, el2: etree._Element) -> etree._Ele
 
 
 def get_pages(
-    doc: etree._Element, start: str, end: str, line_numbers: bool = False
+    doc: etree._Element,
+    start: str,
+    end: str,
+    line_numbers: bool = False,
+    include_footnotes: bool = True,
 ) -> str:
     # use the start and end page numbers to find the elements of interest
     start_pb = end_pb = None
@@ -146,7 +179,13 @@ def get_pages(
 
     # get text between start/end
     text_lines = list(
-        text_between_pages(common_ancestor, start, end, line_numbers=line_numbers)
+        text_between_pages(
+            common_ancestor,
+            start,
+            end,
+            line_numbers=line_numbers,
+            include_footnotes=include_footnotes,
+        )
     )
     print(f"Extracted {len(text_lines)} lines of text.")
 
@@ -183,13 +222,19 @@ def main():
         "-l",
         "--line-numbers",
         action="store_true",
-        help="Output line numbers at the beginning of each line (off by default)",
+        help="Output XML line numbers at the beginning of each line (off by default)",
         default=False,
+    )
+    parser.add_argument(
+        "--footnotes",
+        action=argparse.BooleanOptionalAction,
+        help="Use to control whether output text should include footnote markers and content (default: %(default)s)",
+        default=True,
     )
     parser.add_argument(
         "-o",
         "--output",
-        help="Filename where the output should be saved; if not specified, prints output to stdout",
+        help="Filename where the output should be saved; if not specified, prints extracted text to stdout",
         type=pathlib.Path,
         required=False,
     )
@@ -221,7 +266,11 @@ def main():
 
     try:
         text_content = get_pages(
-            doc, args.start_page, end_page, line_numbers=args.line_numbers
+            doc,
+            args.start_page,
+            end_page,
+            line_numbers=args.line_numbers,
+            include_footnotes=args.footnotes,
         )
     except ValueError as err:
         # display any error message, then continue on to cleanup
