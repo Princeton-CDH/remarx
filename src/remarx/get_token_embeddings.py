@@ -36,8 +36,13 @@ from transformers import (
 def normalize_text(text: str) -> str:
     """
     Normalizes text so that it will align with its tokenized version.
+
+    Since we assume we're using a T5Tokenizer for tokenization, we want to
+    ensure that our text will not change length when sentencepiece's (default)
+    normalization is applied.
     """
-    # Remove any outer whitespace, consolidate multiple whitespace characters, and add a leading space
+    # Remove any outer whitespace, convert whitespace sequences to a single space,
+    # and add a leading space
     return " " + " ".join(text.strip().split())
 
 
@@ -59,13 +64,22 @@ def get_subtoken_alignment(
     spans: list[tuple[int, int]],
 ) -> list[list[int]]:
     """
-    For a sentence, determine the correspondence between each given span and
-    the given T5 tokenizer's subtokens. In cases where span and subtoken boundaries
-    are misaligned, all subtokens that contain chracters within the span are included.
-    Returns the span's subtoken positions as a list of lists of integers.
+    Given a sentence and a list of spans for terms (or phrases) of interest
+    within the sentence (i.e., produced by `get_term_spans`), returns a list
+    of subtoken indices within the subtoken sequence produced by the tokenizer.
+    In cases where span and subtoken boundaries are misaligned, all subtokens
+    that contain chracters within the span are included.
+
+    Assumes:
+      * The pretrained tokenizer is a T5Tokenizer, so encoding only adds a special
+        subtoken (</s>) at the end
+      * The sentence has been normalized using `normalize_text`
+      * Spans are consecutive and non-overlapping
     """
-    # Check that tokenized text aligns with original
+    # Note: this does not include the special tokens added when encoding
     subtokens = tokenizer.tokenize(sentence)
+
+    # Check that tokenized text aligns with original
     if len("".join(subtokens)) != len(sentence):
         raise ValueError(
             "Error: Tokenized sentence does not align with input. "
@@ -73,7 +87,7 @@ def get_subtoken_alignment(
         )
 
     # Initialize span to subtoken correspondence
-    span2subtokens: list[list[int]] = [[] for x in spans]
+    span2subtokens: list[list[int]] = [[]]
     # Calculate subtoken start indices
     subtoken_starts: list[int] = []
     for i, subtoken in enumerate(subtokens):
@@ -98,15 +112,16 @@ def get_subtoken_alignment(
         # Subtoken overlaps token span
         if sub_start < token_end and token_start < token_end:
             # Map subtoken to token
-            span2subtokens[j_token].append(i_subtoken)
+            span2subtokens[-1].append(i_subtoken)
 
         # Increment subtoken if it doesn't continue past the current token
         if sub_end <= token_end:
             i_subtoken += 1
 
         # Increment token if it doesn't continue past the current subtoken
-        if token_end < sub_end:
+        if token_end <= sub_end:
             j_token += 1
+            span2subtokens.append([])  # Add next subtoken list
 
     return span2subtokens
 
@@ -117,7 +132,7 @@ def extract_span_embeddings(
     span_to_subtokens: list[list[int]],
 ) -> npt.NDArray:
     """
-    For a sentence, extract the span embeddings using a given hugging face feature
+    For a sentence, extract the span embeddings using a given Hugging Face feature
     extraction pipeline. The spans of interest are represented by a list of their
     subtokens which were determined using `get_subtoken_alignment`. A span's
     embedding is the average of its subtokens' embeddings.
@@ -145,7 +160,37 @@ def extract_span_embeddings(
     return np.vstack(token_embeddings)
 
 
-def save_term_embeddings(
+def get_term_embeddings(
+    extractor: FeatureExtractionPipeline,
+    sentence: str,
+    term: str,
+):
+    """
+    For a sentence, extract the token-level embeddings for each instance of a
+    given term within the sentence using a given Hugging Face feature extraction
+    pipeline.
+    Returns a numpy array of the resulting token embeddings
+
+    Note:
+      * The resulting array's rows correspond to distinct embeddings
+      * Embedding ordering corresponds to the relative position of its token within
+        the sentence
+    """
+    # Normalize sentence text
+    sent = normalize_text(sentence)
+    # Identify indices for term's tokens (if any)
+    term_spans = get_term_spans(sent, term)
+    # Determine how these term spans align with T5's (sub)tokenization
+    span2subtokens = get_subtoken_alignment(
+        cast(PreTrainedTokenizer, extractor.tokenizer),  # for mypy
+        sent,
+        term_spans,
+    )
+    # Extract the term embeddings
+    return extract_span_embeddings(extractor, sent, span2subtokens)
+
+
+def save_token_embeddings(
     sentence_corpus: pathlib.Path,
     term: str,
     output_pfx: pathlib.Path,
@@ -154,18 +199,24 @@ def save_term_embeddings(
 ):
     """
     Extracts and saves the embeddings of each instance of a given term within
-    each sentence (if any) for a pretrained HuggingFace model (by default MT5-XL).
+    each sentence (if any) for a pretrained Hugging Face model (by default MT5-XL).
     Since there may not be a one-to-one correspondence between sentences and
     term instances, a CSV containing metadata to identify these embeddings is also
     saved.
 
-    Note: Assumes that the pretrained model is compatible with T5's tokenizer.
+    Note:
+       * Assumes that the pretrained model uses T5's tokenizer.
     """
-    # Instantiate tokenizer and feature extractor
-    ## Set legacy flag to remove warning tied to this update:
-    ## https://github.com/huggingface/transformers/pull/24565
-    tokenizer = T5Tokenizer.from_pretrained(model, legacy=False)
-    extractor = pipeline(model=model, tokenizer=tokenizer, task="feature-extraction")
+    # Construct feature extractor
+    # Note: We have to explicitly build the tokenizer to get the fixed T5
+    # tokenizer. Set the following link for more details:
+    # https://github.com/huggingface/transformers/pull/24565
+    extractor = pipeline(
+        model=model,
+        # Explicitly setting legacy flag suppresses warning
+        tokenizer=T5Tokenizer.from_pretrained(model, legacy=False),
+        task="feature-extraction",
+    )
     extractor = cast(FeatureExtractionPipeline, extractor)  # for mypy
 
     # Output CSV containing metadata to identify the resulting embeddings
@@ -184,17 +235,12 @@ def save_term_embeddings(
         )
         for row in sent_progress:
             row = cast(dict[str, str], row)  # for mypy
-            # Normalize sentence text
-            sent = normalize_text(row["text"])
-            # Identify indices for term's tokens (if any)
-            term_spans = get_term_spans(sent, term)
-            # Determine how these term spans align with T5's (sub)tokenizer
-            span2subtokens = get_subtoken_alignment(tokenizer, sent, term_spans)
             # Extract the term embeddings
-            term_embeddings = extract_span_embeddings(extractor, sent, span2subtokens)
+            term_embeddings = get_term_embeddings(extractor, row["text"], term)
 
             # Write term's metadata to the output CSV
-            for i in range(len(term_spans)):
+            n_instances = term_embeddings.shape[0]
+            for i in range(n_instances):
                 entry = {
                     "row_id": embedding_index,
                     "file": row["file"],
@@ -283,7 +329,7 @@ def main():
         )
         sys.exit(1)
 
-    save_term_embeddings(
+    save_token_embeddings(
         args.input,
         args.term,
         out_pfx,
