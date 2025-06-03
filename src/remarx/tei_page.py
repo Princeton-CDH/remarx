@@ -42,7 +42,9 @@ TagNames = namedtuple("TagNames", _tei_tags)
 TEI_TAG = TagNames(**{tag: "{%s}%s" % (TEI_NAMESPACE, tag) for tag in _tei_tags})
 
 
-def text_between_pages(element: etree._Element, start: str, end: str) -> Iterable[str]:
+def text_between_pages(
+    element: etree._Element, start: str, end: str, line_numbers: bool = False
+) -> Iterable[str]:
     """generator of text strings between this page beginning tag and
     the next one"""
 
@@ -58,8 +60,11 @@ def text_between_pages(element: etree._Element, start: str, end: str) -> Iterabl
         parent = text.getparent()
 
         # yield newline for a line break tag or note
-        if started and text.is_tail and parent.tag in newline_before_tags:
-            yield "\n"
+        if started and text.is_tail:
+            if parent.tag in newline_before_tags:
+                yield "\n"
+            if line_numbers and parent.tag == TEI_TAG.lb:
+                yield f"{parent.attrib['n']:>2}  "
 
         # if we hit a pb tag, check the n attribute for start/ end condition
         if text.is_tail and parent.tag == TEI_TAG.pb:
@@ -106,7 +111,9 @@ def find_common_ancestor(el1: etree._Element, el2: etree._Element) -> etree._Ele
             return el2_ancestor
 
 
-def get_pages(doc: etree._Element, start: str, end: str) -> str:
+def get_pages(
+    doc: etree._Element, start: str, end: str, line_numbers: bool = False
+) -> str:
     # use the start and end page numbers to find the elements of interest
     start_pb = end_pb = None
     # iterative find is faster than xpath since it does not need to load
@@ -138,7 +145,9 @@ def get_pages(doc: etree._Element, start: str, end: str) -> str:
     common_ancestor = find_common_ancestor(start_pb, end_pb)
 
     # get text between start/end
-    text_lines = list(text_between_pages(common_ancestor, start, end))
+    text_lines = list(
+        text_between_pages(common_ancestor, start, end, line_numbers=line_numbers)
+    )
     print(f"Extracted {len(text_lines)} lines of text.")
 
     return "".join(text_lines)
@@ -171,9 +180,18 @@ def main():
         required=False,
     )
     parser.add_argument(
-        "output",
-        help="Filename where the output should be saved",
+        "-l",
+        "--line-numbers",
+        action="store_true",
+        help="Output line numbers at the beginning of each line (off by default)",
+        default=False,
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        help="Filename where the output should be saved; if not specified, prints output to stdout",
         type=pathlib.Path,
+        required=False,
     )
     args = parser.parse_args()
 
@@ -181,7 +199,7 @@ def main():
     if not args.tei_file.is_file():
         print(f"Error: TEI file {args.tei_file} does not exist", file=sys.stderr)
         sys.exit(1)
-    if args.output.is_file():
+    if args.output is not None and args.output.is_file():
         print(
             f"Error: output file {args.output} exists. Will not overwrite.",
             file=sys.stderr,
@@ -201,18 +219,23 @@ def main():
 
     doc = etree.parse(args.tei_file)
 
-    with args.output.open("w") as outfile:
-        try:
-            outfile.write(get_pages(doc, args.start_page, end_page))
-        except ValueError as err:
-            # display any error message, then continue on to cleanup
-            print(err, file=sys.stderr)
+    try:
+        text_content = get_pages(
+            doc, args.start_page, end_page, line_numbers=args.line_numbers
+        )
+    except ValueError as err:
+        # display any error message, then continue on to cleanup
+        print(err, file=sys.stderr)
+        sys.exit(1)
 
-    # check if file is zero size (something went wrong)
-    # remove and report the empty file
-    if args.output.stat().st_size == 0:
-        print("No text output; file not created.", file=sys.stderr)
-        args.output.unlink()
+    if text_content:
+        if args.output:
+            with args.output.open("w") as outfile:
+                outfile.write(text_content)
+        else:
+            print(text_content)
+    else:
+        print("No text output.", file=sys.stderr)
 
 
 if __name__ == "__main__":
