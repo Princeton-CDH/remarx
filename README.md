@@ -4,7 +4,7 @@ This is work associated with the CDH project [Citing Marx](https://cdh.princeton
 
 ## Pretrained text embeddings experiments
 
-This branch contains and data for preliminary experiments
+This branch contains code and data for preliminary experiments
 using language model embeddings to identify similar sentences
 (quotation detection) and differentiate word tokens (title detection).
 
