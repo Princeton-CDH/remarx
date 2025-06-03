@@ -19,4 +19,4 @@ using language model embeddings to identify similar sentences
 - `src/remarx/`: python package with utility code and scripts
    - `build_sentence_corpus.py`: script to parse a directory of text files into a JSONL corpus of sentences; uses Stanza for sentence splitting; adapted from experiment 2 with very light modification
    - `get_sentence_embeddings.py` : script to build and save sentence-level embeddings for a sentence-level corpus
-   - `tei_page.py` : script to extract save TEI content between two pages as plain text
+   - `tei_page.py` : script to extract and save TEI content between two pages as plain text
