@@ -21,6 +21,7 @@ import csv
 import pathlib
 import re
 import sys
+import unicodedata
 from itertools import accumulate
 from typing import cast
 
@@ -46,9 +47,12 @@ def normalize_text(text: str) -> str:
     ensure that our text will not change length when sentencepiece's (default)
     normalization is applied.
     """
-    # Remove any outer whitespace, convert whitespace sequences to a single space,
-    # and add a leading space
-    return " " + " ".join(text.strip().split())
+    # First, perform NFKC unicode normalization
+    new_text = unicodedata.normalize("NFKC", text)
+
+    # Then, remove any outer whitespace, convert whitespace sequences to a
+    # single space, and add a leading space
+    return " " + " ".join(new_text.strip().split())
 
 
 def get_term_spans(text: str, term: str) -> list[tuple[int, int]]:
@@ -171,6 +175,10 @@ def extract_span_embeddings(
     embeddings correspond to the hidden states of a specific layer of the model. By
     default, this is the final layer.
     Returns a numpy array of the resulting span embeddings.
+
+    Assumes:
+      * span_to_subtokens is not empty
+      * span_to_subtokens sublits are non-empty and contain valid subtoken ids
     """
     # Using the initial token embedding layer
     subtoken_embeddings = extract_subtoken_embeddings(
@@ -202,7 +210,7 @@ def get_term_embeddings(
     model: MT5EncoderModel,
     sentence: str,
     term: str,
-):
+) -> npt.NDArray | None:
     """
     For a sentence, extract the token-level embeddings for each instance of a
     given term within the sentence using a given pretrained T5 tokenizer and MT5
@@ -220,7 +228,11 @@ def get_term_embeddings(
     term_spans = get_term_spans(sent, term)
     # Determine how these term spans align with T5's (sub)tokenization
     span2subtokens = get_subtoken_alignment(tokenizer, sent, term_spans)
-    return extract_span_embeddings(tokenizer, model, sent, span2subtokens)  # type: ignore
+
+    if span2subtokens:
+        return extract_span_embeddings(tokenizer, model, sent, span2subtokens)  # type: ignore
+    else:
+        return None
 
 
 def save_token_embeddings(
@@ -255,7 +267,7 @@ def save_token_embeddings(
     model = MT5EncoderModel.from_pretrained(model_name)
 
     # Output CSV containing metadata to identify the resulting embeddings
-    out_meta = output_pfx / ".csv"
+    out_meta = output_pfx.with_suffix(output_pfx.suffix + ".csv")
     fieldnames = ["row_id", "file", "sent_id", "token_order"]
 
     token_embeddings = []
@@ -273,6 +285,10 @@ def save_token_embeddings(
             # Extract the term embeddings
             term_embeddings = get_term_embeddings(tokenizer, model, row["text"], term)
 
+            # Continue if no instances found
+            if term_embeddings is None:
+                continue
+
             # Write term's metadata to the output CSV
             n_instances = term_embeddings.shape[0]
             for i in range(n_instances):
@@ -288,8 +304,7 @@ def save_token_embeddings(
             token_embeddings.append(term_embeddings)
 
     # Write output embeddings array
-    out_npy = output_pfx / ".npy"
-    np.save(out_npy, np.vstack(token_embeddings))
+    np.save(output_pfx, np.vstack(token_embeddings))
 
 
 def main():
@@ -351,13 +366,13 @@ def main():
         sys.exit(1)
 
     out_pfx = args.output_dir / args.output_name
-    if (out_pfx / ".csv").is_file():
+    if out_pfx.with_suffix(out_pfx.suffix + ".csv").is_file():
         print(
             f"Error: output metadata file {out_pfx}.csv exists. Will not overwrite",
             file=sys.stderr,
         )
         sys.exit(1)
-    if (out_pfx / ".npy").is_file():
+    if out_pfx.with_suffix(out_pfx.suffix + ".npy").is_file():
         print(
             f"Error: output embeddings file {out_pfx}.npy exists. Will not overwrite",
             file=sys.stderr,
