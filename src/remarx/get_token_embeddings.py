@@ -21,6 +21,7 @@ import csv
 import pathlib
 import re
 import sys
+from itertools import accumulate
 from typing import cast
 
 import numpy as np
@@ -76,7 +77,7 @@ def get_subtoken_alignment(
 
     Assumes:
       * The pretrained tokenizer is a T5Tokenizer, so encoding only adds a special
-        subtoken (</s>) at the end
+        subtoken (</s>) at the end, so it will not impact alignment.
       * The sentence has been normalized using `normalize_text`
       * Spans are consecutive and non-overlapping
     """
@@ -87,45 +88,43 @@ def get_subtoken_alignment(
     if len("".join(subtokens)) != len(sentence):
         raise ValueError(
             "Error: Tokenized sentence does not align with input. "
-            "Trying applying normalize_text first."
+            "Try applying normalize_text first."
         )
 
     # Initialize span to subtoken correspondence
-    span2subtokens: list[list[int]] = [[]]
+    span2subtokens: list[list[int]] = []
     # Calculate subtoken start indices
-    subtoken_starts: list[int] = []
-    for i, subtoken in enumerate(subtokens):
-        if i == 0:
-            start = 0
-        else:
-            start = subtoken_starts[i - 1] + len(subtoken)
-        subtoken_starts.append(start)
+    subtoken_lens = [len(s) for s in subtokens]
+    subtoken_starts = list(accumulate(subtoken_lens, initial=0))[:-1]
 
     i_subtoken = 0
-    j_token = 0
-    while i_subtoken < len(subtokens) and j_token < len(spans):
+    j_span = 0
+    while i_subtoken < len(subtokens) and j_span < len(spans):
+        # Check if new subtoken list needs to be created
+        if j_span == len(span2subtokens):
+            span2subtokens.append([])
+        # Get subtoken's character-level indices
         sub_start = subtoken_starts[i_subtoken]
         sub_end = (
             subtoken_starts[i_subtoken + 1]
-            if i_subtoken < len(subtokens) - 1
+            if i_subtoken + 1 < len(subtokens)
             else len(sentence)
         )
+        # Get span's character-level indices
+        span_start, span_end = spans[j_span]
 
-        token_start, token_end = spans[j_token]
-
-        # Subtoken overlaps token span
-        if sub_start < token_end and token_start < token_end:
-            # Map subtoken to token
+        # Subtoken overlaps with span
+        if sub_start < span_end and span_start < sub_end:
+            # Map subtoken to span
             span2subtokens[-1].append(i_subtoken)
 
-        # Increment subtoken if it doesn't continue past the current token
-        if sub_end <= token_end:
+        # Increment subtoken if it doesn't continue past the current span
+        if sub_end <= span_end:
             i_subtoken += 1
 
-        # Increment token if it doesn't continue past the current subtoken
-        if token_end <= sub_end:
-            j_token += 1
-            span2subtokens.append([])  # Add next subtoken list
+        # Increment span if it doesn't continue past the current subtoken
+        if span_end <= sub_end:
+            j_span += 1
 
     return span2subtokens
 
@@ -146,11 +145,13 @@ def extract_subtoken_embeddings(
 
     """
     # Note: assuming the encoded sentence is shorter than the model's max length
-    input_ids = tokenizer(sentence, return_tensors="pt")
+    input_ids = tokenizer(sentence, return_tensors="pt").input_ids
 
     if layer == -1:
+        # Tensor shape ( # blocks = 1, # subtokens, # dimensions )
         return model(input_ids).last_hidden_state[0].cpu().detach().numpy()  # type: ignore
 
+    # Tensor shape: ( # layers, # blocks =1, # subtokens, # dimensions )
     hidden_states = model(input_ids, output_hidden_states=True).hidden_states  # type: ignore
     return hidden_states[layer][0].cpu().detach().numpy()
 
@@ -219,9 +220,7 @@ def get_term_embeddings(
     term_spans = get_term_spans(sent, term)
     # Determine how these term spans align with T5's (sub)tokenization
     span2subtokens = get_subtoken_alignment(tokenizer, sent, term_spans)
-    # Extract the term embeddings from the initial token embedding layer
-    # per Wen-Yi & Mimno (EMNLP 2023) findings.
-    return extract_span_embeddings(tokenizer, model, sent, span2subtokens, layer=0)  # type: ignore
+    return extract_span_embeddings(tokenizer, model, sent, span2subtokens)  # type: ignore
 
 
 def save_token_embeddings(
