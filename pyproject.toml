@@ -34,6 +34,11 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "pre-commit",
+  "remarx[test]",
+]
+test = [
+  "pytest",
+  "pytest-cov",
 ]
 
 [project.scripts]
