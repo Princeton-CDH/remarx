@@ -29,6 +29,8 @@ dependencies = [
   "sentence-transformers",
   "transformers[torch]", # CPU-only version
   "tqdm",
+  "scikit-learn",
+  "scipy-stubs", # for mypy
 ]
 
 [project.optional-dependencies]
@@ -39,6 +41,8 @@ dev = [
 test = [
   "pytest",
   "pytest-cov",
+  # for scikit-learn type stubs for mypy
+  "microsoft-python-type-stubs @ git+https://github.com/microsoft/python-type-stubs.git",
 ]
 
 [project.scripts]
@@ -81,3 +85,7 @@ enabled = true
 
 [tool.marimo.experimental]
 lsp = true
+
+[tool.hatch.metadata]
+# so python type stubs can be installed from GitHub (i.e., direct reference)
+allow-direct-references = true
