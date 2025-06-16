@@ -2,7 +2,7 @@
 Script to build embeddings of a specific term for each sentence in a
 sentence-level corpus file (JSONL). The resulting embeddings are saves as a .npy
 binary file. By default the MT5-XL model (google/mt5-xl) is used, but this can
-be changed to another MT5 variants. Since term instances and sentences are
+be changed to other MT5 variants. Since term instances and sentences are
 unlikely to have a one-to-one correspondence, a metadata file (CSV) identifying
 each embedding is also generated.
 
