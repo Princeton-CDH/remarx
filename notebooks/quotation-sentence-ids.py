@@ -6,9 +6,11 @@ app = marimo.App(width="medium")
 
 @app.cell
 def _():
+    import pathlib
+
     import marimo as mo
     import polars as pl
-    return mo, pl
+    return mo, pathlib, pl
 
 
 @app.cell(hide_code=True)
@@ -106,6 +108,17 @@ def _(quote_sentences):
     return
 
 
+@app.cell
+def _(quote_sentences):
+    # select fields for output
+    quote_sentences.select(
+        "UUID", "file", "sent_id", "text", "COMMENTS"
+    ).write_csv("data/sentence-eval-pairs/dnz_quoted_sentences.csv")
+
+    quote_sentences.select("UUID", "file", "sent_id", "text", "COMMENTS")
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(
@@ -136,10 +149,40 @@ def _(mo, quote_df):
 def _():
     # MEGA text content based on corrected citation page and line numbers
 
+    # for each annotation above, store the filename and start and end strings that can be used to identify
+    # indices in the text file, which can then be used to identify the set of overlapping sentences.
+
+    mega_text = {
+        # annotation id
+        "4eb40d8e-928e-4b17-938f-8c72045db14d": {
+            "file": "p395-396.txt",
+            "start_str": "Ihr Erfolg bewies",
+            "end_str": "Methode zur Produktion vollseitig entwickelter Menschen.",
+        },
+        "df81d5e4-4779-4117-b89c-7055c1cd7cc7": {
+            "file": "p402.txt",
+            "start_str": "daß die Zusammensetzung des kombinirten",
+            "end_str": "Quelle humaner Entwicklung umschlagen muß",
+        },
+        "598859f7-3f49-4cb8-8383-8aefbc4ca667": {
+            "file": "p25.txt",
+            "start_str": "Die verschiednen Proportionen, worin",
+            "end_str": "und scheinen ihnen daher durch das Herkommen \ngegeben",
+        },
+        "0f93adf5-75c6-49a9-a4ce-7caea83f636c": {
+            "file": "p147.txt",
+            "start_str": "Ist der Werth dieser Kraft höher",
+            "end_str": "in verhältnißmäßig höheren Werthe",
+        },
+    }
+
     # text content here was manually extracted using the tei_page script with line numbers turned on and footnotes omitted,
     # then manually selecting from the specified lines based on the quotation text above
 
-    mega_text = {
+    # this is the full set of text content used to generat start and end strings above;
+    # no longer directly used, but kept as a reference
+
+    mega_text2 = {
         # ./src/remarx/tei_page.py data/MEGA_A2_B005-00_ETX.xml -s 395 -e 397 --no-footnotes
         # data/mega-sample-pages/p395-396.txt
         "4eb40d8e-928e-4b17-938f-8c72045db14d": """Ihr Erfolg bewies zuerst die Möglichkeit der Verbindung von
@@ -186,6 +229,80 @@ def _():
     daher, in denselben Zeiträumen, in verhältnißmäßig höheren Werthen.
     """,
     }
+    return (mega_text,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(
+        r"""Use filenames and start/end strings to determine character indices, for matching with sentences."""
+    )
+    return
+
+
+@app.cell
+def _(mega_text, pathlib, pl):
+    mega_page_dir = pathlib.Path("data/mega-sample-pages/")
+
+    cited_text_info = []
+
+
+    for annotation_id, citation_source in mega_text.items():
+        file_path = mega_page_dir / citation_source["file"]
+        file_contents = file_path.read_text()
+        start_index = file_contents.index(citation_source["start_str"])
+        end_index = file_contents.index(citation_source["end_str"]) + len(
+            citation_source["end_str"]
+        )
+        cited_text_info.append(
+            {
+                "annotation_id": annotation_id,
+                "file": citation_source["file"],
+                "start_idx": start_index,
+                "end_idx": end_index,
+            }
+        )
+
+    cited_texts_df = pl.from_dicts(cited_text_info)
+    cited_texts_df
+    return (cited_texts_df,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""Load sentence corpus file.""")
+    return
+
+
+@app.cell
+def _(pl):
+    mega_sent_df = pl.read_ndjson("data/sentence-corpora/mega-sample-sents.jsonl")
+
+    # calculate end character index
+    mega_sent_df = mega_sent_df.with_columns(
+        char_end_idx=pl.col("char_idx").add(pl.col("text").str.len_chars())
+    )
+    mega_sent_df
+    return (mega_sent_df,)
+
+
+@app.cell
+def _(cited_texts_df, mega_sent_df, pl):
+    # join sentence corpus with cited sentence details
+
+    # join subset of quotes with page text; rename page text columns for clarity
+    cited_sentences = cited_texts_df.join_where(
+        mega_sent_df,
+        # limit to annotations and sentences from the same file
+        pl.col("file") == pl.col("file_right"),
+        # look for sentences with any overlap with the annotation content
+        pl.col("start_idx") < pl.col("char_end_idx"),
+        # annotation ends after sentence starts
+        pl.col("end_idx") > pl.col("char_idx"),
+    ).select("annotation_id", "file", "sent_id", "text")
+
+    cited_sentences.write_csv("data/sentence-eval-pairs/marx_cited_sentences.csv")
+    cited_sentences
     return
 
 
@@ -195,10 +312,8 @@ def _(mo):
         r"""
     ### next steps:
 
-    - check if footnotes should be omitted from previously generated page content
-    - update mega sentence corpora with p395-396.txt file  (remove p396.txt) and any other revised pages
-    - figure out how to align these text passages to the sentences in the full page
-    - figure out how to match up specific sentences within quotations and cited passage (with help from team if possible)
+    - manually match up dnz <-> mega sentence pairs (first-pass, easy for single-sentence quotes)
+    - share with project team for review/refinement as google spreadsheet
     """
     )
     return
