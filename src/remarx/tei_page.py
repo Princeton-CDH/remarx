@@ -279,8 +279,7 @@ def main():
 
     if text_content:
         if args.output:
-            with args.output.open("w") as outfile:
-                outfile.write(text_content)
+            args.output.write_text(text_content)
         else:
             print(text_content)
     else:
