@@ -140,7 +140,7 @@ def extract_subtoken_embeddings(
     layer: int = -1,
 ):
     """
-    For a sentence, extract its subtoken embeddings (i.e., hiddens states) from
+    For a sentence, extract its subtoken embeddings (i.e., hidden states) from
     a specific layer of a given model. By default, this is the final layer.
     Returns a numpy array of the resulting subtoken embeddings.
 
