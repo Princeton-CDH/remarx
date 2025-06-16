@@ -132,17 +132,17 @@ def _(mo, quote_df):
     return
 
 
-app._unparsable_cell(
-    r"""
+@app.cell
+def _():
     # MEGA text content based on corrected citation page and line numbers
 
     # text content here was manually extracted using the tei_page script with line numbers turned on and footnotes omitted,
     # then manually selecting from the specified lines based on the quotation text above
 
-    mega_text = [
+    mega_text = {
         # ./src/remarx/tei_page.py data/MEGA_A2_B005-00_ETX.xml -s 395 -e 397 --no-footnotes
         # data/mega-sample-pages/p395-396.txt
-        \"4eb40d8e-928e-4b17-938f-8c72045db14d\": \"\"\"Ihr Erfolg bewies zuerst die Möglichkeit der Verbindung von
+        "4eb40d8e-928e-4b17-938f-8c72045db14d": """Ihr Erfolg bewies zuerst die Möglichkeit der Verbindung von
     Unterricht und Gymnastik mit Handarbeit, also auch von Handarbeit mit 
     Unterricht und Gymnastik. Die Fabrikinspektoren entdeckten bald aus den
     Zeugenverhören der Schulmeister, daß die Fabrikkinder, obgleich sie nur
@@ -166,33 +166,27 @@ app._unparsable_cell(
     Arbeit mit Unterricht und Gymnastik verbinden wird, nicht nur als eine
     Methode zur Steigerung der gesellschaftlichen Produktion, sondern als die
     einzige Methode zur Produktion vollseitig entwickelter Menschen.
-        \"\"\",
+        """,
         # data/mega-sample-pages/p402.txt
-        \"df81d5e4-4779-4117-b89c-7055c1cd7cc7\": \"\"\"daß die Zusammensetzung des kombinirten Arbeitspersonals aus Individuen
+        "df81d5e4-4779-4117-b89c-7055c1cd7cc7": """daß die Zusammensetzung des kombinirten Arbeitspersonals aus Individuen
     beiderlei Geschlechts und der verschiedensten Altersstufen, obgleich in ihrer
     naturwüchsig brutalen, kapitalistischen Form, wo der Arbeiter für den Pro-
     duktionsprozeß, nicht der Produktionsprozeß für den Arbeiter da ist, Pest-
     quelle des Verderbs und der Sklaverei, unter entsprechenden Verhältnissen
-    umgekehrt zur Quelle humaner Entwicklung umschlagen muß.\"\"\",
+    umgekehrt zur Quelle humaner Entwicklung umschlagen muß.""",
         # data/mega-sample-pages/p25.txt
-        \"598859f7-3f49-4cb8-8383-8aefbc4ca667\": \"\"\"Die verschiednen Proportionen, worin
+        "598859f7-3f49-4cb8-8383-8aefbc4ca667": """Die verschiednen Proportionen, worin
     verschiedne Arbeitsarten auf einfache Arbeit als ihre Maßeinheit reducirt
     sind, werden durch einen gesellschaftlichen Prozeß hinter dem Rücken der
     Produzenten festgesetzt und scheinen ihnen daher durch das Herkommen
-    gegeben.\"\"\",
+    gegeben.""",
         # data/mega-sample-pages/p147.txt
-        \"0f93adf5-75c6-49a9-a4ce-7caea83f636c\": \"\"\"Ist der Werth dieser Kraft höher,
+        "0f93adf5-75c6-49a9-a4ce-7caea83f636c": """Ist der Werth dieser Kraft höher,
     so äußert sie sich aber auch in höherer Arbeit und vergegenständlicht sich
     daher, in denselben Zeiträumen, in verhältnißmäßig höheren Werthen.
-    \"\"\"
-
-    ]
-
-
-
     """,
-    name="_"
-)
+    }
+    return
 
 
 @app.cell
@@ -205,8 +199,6 @@ def _(mo):
     - update mega sentence corpora with p395-396.txt file  (remove p396.txt) and any other revised pages
     - figure out how to align these text passages to the sentences in the full page
     - figure out how to match up specific sentences within quotations and cited passage (with help from team if possible)
-
-
     """
     )
     return
