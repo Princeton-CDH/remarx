@@ -15,7 +15,7 @@ using language model embeddings to identify similar sentences
   - `dnz-sample-articles/`: text files for two sample articles annotated with quotes that have known citations
   - `mega-sample-pages/`: text files for 4 pages of MEGA cited in the two sample articles; extracted from MEGA TEI xml file with `tei_page.py` script
   - `sentence-corpora/` : JSON lines files with sentence corpora for dnz articles and mega pages; created with `build_sentence_corpus.py` script
-    - `title-mentions-sentences.jsonl`: JSONL lines file version of `title_mentions_sent_results.csv` from Experment II.
+    - `title-mentions-sentences.jsonl`: JSONL lines file version of `title_mentions_sent_results.csv` from Experiment II.
   - `sentence-embeddings/` : binary `.npy` files containing pickled numpy arrays of embeddings data for the sentence corpora files; created by `get_sentence_embeddings.py` script
   - `token-embeddings/`: token embedding files (`.npy` & `.csv`) for `title-mentions-sentences.jsonl`; created by `get_token_embeddings.py` script
 - `src/remarx/`: python package with utility code and scripts
