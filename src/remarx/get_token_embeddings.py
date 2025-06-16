@@ -77,7 +77,7 @@ def get_subtoken_alignment(
     within the sentence (i.e., produced by `get_term_spans`), returns a list
     of subtoken indices within the subtoken sequence produced by the tokenizer.
     In cases where span and subtoken boundaries are misaligned, all subtokens
-    that contain chracters within the span are included.
+    that contain characters within the span are included.
 
     Assumes:
       * The pretrained tokenizer is a T5Tokenizer, so encoding only adds a special
