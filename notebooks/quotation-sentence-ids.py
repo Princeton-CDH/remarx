@@ -80,9 +80,9 @@ def _(dnz_sent_df, pl, quote_df):
         # limit to annotations and sentences from the same file
         pl.col("FILE") == pl.col("file"),
         # look for sentences with any overlap with the annotation content
-        pl.col("start_index") <= pl.col("char_end_idx"),
+        pl.col("start_index") < pl.col("char_end_idx"),
         # annotation ends after sentence starts
-        pl.col("end_index") >= pl.col("char_idx"),
+        pl.col("end_index") > pl.col("char_idx"),
     )
     quote_sentences
     return (quote_sentences,)
