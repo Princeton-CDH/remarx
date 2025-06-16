@@ -112,7 +112,7 @@ def _(mo):
         r"""
     The citation data is in a human-readable form in the annotation notes.
 
-    Output the quotation and the comment with citation information so citation text can be manually idenfied from MEGA xml.
+    Output the quotation and the comment with citation information so citation text can be manually identified from MEGA xml.
     """
     )
     return
