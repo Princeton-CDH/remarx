@@ -18,6 +18,7 @@ using language model embeddings to identify similar sentences
     - `title-mentions-sentences.jsonl`: JSONL lines file version of `title_mentions_sent_results.csv` from Experiment II.
   - `sentence-embeddings/` : binary `.npy` files containing pickled numpy arrays of embeddings data for the sentence corpora files; created by `get_sentence_embeddings.py` script
   - `sentence-eval-pairs/`: CSV files with sentences from sample articles and corresponding sentences from MEGA pages, for use in evaluation of similar sentence retrieval methods
+  - `sentence-pairs/`: data files containing sentence pair results and evaulation for different methods
   - `token-embeddings/`: token embedding files (`.npy` & `.csv`) for `title-mentions-sentences.jsonl`; created by `get_token_embeddings.py` script
 - `src/remarx/`: python package with utility code and scripts
   - `build_sentence_corpus.py`: script to parse a directory of text files into a JSONL corpus of sentences; uses Stanza for sentence splitting; adapted from experiment 2 with very light modification
@@ -26,3 +27,4 @@ using language model embeddings to identify similar sentences
   - `tei_page.py` : script to extract and save TEI content between two pages as plain text
 - `notebooks/`: marimo notebooks for exploration and data work
   - `quotation-sentence-ids.py`: notebook to filter candidate sentence ids for dnz/mega sentence pairs for evaluation
+  - `try-chroma.py`: notebook trying out ChromaDB to find similar sentences and compare with evaluation sentence pairs

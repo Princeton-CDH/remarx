@@ -1,0 +1,15 @@
+marx_sent_id,dnz_sent_id,marx_index_rank,dnz_index_rank,distance,marx_next_closest,dnz_next_closest,dnz_marx_q_overlap,comments
+p402:0002,"Bernstein,_1897__790_Der-Sozialismus-und-die-gewerbliche:0105",0,0,0.4240033030509949,0.7922941446304321,0.6747839450836182,1,"Mostly accurate. 
+---Omitted ""wo der Arbeiter für den Produktionsprozeß,nicht der Produktionsprozeß für den Arbeiter das ist"" "
+p147:0001,Bernstein_Zur_Theorie_des_Arbeitswerth_1899-90a:0073,0,0,0.6446312665939331,0.8485375642776489,0.6446312665939331,1,"Accurate citation
+--- Author added ""(der Arbeitskraft)"""
+p25:0005,Bernstein_Zur_Theorie_des_Arbeitswerth_1899-90a:0052,0,0,0.34772801399230957,0.6493592262268066,0.5817606449127197,1,reduzirt vs. reducirt  in MEGA and dnz_sentence
+p395-396:0011,"Bernstein,_1897__790_Der-Sozialismus-und-die-gewerbliche:0062",4,4,0.7976441383361816,0.8660890460014343,1.104107141494751,1,"Accurate citation
+--- Unedited"
+p395-396:0012,"Bernstein,_1897__790_Der-Sozialismus-und-die-gewerbliche:0063",0,0,0.00281773810274899,0.7293444871902466,0.7538679838180542,1,"Accurate citation
+--- ""Eben so"" versus ""ebenso"" in MEGA and dnz_sentence "
+p395-396:0017,"Bernstein,_1897__790_Der-Sozialismus-und-die-gewerbliche:0065",0,0,0.18972845375537872,1.0767056941986084,1.0287449359893799,1,"Accurate citation
+--- Unedited. Some transcription errors"
+p395-396:0018,"Bernstein,_1897__790_Der-Sozialismus-und-die-gewerbliche:0066",0,0,0.03397775813937187,0.6501364707946777,0.4739890694618225,1,Accurate citation --- Unedited
+p395-396:0019,"Bernstein,_1897__790_Der-Sozialismus-und-die-gewerbliche:0067",0,0,0.02899588830769062,0.7145314812660217,0.524863064289093,1,"Accurate citation 
+--- Unedited"
