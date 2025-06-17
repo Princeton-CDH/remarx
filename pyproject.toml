@@ -27,7 +27,7 @@ dependencies = [
   "intspan",
   "lxml",
   "sentence-transformers",
-  "chromadb"
+  "chromadb",
   "transformers[torch]", # CPU-only version
   "tqdm",
   "scikit-learn",
