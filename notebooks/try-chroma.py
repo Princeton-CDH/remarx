@@ -153,7 +153,11 @@ def _(mega_sent_df, pl, result):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(
-        r"""Now do the same thing in the other direction: query the collection loaded with Marx content for DNZ sentences."""
+        r"""
+    Now do the same thing in the other direction: query the collection loaded with Marx content for DNZ sentences.
+
+    This is the method we'll be using in evaluation since we expect DNZ sentences to only match at most a few sentences of Marx content whereas a single Marx passage could be quoted many times across all DNZ articles.
+    """
     )
     return
 
@@ -178,8 +182,9 @@ def _(dnz_sentences_df, marx_query_dnz_result, pl):
             "result_text": marx_query_dnz_result["documents"],
             "distance": marx_query_dnz_result["distances"],
             "result_id": marx_query_dnz_result["ids"],
+            "rank": [list(range(0, 10))] * 352,
         }
-    ).explode("result_id", "result_text", "distance")
+    ).explode("result_id", "result_text", "distance", "rank")
 
     marx_query_dnz_result_df
     return (marx_query_dnz_result_df,)
@@ -188,7 +193,7 @@ def _(dnz_sentences_df, marx_query_dnz_result, pl):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(
-        r"""Use the set of known Marx/DNZ sentence pairs for some initial evaluation."""
+        r"""Next, we'll load in the evaluation data so we can construct a final column for the above dataframe that indicates whether a sentence pair is a true match."""
     )
     return
 
@@ -204,6 +209,51 @@ def _(pl):
     )
     eval_pairs_df
     return (eval_pairs_df,)
+
+
+@app.cell
+def _(eval_pairs_df, marx_query_dnz_result_df, pl):
+    # Find row indices for matching sentence pairs
+    match_indices = (
+        marx_query_dnz_result_df.with_row_index()
+        .join_where(
+            eval_pairs_df,
+            pl.col("id") == pl.col("dnz_sent_id"),
+            pl.col("result_id") == pl.col("marx_sent_id"),
+        )
+        .get_column("index")
+        .implode()
+    )
+
+    match_indices
+
+
+    output_df = (
+        marx_query_dnz_result_df.with_row_index()
+        .with_columns(pl.col("index").is_in(match_indices).alias("is_match"))
+        .rename(
+            {
+                "id": "dnz_sent_id",
+                "result_id": "marx_sent_id",
+                "input_text": "dnz_text",
+                "result_text": "marx_text",
+            }
+        )
+        .select(
+            [
+                "dnz_sent_id",
+                "marx_sent_id",
+                "distance",
+                "rank",
+                "is_match",
+                "dnz_text",
+                "marx_text",
+            ]
+        )
+    )
+
+    output_df.write_csv("data/sentence-pairs/chromadb-top10.csv")
+    return
 
 
 @app.cell(hide_code=True)
@@ -236,15 +286,16 @@ def _(dnz_query_marx_result_df, eval_pairs_df, marx_query_dnz_result_df, pl):
             .with_row_index()
         )
         # filter to this marx sentence to get rank
-        eval_match = marx_q_dnz_results.filter(
+        marx_eval_match = marx_q_dnz_results.filter(
             pl.col("result_id").eq(eval_pair["marx_sent_id"])
         ).row(0, named=True)
-        marx_index_rank = eval_match["index"]
-        marx_index_distance = eval_match["distance"]
-        # what is the next closest sentence?
-        marx_next_closest = marx_q_dnz_results.row(
-            marx_index_rank + 1, named=True
-        )["distance"]
+        marx_index_rank = marx_eval_match["index"]
+        marx_index_distance = marx_eval_match["distance"]
+        # What is the closest alternative sentence?
+        marx_alt_rank = 0 if marx_index_rank else marx_index_rank + 1
+        marx_best_alt = marx_q_dnz_results.row(marx_alt_rank, named=True)[
+            "distance"
+        ]
 
         # do the same thing for the other set, indexing dnz and querying marx
         dnz_q_marx_results = (
@@ -258,25 +309,11 @@ def _(dnz_query_marx_result_df, eval_pairs_df, marx_query_dnz_result_df, pl):
         dnz_eval_match = dnz_q_marx_results.filter(
             pl.col("result_id").eq(eval_pair["dnz_sent_id"])
         ).row(0, named=True)
-        dnz_index_rank = eval_match["index"]
-        dnz_index_distance = eval_match["distance"]
-        # what is the next closest sentence?
-        dnz_next_closest = dnz_q_marx_results.row(marx_index_rank + 1, named=True)[
-            "distance"
-        ]
-
-        # determine how many many overlapping pairs in these two sets of results
-        # make a set of id pair tuples
-        dnq_q_marx_ids = set(
-            (row["id"], row["result_id"])
-            for row in marx_q_dnz_results.iter_rows(named=True)
-        )
-        # swap id/result id order so we always list marx sentence id first
-        marx_q_dnz_ids = set(
-            (row["result_id"], row["id"])
-            for row in dnz_q_marx_results.iter_rows(named=True)
-        )
-        overlap_count = len(dnq_q_marx_ids & marx_q_dnz_ids)
+        dnz_index_rank = dnz_eval_match["index"]
+        dnz_index_distance = dnz_eval_match["distance"]
+        # What is the closest alternative sentence?
+        dnz_alt_rank = 0 if dnz_index_rank else dnz_index_rank + 1
+        dnz_best_alt = dnz_q_marx_results.row(dnz_alt_rank, named=True)["distance"]
 
         results.append(
             {
@@ -288,16 +325,13 @@ def _(dnz_query_marx_result_df, eval_pairs_df, marx_query_dnz_result_df, pl):
                 # "dnz_index_distance": dnz_index_distance,
                 # distance is the same either way
                 "distance": marx_index_distance,
-                "marx_next_closest": marx_next_closest,
-                "dnz_next_closest": dnz_next_closest,
-                "dnz_marx_q_overlap": overlap_count,
+                "marx_other_closest": marx_best_alt,
+                "dnz_other_closest": dnz_best_alt,
                 "comments": eval_pair["comments"],
             }
         )
 
     results_df = pl.from_dicts(results)
-    # save a copy of this dataframe
-    results_df.write_csv("data/sentence-pairs/chroma-eval-pairs.csv")
 
     results_df
     return
@@ -307,11 +341,10 @@ def _(dnz_query_marx_result_df, eval_pairs_df, marx_query_dnz_result_df, pl):
 def _(mo):
     mo.md(
         r"""
-    In every case but one, the expected sentence pair shows up as the closest match when searching in either direction. 
+    When querying with DNZ sentences, all but one expected sentence pair shows up as the closest match. When querying with Marx sentences, one additional expected sentence pair is not the closest match.
 
-    When we check the overlap between the two searches, the expected sentence pair is the only overlap - although this may be an artifact of querying with the small dataset we're testing with.
 
-    The sentence that shows up at index 4 is noted as an accurate citation that is unedited, but the quotation is about half (or less) of the full sentence in DNZ as it is currently tokenized. 
+    The sentence that shows up at index 4 (i.e., 5th nearest neighbor) is noted as an accurate citation that is unedited, but the quotation is about half (or less) of the full sentence in DNZ as it is currently tokenized. 
 
     ---
     """
