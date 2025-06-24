@@ -32,6 +32,7 @@ dependencies = [
   "tqdm",
   "scikit-learn",
   "scipy-stubs", # for mypy
+  "annoy",
 ]
 
 [project.optional-dependencies]
