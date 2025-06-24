@@ -17,8 +17,9 @@ using language model embeddings to identify similar sentences
   - `sentence-corpora/` : JSON lines files with sentence corpora for dnz articles and mega pages; created with `build_sentence_corpus.py` script
     - `title-mentions-sentences.jsonl`: JSONL lines file version of `title_mentions_sent_results.csv` from Experiment II.
   - `sentence-embeddings/` : binary `.npy` files containing pickled numpy arrays of embeddings data for the sentence corpora files; created by `get_sentence_embeddings.py` script
-  - `sentence-eval-pairs/`: CSV files with sentences from sample articles and corresponding sentences from MEGA pages, for use in evaluation of similar sentence retrieval methods
-  - `sentence-pairs/`: data files containing sentence pair results and evaulation for different methods
+  - `sentence-eval-pairs/`: CSV files with sentences from sample articles and corresponding sentences from MEGA pages, as well as DNZ-MEGA sentence pairs,
+     for use in evaluation of similar sentence retrieval methods
+  - `sentence-pairs/`: data files containing top sentence pair results for various approximate nearest neighbor methods
   - `token-embeddings/`: token embedding files (`.npy` & `.csv`) for `title-mentions-sentences.jsonl`; created by `get_token_embeddings.py` script
 - `src/remarx/`: python package with utility code and scripts
   - `build_sentence_corpus.py`: script to parse a directory of text files into a JSONL corpus of sentences; uses Stanza for sentence splitting; adapted from experiment 2 with very light modification
