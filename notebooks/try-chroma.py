@@ -225,8 +225,6 @@ def _(eval_pairs_df, marx_query_dnz_result_df, pl):
         .implode()
     )
 
-    match_indices
-
 
     output_df = (
         marx_query_dnz_result_df.with_row_index()
