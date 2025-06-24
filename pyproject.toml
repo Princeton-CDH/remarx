@@ -32,6 +32,8 @@ dependencies = [
   "tqdm",
   "scikit-learn",
   "scipy-stubs", # for mypy
+  "pyarrow",
+  "seaborn",
 ]
 
 [project.optional-dependencies]
