@@ -179,7 +179,7 @@ def _():
     # text content here was manually extracted using the tei_page script with line numbers turned on and footnotes omitted,
     # then manually selecting from the specified lines based on the quotation text above
 
-    # this is the full set of text content used to generat start and end strings above;
+    # this is the full set of text content used to generate start and end strings above;
     # no longer directly used, but kept as a reference
 
     mega_text2 = {
