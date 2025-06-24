@@ -23,10 +23,11 @@ dependencies = [
   "ruff",
   "polars",
   "stanza",
-  "orjsonl",  
+  "orjsonl",
   "intspan",
   "lxml",
   "sentence-transformers",
+  "chromadb",
   "transformers[torch]", # CPU-only version
   "tqdm",
   "scikit-learn",
