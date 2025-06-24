@@ -69,3 +69,15 @@ pip install -e ".[dev]"
 ```sh
 pre-commit install
 ```
+
+
+---
+
+## Open OnDemand Proof-of-Concept
+
+This branch includes content related to testing the potential of running Marimo notebooks in app-mode via Open OnDemand.
+
+See [notebooks/ondemand/](notebooks/ondemand/) for documentation and notes on the test. This folder also includes screenshots documenting the steps for running this test application through Open OnDemand.
+
+This notebook is included in the `experiments/trad-nlp` branch because the test Marimo app uses the lemmatized search functionality included in this version of the `remarx` python package.
+
