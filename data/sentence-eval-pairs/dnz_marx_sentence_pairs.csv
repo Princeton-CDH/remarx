@@ -1,0 +1,87 @@
+annotation_id,file,marx_sent_id,marx_sentence,dnz_sent_id,dnz_sentence,comments
+df81d5e4-4779-4117-b89c-7055c1cd7cc7,p402.txt,p402:0002,"Ebenso leuchtet ein, 
+daß die Zusammensetzung des kombinirten Arbeitspersonals aus Individuen 
+beiderlei Geschlechts und der verschiedensten Altersstufen, obgleich in ihrer 
+naturwüchsig brutalen, kapitalistischen Form, wo der Arbeiter für den Pro- 
+duktionsprozeß, nicht der Produktionsprozeß für den Arbeiter da ist, Pest- 
+quelle des Verderbs und der Sklaverei, unter entsprechenden Verhältnissen 
+umgekehrt zur Quelle humaner Entwicklung umschlagen muß 312).","Bernstein,_1897__790_Der-Sozialismus-und-die-gewerbliche:0105","Sehr wahr¬
+scheinlich hatte Marx dies im Sinne, als er schrieb, daß „die Zusammensetzung
+des kombinirten Arbeitspersonals aus Individuen beiderlei Geschlechts und der
+verschiedensten Altersstufen, obgleich in ihrer naturwüchsig brutalen, kapi¬
+talistischen Form... Pestquelle des Verderbs und der Sklaverei, unter ent¬
+sprechenden Verhältnissen umgekehrt zur Quelle humaner Entwicklung umschlagen
+muß“ (a. a. O. S. 517).","Mostly accurate. 
+---Omitted ""wo der Arbeiter für den Produktionsprozeß,nicht der Produktionsprozeß für den Arbeiter das ist"" "
+0f93adf5-75c6-49a9-a4ce-7caea83f636c,p147.txt,p147:0001,"Ist der Werth dieser Kraft höher, 
+so äußert sie sich aber auch in höherer Arbeit und vergegenständlicht sich 
+   daher, in denselben Zeiträumen, in verhältnißmäßig höheren Werthen.",Bernstein_Zur_Theorie_des_Arbeitswerth_1899-90a:0073,"In der That sagt Marx selbst an einer wichtigen Stelle (Kapitel 5 des ersten
+Bandes): „Ist der Werth dieser Kraft (der Arbeitskraft) höher, so äußert sie
+sich aber auch in höherer Arbeit und vergegenständlicht sich daher () in den¬
+selben Zeiträumen in verhältnißmäßig höheren Werthen“ („Arbeitsprozeß und
+Verwerthungsprozeß“ Band 1, 2. Auflage, S. 186).","Accurate citation
+--- Author added ""(der Arbeitskraft)"""
+598859f7-3f49-4cb8-8383-8aefbc4ca667,p25.txt,p25:0005,"Die verschiednen Proportionen, worin 
+verschiedne Arbeitsarten auf einfache Arbeit als ihre Maßeinheit reducirt 
+sind, werden durch einen gesellschaftlichen Prozeß hinter dem Rücken der 
+Produzenten festgesetzt und scheinen ihnen daher durch das Herkommen 
+gegeben.",Bernstein_Zur_Theorie_des_Arbeitswerth_1899-90a:0052,"„Die verschiedenen Proportionen“, sagt Marx hierüber, „worin
+verschiedene Arbeitsarten auf einfache Arbeit als ihre Maßeinheit reduzirt sind,
+werden durch einen gesellschaftlichen Prozeß hinter dem Rücken der Produzenten
+festgesetzt und scheinen ihnen daher durch das Herkommen gegeben“ („Kapital“, I.
+2. Auflage, S. 19).",reduzirt vs. reducirt  in MEGA and dnz_sentence
+4eb40d8e-928e-4b17-938f-8c72045db14d,p395-396.txt,p395-396:0011,"Ihr Erfolg bewies zuerst die Möglichkeit der Verbindung von 
+Unterricht und Gymnastik mit Handarbeit, also auch von Handarbeit mit        
+Unterricht und Gymnastik.","Bernstein,_1897__790_Der-Sozialismus-und-die-gewerbliche:0062","handelt (§ 9), über die Wirkungen dieser Vorschriften (daß nämlich kein Kind
+vor Abwicklung der ersten Schulklassen zur Fabrikarbeit zugelassen werden soll
+und daß Kinder unter vierzehn Jahren nur Fabrikarbeit leisten dürfen, wenn sie
+gleichzeitig Schulunterricht empfangen) wie folgt:
+„Ihr Erfolg bewies zunächst die Möglichkeit der Verbindung von Unter¬
+richt und Gymnastik mit Haudarbeit, also auch von Handarbeit mit Unterricht
+und Gymnastik.","Accurate citation
+--- Unedited"
+4eb40d8e-928e-4b17-938f-8c72045db14d,p395-396.txt,p395-396:0012,"Die Fabrikinspektoren entdeckten bald aus den 
+Zeugenverhören der Schulmeister, daß die Fabrikkinder, obgleich sie nur 
+halb so viel Unterricht genießen als die regelmäßigen Tagesschüler, eben so 
+viel und oft mehr lernen.","Bernstein,_1897__790_Der-Sozialismus-und-die-gewerbliche:0063","Die Fabrikinspektoren entdeckten bald aus den Zeugenverhören
+der Schulmeister, daß die Fabrikkinder, obgleich sie nur halb so viel Unterricht
+genießen als die regelmäßigen Tagesschüler, ebenso viel und oft mehr lernen.","Accurate citation
+--- ""Eben so"" versus ""ebenso"" in MEGA and dnz_sentence "
+4eb40d8e-928e-4b17-938f-8c72045db14d,p395-396.txt,p395-396:0013,„Die Sache ist einfach.,,,No match found 
+4eb40d8e-928e-4b17-938f-8c72045db14d,p395-396.txt,p395-396:0014,"Diejenigen, die sich nur 
+einen halben Tag in der Schule aufhalten, sind stets frisch und fast immer 
+fähig und willig Unterricht zu empfangen.",,,No match found 
+4eb40d8e-928e-4b17-938f-8c72045db14d,p395-396.txt,p395-396:0015,"Das System halber Arbeit und 
+halber Schule macht jede der beiden Beschäftigungen zur Ausruhung und 
+Erholung von der andern und folglich viel angemeßner für das Kind als die 
+ununterbrochne Fortdauer einer von beiden.",,,No match found 
+4eb40d8e-928e-4b17-938f-8c72045db14d,p395-396.txt,p395-396:0016,"Ein Junge, der von Morgens 
+früh in der Schule sitzt, und nun gar bei heißem Wetter, kann unmöglich mit 
+einem andern wetteifern, der munter und aufgeweckt von seiner Arbeit 
+kommt“.",,,No match found 
+4eb40d8e-928e-4b17-938f-8c72045db14d,p395-396.txt,p395-396:0017,"Weitere Belege findet man in Senior's   Rede auf dem 
+sociologischen Kongress zu Edinburg 1863.","Bernstein,_1897__790_Der-Sozialismus-und-die-gewerbliche:0065","Weitere Belege findet
+man in Seniers Rede auf dem soziologischen Kongreß zu Edinburg 1863.","Accurate citation
+--- Unedited. Some transcription errors"
+4eb40d8e-928e-4b17-938f-8c72045db14d,p395-396.txt,p395-396:0018,"Er zeigt hier auch u. a. nach, wie 
+der einseitige, unproduktive und verlängerte Schultag der Kinder der hö- 
+heren und mittleren Klassen die Arbeit der Lehrer nutzlos vermehrt, 
+„während er Zeit, Gesundheit und Energie der Kinder nicht nur fruchtlos, 
+sondern absolut schädlich verwüstet“.","Bernstein,_1897__790_Der-Sozialismus-und-die-gewerbliche:0066","Er
+zeigt hier auch u. A. nach, wie der einseitige, unproduktive und verlängerte
+Schultag der Kinder der höheren und mittleren Klassen die Arbeit der Lehre
+nutzlos vermehrt, während er Zeit, Gesundheit und Energie der Kinder nicht
+nur fruchtlos, sondern absolut schädlich verwüstet:",Accurate citation --- Unedited
+4eb40d8e-928e-4b17-938f-8c72045db14d,p395-396.txt,p395-396:0019,"Aus dem Fabriksystem, wie man 
+in Detail bei Robert Owen verfolgen kann, entsproß der Keim der Erziehung 
+der Zukunft, welche für alle Kinder über einem gewissen Alter produktive 
+Arbeit mit Unterricht und Gymnastik verbinden wird, nicht nur als eine 
+Methode zur Steigerung der gesellschaftlichen Produktion, sondern als die 
+einzige Methode zur Produktion vollseitig entwickelter Menschen.","Bernstein,_1897__790_Der-Sozialismus-und-die-gewerbliche:0067","Aus dem Fabriksystem, wie
+man im Detail bei Robert Owen verfolgen kann, entsproß der Keim der Erziehung
+der Zukunft, welche für alle Kinder über einem gewissen Alter produktive Arbeit
+mit Unterricht und Gymnastik verbinden wird, nicht nur als eine Methode zur
+Steigerung der gesellschaftlichen Produktion, sondern als die einzige Methode zur
+produktion vollseitig entwickelter Menschen.“ („Kapital“, Band I, 2. Auflage,
+S. 508/ Verh.","Accurate citation 
+--- Unedited"
