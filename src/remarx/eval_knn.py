@@ -35,7 +35,7 @@ def recall_at_distance(
     pairs_df: pl.DataFrame, distance: float, n_matches: int | None = None
 ) -> float:
     """
-    Calculates the recall for a sentence pairs at most a given distance apart. Optionall,
+    Calculates the recall for a sentence pairs at most a given distance apart. Optionally,
     the number of matching pairs can be provided; this is crucial when the results
     do not retrieve all matching pairs.
     """
