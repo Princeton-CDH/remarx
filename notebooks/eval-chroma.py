@@ -171,18 +171,32 @@ def _(
     dist_results = []
 
     for d in np.arange(0.1, 0.95, 0.05):
+        precision_score = precision_at_distance(all_pairs_df, d)
+        recall_score = recall_at_distance(all_pairs_df, d)
+        # Add precision score
         dist_results.append(
             {
                 "distance": d,
-                "score": precision_at_distance(all_pairs_df, d),
-                "measure": "precision",
+                "score": precision_score,
+                "measure": "Precision",
             }
         )
+        # Add recall score
         dist_results.append(
             {
                 "distance": d,
-                "score": recall_at_distance(all_pairs_df, d),
-                "measure": "recall",
+                "score": recall_score,
+                "measure": "Recall",
+            }
+        )
+        # Add F1 score
+        dist_results.append(
+            {
+                "distance": d,
+                "score": 2
+                * (precision_score * recall_score)
+                / (precision_score + recall_score),
+                "measure": "F1",
             }
         )
 
@@ -196,6 +210,25 @@ def _(
     ax_points.axvline(x=max(true_dists), linestyle=":", color="black")
     plt.text(max(true_dists) + 0.01, 0.5, "max dist for\n   matches")
     plt.title("Precision and Recall for Distance Thresholds")
+    sns.move_legend(ax_points, "upper left", bbox_to_anchor=(1, 1))
+
+    plt.show()
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(
+        r"""
+    By examining the precision and recall scores for different distance thresholds we can see the trade-offs between for different values. From this we can see we get the best precision (the proportion of retrieved sentence pairs that are correct matches) when we have a distance threshold at or below a distance of 0.4. In contrast, we get the best recall (i.e., all correct matches are retrieved) when we have a distance threshold at or above 0.8.
+
+    We'll want a threshold in between this that strikes a balance between precision and recall, since we want to identify correct matches but without too many false positives. We can use the $F_1$ score
+
+    $$F_1 = 2\frac{\text{precision}*\text{recall}}{\text{precision}+\text{recall}}$$
+
+    to help determine a good starting threshold. We observe the highest $F_1$ score when we set our distance threshold to 0.45. For this threshold, seven sentence pairs will be retrieved with six of them corresponding to matching sentence pairs and only one bad match.
+    """
+    )
     return
 
 
