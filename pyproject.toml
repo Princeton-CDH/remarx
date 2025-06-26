@@ -47,6 +47,7 @@ test = [
   # for scikit-learn type stubs for mypy
   "microsoft-python-type-stubs @ git+https://github.com/microsoft/python-type-stubs.git",
 ]
+passim = ["passim @ git+https://github.com/dasmiq/passim.git"]
 
 [project.scripts]
 remarx-candidate-mentions = "remarx.candidate_mentions:main"
