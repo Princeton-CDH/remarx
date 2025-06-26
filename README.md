@@ -33,3 +33,4 @@ using language model embeddings to identify similar sentences
   - `try-chroma.py`: notebook trying out ChromaDB to find similar sentences and compare with evaluation sentence pairs
   - `eval-chroma.py`: notebook for evaluating ChromaDB sentence pair results
   - `try-cross-encoder.py`: notebook investigating the usage of a cross encoder model for identifiying similar sentences
+  - `plot-token-embeddings.py` : notebook to plot token embeddings; based primarily on content in `data/token-embeddings/`
