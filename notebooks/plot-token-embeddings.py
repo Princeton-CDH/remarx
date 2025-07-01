@@ -89,7 +89,7 @@ def _(alt, embedding_df):
     color_domain = {"domain": ["Yes", "Maybe", "No"]}
 
     scatter = (
-        alt.Chart(embedding_df, title="Token emeddings for Kapital")
+        alt.Chart(embedding_df, title="Token embeddings for Kapital")
         .mark_point()
         .encode(
             x=alt.X("x", scale=alt.Scale(zero=False), title=""),
