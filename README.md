@@ -22,16 +22,20 @@ using language model embeddings to identify similar sentences
       for use in evaluation of similar sentence retrieval methods
   - `sentence-pairs/`: data files containing top sentence pair results for various approximate nearest neighbor methods
   - `token-embeddings/`: token embedding files (`.npy` & `.csv`) for `title-mentions-sentences.jsonl`; created by `get_token_embeddings.py` script
+  - [`passim/`](data/passim): data related to running passim on test subset content; input, output, and readme documenting how it was all generated
 - `src/remarx/`: python package with utility code and scripts
   - `build_sentence_corpus.py`: script to parse a directory of text files into a JSONL corpus of sentences; uses Stanza for sentence splitting; adapted from experiment 2 with very light modification
   - `get_sentence_embeddings.py` : script to build and save sentence-level embeddings for a sentence-level corpus
   - `get_token_embeddings.py`: script to build and save token-level embeddings for a specific term for a sentence-level corpus
   - `tei_page.py` : script to extract and save TEI content between two or more pages as plain text
   - `eval_knn.py`: utilities for evaluating nearest neighbor results for sentence pairs, assumes the format of files in `sentence-pairs`
+  - `highlight_utils.py`: utility method for highlighting spans; adapted from experiment 2
 - `notebooks/`: marimo notebooks for exploration and data work
   - `quotation-sentence-ids.py`: notebook to filter candidate sentence ids for DNZ/MEGA sentence pairs for evaluation
   - `try-chroma.py`: notebook trying out ChromaDB to find similar sentences and compare with evaluation sentence pairs
   - `eval-chroma.py`: notebook for evaluating ChromaDB sentence pair results
   - `try-annoy.py`: notebook using Annoy to find similar sentences and evaluate the resulting sentence pairs
-  - `try-cross-encoder.py`: notebook investigating the usage of a cross encoder model for identifiying similar sentences
-  - `plot-token-embeddings.py` : notebook to plot token embeddings; based primarily on content in `data/token-embeddings/`
+  - `try-cross-encoder.py`: notebook investigating the usage of a cross encoder model for identifying similar sentences
+  - `plot-token-embeddings.py` : notebook to plot token embeddings; based primarily on content in `data/token-embeddings/`  
+  - `passim-results.py`: notebook reviewing & evaluating passim results 
+  - `highlight.css`: custom CSS styles for highlighting spans; adapted from experiment 2
