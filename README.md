@@ -32,5 +32,6 @@ using language model embeddings to identify similar sentences
   - `quotation-sentence-ids.py`: notebook to filter candidate sentence ids for DNZ/MEGA sentence pairs for evaluation
   - `try-chroma.py`: notebook trying out ChromaDB to find similar sentences and compare with evaluation sentence pairs
   - `eval-chroma.py`: notebook for evaluating ChromaDB sentence pair results
+  - `try-annoy.py`: notebook using Annoy to find similar sentences and evaluate the resulting sentence pairs
   - `try-cross-encoder.py`: notebook investigating the usage of a cross encoder model for identifiying similar sentences
   - `plot-token-embeddings.py` : notebook to plot token embeddings; based primarily on content in `data/token-embeddings/`
