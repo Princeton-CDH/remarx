@@ -1,7 +1,7 @@
 import marimo
 
 __generated_with = "0.14.9"
-app = marimo.App(width="medium")
+app = marimo.App(width="medium", auto_download=["html"])
 
 
 @app.cell
@@ -115,8 +115,8 @@ def _(alt, embedding_df):
     # combine with a clickable histogram plot by status so tokens can be selected based on annotation status
 
 
-    select_color = alt.selection_point(fields=["anno_mentions_kapital"])
-    select_shape = alt.selection_point(fields=["is_quoted"])
+    select_anno_mention = alt.selection_point(fields=["anno_mentions_kapital"])
+    select_is_quoted = alt.selection_point(fields=["is_quoted"])
 
     # define the color domain so we can control order
     color_domain = {"domain": ["Yes", "Maybe", "No"]}
@@ -136,7 +136,7 @@ def _(alt, embedding_df):
             # "anno_mentions_kapital", title="Annotated as Kapital"
             # ).scale(**color_domain),
             color=alt.condition(
-                select_color,
+                select_anno_mention,
                 alt.Color("anno_mentions_kapital:N", title="Title Mention").scale(
                     **color_domain
                 ),
@@ -148,8 +148,7 @@ def _(alt, embedding_df):
             tooltip=["text"],
             # are there more fields that would be helpful to display? possible to pass a list
         )
-        .transform_filter(select_color & select_shape)
-        # .transform_filter(select_shape)
+        .transform_filter(select_anno_mention & select_is_quoted)
     )
 
     hist = (
@@ -159,10 +158,12 @@ def _(alt, embedding_df):
             x=alt.X("count()", title=""),
             y=alt.Y("anno_mentions_kapital", title="").scale(**color_domain),
             color=alt.condition(
-                select_color, "anno_mentions_kapital", alt.value("lightgray")
+                select_anno_mention,
+                "anno_mentions_kapital",
+                alt.value("lightgray"),
             ),
         )
-        .add_selection(select_color)
+        .add_selection(select_anno_mention)
     )
     quoted_hist = (
         alt.Chart(embedding_df)
@@ -170,13 +171,15 @@ def _(alt, embedding_df):
         .encode(
             x=alt.X("count()", title="Total"),
             y=alt.Y("is_quoted", title="Quoted").scale(domain=["Yes", "No"]),
-            color=alt.condition(select_shape, "is_quoted", alt.value("lightgray")),
+            color=alt.condition(
+                select_is_quoted, "is_quoted", alt.value("lightgray")
+            ),
         )
-        .add_selection(select_shape)
+        .add_selection(select_is_quoted)
     )
 
     (scatter & hist & quoted_hist).interactive()
-    return
+    return color_domain, select_anno_mention
 
 
 @app.cell(hide_code=True)
@@ -209,6 +212,80 @@ def _(mo):
     If we had more time for this experiment, we would strip out quotes around single terms and short phrases first before generating the token embeddings and see how that impacts our results.
     """
     )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""## Clustering""")
+    return
+
+
+@app.cell
+def _(mo):
+    num_cluster_slider = mo.ui.slider(
+        start=3, stop=8, step=1, label="Number of clusters", value=5
+    )
+    num_cluster_slider
+    return (num_cluster_slider,)
+
+
+@app.cell(hide_code=True)
+def _(
+    alt,
+    color_domain,
+    embedding_df,
+    num_cluster_slider,
+    select_anno_mention,
+    word_embed,
+):
+    from sklearn.cluster import KMeans
+
+    kmeans = KMeans(
+        n_clusters=num_cluster_slider.value, random_state=0, n_init="auto"
+    ).fit(word_embed)
+
+    # assigned labels are available as
+    # kmeans.labels_
+
+    # turn labels into a column in our dataframe
+    embed_cluster_df = embedding_df.with_columns(cluster=kmeans.labels_)
+    # embed_cluster_df
+
+    # plot the clustered embeddings with altair
+    cluster_scatter = (
+        alt.Chart(
+            embed_cluster_df,
+            title="Token embeddings for Kapital with k-means clustering",
+        )
+        .mark_point()
+        .encode(
+            x=alt.X("x", scale=alt.Scale(zero=False), title=""),
+            y=alt.Y("y", title=""),
+            color="cluster:N",
+            shape=alt.Shape("anno_mentions_kapital:N", title="Title Mention"),
+            tooltip=["text"],
+        )
+        .transform_filter(select_anno_mention)
+    )
+
+    anno_hist = (
+        alt.Chart(embed_cluster_df)
+        .mark_bar()
+        .encode(
+            x=alt.X("count()", title=""),
+            y=alt.Y("anno_mentions_kapital", title="").scale(**color_domain),
+            color=alt.condition(
+                select_anno_mention,
+                "anno_mentions_kapital",
+                alt.value("lightgray"),
+                legend=None,
+            ),
+        )
+        .add_selection(select_anno_mention)
+    )
+
+    (cluster_scatter & anno_hist).interactive().resolve_scale(color="independent")
     return
 
 
