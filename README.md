@@ -24,8 +24,10 @@ including all python dependencies  and optional dependencies for development and
 pip install -e ".[dev]"
 ```
 
-#  TODO: Uncomment this section once pre-commit is set up
-#  - This repository uses [pre-commit](https://pre-commit.com/) for python code linting
-#  and consistent formatting. Run this command to initialize and install pre-commit hooks:
-#  ```sh
-#  pre-commit install
+<!---
+TODO: Uncomment this section once pre-commit is set up
+- This repository uses [pre-commit](https://pre-commit.com/) for python code linting
+and consistent formatting. Run this command to initialize and install pre-commit hooks:
+```sh
+pre-commit install
+--->
