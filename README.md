@@ -31,3 +31,10 @@ and consistent formatting. Run this command to initialize and install pre-commit
 ```sh
 pre-commit install
 --->
+
+## License
+
+This project is licensed under the [Apache 2.0 License](LICENSE).
+
+(c)2025 Trustees of Princeton University. Permission granted for non-commercial
+distribution online under a standard Open Source license.
