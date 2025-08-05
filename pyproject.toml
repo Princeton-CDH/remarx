@@ -68,9 +68,9 @@ select = [
 "D1", # pydocstyle: undocumented
 "D201", # pydocstyle: blank-line-before-function
 "D209", # pydocstyle: new-line-after-last-paragraph
-"D213": # pydocstyle: multi-line-summary-second-line
-"D403": # pydocstyle: first-word-uncapitalized
-"D419": # pydocstyle: empty-docstring
+"D213", # pydocstyle: multi-line-summary-second-line
+"D403", # pydocstyle: first-word-uncapitalized
+"D419", # pydocstyle: empty-docstring
 "PERF", # perflint
 "SIM", # flake8-simplify
 "C4", # flake8-comprehensions
