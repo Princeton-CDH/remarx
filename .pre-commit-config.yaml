@@ -1,4 +1,4 @@
-# This configuration file specifies which hooks to run (ruff, prettier, and codespell), the versions of each tool, arguments to pass, and which files to include or exclude.
+# This configuration file specifies which hooks to run (ruff, prettier, and codespell), the versions of each tool, arguments to pass, and which file types to include or exclude.
 # It ensures that code is linted, formatted, and checked for spelling and quality issues automatically on every commit.
 # To set up, run 'pre-commit install'. You can also run all hooks manually with 'pre-commit run --all-files'.
 repos:
