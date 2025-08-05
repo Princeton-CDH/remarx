@@ -1,0 +1,104 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "remarx"
+description = "Code for identifiying Marx citations associated with the CDH project Citing Marx"
+authors = [
+  {name = "Center for Digital Humanities at Princeton", email = "cdh@princeton.edu"},
+]
+requires-python = ">=3.12"
+readme = "README.md"
+license = {text = "Apache-2"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Text Processing",
+]
+dynamic = ["version"]
+dependencies = [
+  "marimo>=0.13.11",
+  "marimo[lsp]", # marimo language server protocol
+  "ruff",
+  "polars",
+  "stanza",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pre-commit",
+  "ruff",
+  "remarx[test]",
+]
+test = [
+  "pytest",
+  "pytest-cov",
+]
+
+#[project.scripts]
+
+[tool.hatch.version]
+path = "src/remarx/__init__.py"
+
+[tool.pytest.ini_options]
+testpaths = ["test"]
+
+[tool.ruff]
+# Always generate Python 3.12-compatible code
+target-version = "py312"
+# Configure src path so ruff import fixes can identify local imports
+src = ["src"]
+
+[tool.ruff.lint]
+select = [
+# ruff defaults
+"E4",
+"E7",
+"E9",
+"F",
+# additional rules
+"I", #isort
+"ANN", # flake8-annotations
+"PTH", # flake8-use-pathlib
+"B", # flake8-bugbear
+"D1", # pydocstyle: undocumented
+"D201", # pydocstyle: blank-line-before-function
+"D209", # pydocstyle: new-line-after-last-paragraph
+"D213", # pydocstyle: multi-line-summary-second-line
+"D403", # pydocstyle: first-word-uncapitalized
+"D419", # pydocstyle: empty-docstring
+"PERF", # perflint
+"SIM", # flake8-simplify
+"C4", # flake8-comprehensions
+"RUF", # ruff-specific rules
+"NPY", # numpy-specific rules
+"UP", # pyupgrade
+]
+# Can use to ignore specific rules within above selection
+ignore = []
+
+[tool.marimo.display]
+cell_output = "below"
+theme = "system"  # honor user preference, including in static html exports
+
+[tool.marimo.runtime]
+# Add project source directory to python path
+pythonpath = ["src"]
+
+[tool.marimo.save]
+format_on_save = true
+
+[tool.marimo.diagnostics]
+enabled = true
+
+[tool.marimo.experimental]
+lsp = true
+
+[tool.hatch.metadata]
+# So python type stubs can be installed from GitHub (i.e., direct reference)
+allow-direct-references = true
