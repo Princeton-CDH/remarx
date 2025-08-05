@@ -36,11 +36,13 @@ optional-dependencies.dev = [
   "remarx[test]",
   "ruff",
 ]
-#[project.scripts]
 optional-dependencies.test = [
   "pytest",
   "pytest-cov",
 ]
+
+scripts.remarx-gui = "remarx.launch_gui:main"
+scripts.remarx-launch-nb = "remarx.launch_notebook:main"
 
 [tool.hatch.version]
 path = "src/remarx/__init__.py"
