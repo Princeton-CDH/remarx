@@ -22,7 +22,7 @@ This repo uses [git-flow](https://github.com/nvie/gitflow) branching conventions
 
 ```sh
 # Using uv (recommended)
-uv sync --extra dev
+uv sync
 
 # Or using pip
 pip install -e ".[dev]"
