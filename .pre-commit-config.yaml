@@ -1,0 +1,32 @@
+# This configuration file specifies which hooks to run (ruff, prettier, and codespell), the versions of each tool, arguments to pass, and which files to include or exclude.
+# It ensures that code is linted, formatted, and checked for spelling and quality issues automatically on every commit.
+# To set up, run 'pre-commit install'. You can also run all hooks manually with 'pre-commit run --all-files'.
+
+repos:
+  # Ruff linter and formatter
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.7
+    hooks:
+      # Run the linter
+      - id: ruff
+        args: [--fix]
+        types_or: [python, pyi, jupyter]
+      # Run the formatter
+      - id: ruff-format
+        types_or: [python, pyi, jupyter]
+
+  # Prettier for formatting various file types
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        types_or: [markdown, yaml, json, toml]
+        exclude: ^(\.git/|\.github/workflows/)
+
+  # Codespell for spell checking
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.3.0
+    hooks:
+      - id: codespell
+        args: [--write-changes]
+        exclude: ^(\.git/|\.github/workflows/|.*\.lock$)
