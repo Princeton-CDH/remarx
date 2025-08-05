@@ -33,6 +33,7 @@ dependencies = [
 dev = [
   "pre-commit",
   "ruff",
+  "remarx[test]",
 ]
 test = [
   "pytest",
