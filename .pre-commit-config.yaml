@@ -1,7 +1,6 @@
 # This configuration file specifies which hooks to run (ruff, prettier, and codespell), the versions of each tool, arguments to pass, and which files to include or exclude.
 # It ensures that code is linted, formatted, and checked for spelling and quality issues automatically on every commit.
 # To set up, run 'pre-commit install'. You can also run all hooks manually with 'pre-commit run --all-files'.
-
 repos:
   # Ruff linter and formatter
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -12,15 +11,32 @@ repos:
         args: [--fix] # To enable lint fixes
       # Run the formatter using configs in pyproject.toml
       - id: ruff-format
-
-  # Prettier for formatting various file types
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: main # Use the latest version
+  # pyproject-fmt for formatting toml files
+  - repo: https://github.com/tox-dev/pyproject-fmt
+    rev: v2.6.0
     hooks:
-      - id: prettier
-
+      - id: pyproject-fmt
+  # yamlfmt for formatting YAML files
+  - repo: https://github.com/google/yamlfmt
+    rev: v0.17.2
+    hooks:
+      - id: yamlfmt
+  # mdformat for formatting Markdown files
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.22
+    hooks:
+      - id: mdformat
   # Codespell for spell checking
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
     hooks:
       - id: codespell
+  # Common file checks (no dependencies)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-yaml
+      - id: check-toml
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
