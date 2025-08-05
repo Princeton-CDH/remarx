@@ -21,6 +21,10 @@ This repo uses [git-flow](https://github.com/nvie/gitflow) branching conventions
   including all python dependencies and optional dependencies for development and testing:
 
 ```sh
+# Using uv (recommended)
+uv sync --extra dev
+
+# Or using pip
 pip install -e ".[dev]"
 ```
 
@@ -28,7 +32,7 @@ pip install -e ".[dev]"
   and consistent formatting. Run this command to initialize and install pre-commit hooks:
 
 ```sh
-pre-commit install
+uv tool run pre-commit install
 ```
 
 ## License
