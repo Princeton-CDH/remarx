@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "remarx"
-description = "Code for identifiying Marx citations associated with the CDH project Citing Marx"
+description = "Code for identifying Marx citations associated with the CDH project Citing Marx"
 authors = [
   {name = "Center for Digital Humanities at Princeton", email = "cdh@princeton.edu"},
 ]
