@@ -40,7 +40,7 @@ class SentenceSegmenter:
 
         Returns:
             list[dict]: A list of sentence dictionaries, each containing the following keys:
-                - file (str): The stem name of the file
+                - file (str): which file the sentence belongs to
                 - sent_idx (int): Index of the sentence within the file
                 - char_idx (int): Starting character position of the sentence
                 - text (str): The sentence text
