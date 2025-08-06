@@ -29,6 +29,7 @@ dependencies = [
   "polars",
   "ruff",
   "stanza",
+  "tqdm>=4.67.1",
 ]
 
 optional-dependencies.dev = [
@@ -40,6 +41,11 @@ optional-dependencies.dev = [
 optional-dependencies.test = [
   "pytest",
   "pytest-cov",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.4.1",
 ]
 
 [tool.hatch.version]
