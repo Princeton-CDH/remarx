@@ -28,11 +28,11 @@ uv run remarx-gui
 
 ## Launch other notebooks as apps
 
-To launch other `remarx` notebooks run the `launch-notebook` command with the
+To launch other `remarx` notebooks run the `remarx-nb` command with the
 name of the notebook to be launched.
 
 ```
-uv run remarx-notebook remarx_gui
+uv run remarx-nb remarx_gui
 ```
 
 # License

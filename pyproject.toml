@@ -42,7 +42,7 @@ optional-dependencies.test = [
 ]
 
 scripts.remarx-gui = "remarx.launch_gui:main"
-scripts.remarx-launch-nb = "remarx.launch_notebook:main"
+scripts.remarx-nb = "remarx.launch_notebook:main"
 
 [tool.hatch.version]
 path = "src/remarx/__init__.py"
