@@ -31,13 +31,13 @@ dependencies = [
   "stanza",
 ]
 
-optional-dependencies.dev = [
+[project.optional-dependencies]
+dev = [
   "pre-commit",
   "remarx[test]",
   "ruff",
 ]
-#[project.scripts]
-optional-dependencies.test = [
+test = [
   "pytest",
   "pytest-cov",
 ]
