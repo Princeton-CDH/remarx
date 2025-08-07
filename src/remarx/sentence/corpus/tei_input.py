@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from functools import cached_property
 from typing import ClassVar, Self
 
+from lxml.etree import XMLSyntaxError
 from neuxml import xmlmap
 
 from remarx.sentence.corpus.input import TextInput
@@ -113,8 +114,10 @@ class TEIDocument(BaseTEIXmlObject):
         """
         Class method to initialize a new :class:`TEIDocument` from a file.
         """
-        # TODO: handle parse error etc
-        return xmlmap.load_xmlobject_from_file(path, cls)
+        try:
+            return xmlmap.load_xmlobject_from_file(path, cls)
+        except XMLSyntaxError as err:
+            raise ValueError(f"Error parsing {path} as XML") from err
 
 
 @dataclass
