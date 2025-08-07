@@ -5,12 +5,7 @@ from collections.abc import Generator
 from dataclasses import dataclass
 from functools import cached_property
 
-
-def segment(text: str) -> list[str]:
-    """
-    Temporary placeholder for sentence segmentation method
-    """
-    return text[::100]
+from remarx.sentence.segment import segment_text
 
 
 @dataclass
@@ -38,6 +33,6 @@ class TextInput:
         """
         Get sentences for this file, with any associated metadata.
         """
-        for chunk in self.get_text_chunks():
-            for sentence in segment(chunk):
+        for chunk in self.get_text():
+            for _char_idx, sentence in segment_text(chunk):
                 yield {"text": sentence, "file_id": self.file_id}
