@@ -12,15 +12,17 @@ def _():
     import marimo as mo
 
     import remarx
-    return mo, remarx, subprocess, sys
+    return mo, remarx, sys
 
 
 @app.cell
-def _(mo, subprocess, sys):
+def _(mo, sys):
     # Launch notebook if its being run as as script
+    from marimo._cli import cli
+
     if not mo.running_in_notebook():
         try:
-            subprocess.run(["marimo", "run", __file__])
+            cli.main(["run", __file__])
         except KeyboardInterrupt:
             sys.exit(0)
     return
