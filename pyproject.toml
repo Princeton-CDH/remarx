@@ -54,7 +54,6 @@ target-version = "py312"
 # Configure src path so ruff import fixes can identify local imports
 src = [ "src" ]
 
-
 [tool.ruff.lint]
 select = [
 # ruff defaults
