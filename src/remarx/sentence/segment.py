@@ -24,7 +24,7 @@ def segment_text(text: str, language: str = "de") -> list[tuple[int, str]]:
     # Use minimal processors (tokenize) for sentence segmentation only
     segmenter = stanza.Pipeline(lang=language, processors="tokenize")
 
-    # Segment the plain text
+    # Segment input text
     processed_doc = segmenter(text)
 
     # Extract sentences with character-level indices
