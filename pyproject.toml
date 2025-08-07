@@ -29,7 +29,7 @@ dependencies = [
   "polars",
   "ruff",
   "stanza",
-  "tqdm>=4.67.1",
+  "tqdm",
 ]
 
 optional-dependencies.dev = [
