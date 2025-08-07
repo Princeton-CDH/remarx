@@ -27,7 +27,6 @@ dependencies = [
   "polars",
   "ruff",
   "stanza",
-  "tqdm",
 ]
 
 [project.optional-dependencies]
