@@ -1,28 +1,26 @@
 [build-system]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-requires = [ "hatchling" ]
 
 [project]
 name = "remarx"
 description = "Code for identifying Marx citations associated with the CDH project Citing Marx"
-readme = "README.md"
-license = { text = "Apache-2" }
 authors = [
-  { name = "Center for Digital Humanities at Princeton", email = "cdh@princeton.edu" },
+  {name = "Center for Digital Humanities at Princeton", email = "cdh@princeton.edu"},
 ]
 requires-python = ">=3.12"
+readme = "README.md"
+license = {text = "Apache-2"}
+dynamic = ["version"]
 classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Science/Research",
   "Operating System :: OS Independent",
-  "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
   "Topic :: Scientific/Engineering :: Information Analysis",
   "Topic :: Text Processing",
 ]
-dynamic = [ "version" ]
 dependencies = [
   "marimo>=0.13.11",
   "marimo[lsp]",     # marimo language server protocol
@@ -31,24 +29,25 @@ dependencies = [
   "stanza",
 ]
 
-optional-dependencies.dev = [
+[project.optional-dependencies]
+dev = [
   "pre-commit",
-  "remarx[test]",
   "ruff",
+  "remarx[test]",
 ]
-optional-dependencies.test = [
+test = [
   "pytest",
   "pytest-cov",
 ]
 
-scripts.remarx-app = "remarx.app:app.run"
+[project.scripts]
+remarx-app = "remarx.app:app.run"
 
 [tool.hatch.version]
 path = "src/remarx/__init__.py"
 
-[tool.hatch.metadata]
-# So python type stubs can be installed from GitHub (i.e., direct reference)
-allow-direct-references = true
+[tool.pytest.ini_options]
+testpaths = ["test"]
 
 [tool.ruff]
 # Always generate Python 3.12-compatible code
@@ -58,8 +57,9 @@ src = [ "src" ]
 # Also ignore the app notebook
 extend-exclude = [ "src/remarx/app.py" ]
 
+[tool.ruff.lint]
 # Include these rules in addition to ruff's defaults
-lint.extend-select = [
+extend-select = [
   "ANN",  # flake8-annotations
   "B",    # flake8-bugbear
   "C4",   # flake8-comprehensions
@@ -78,10 +78,7 @@ lint.extend-select = [
   "UP",   # pyupgrade
 ]
 # Can use to ignore specific rules within above selection
-lint.ignore = [  ]
-
-[tool.pytest.ini_options]
-testpaths = [ "test" ]
+ignore = []
 
 [tool.marimo.display]
 cell_output = "below"
@@ -99,3 +96,7 @@ enabled = true
 
 [tool.marimo.experimental]
 lsp = true
+
+[tool.hatch.metadata]
+# So python type stubs can be installed from GitHub (i.e., direct reference)
+allow-direct-references = true

@@ -11,11 +11,6 @@ repos:
         args: [--fix] # To enable lint fixes
       # Run the formatter using configs in pyproject.toml
       - id: ruff-format
-  # pyproject-fmt for formatting toml files
-  - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: v2.6.0
-    hooks:
-      - id: pyproject-fmt
   # yamlfmt for formatting YAML files
   - repo: https://github.com/google/yamlfmt
     rev: v0.17.2
