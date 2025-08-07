@@ -24,6 +24,7 @@ classifiers = [
 dependencies = [
   "marimo>=0.13.11",
   "marimo[lsp]",     # marimo language server protocol
+  "neuxml>=1",
   "polars",
   "ruff",
   "stanza",
