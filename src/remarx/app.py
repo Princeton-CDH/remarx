@@ -6,18 +6,31 @@ app = marimo.App(width="medium")
 
 @app.cell
 def _():
+    import subprocess
+    import sys
+
     import marimo as mo
 
     import remarx
+    return mo, remarx, subprocess, sys
 
-    return mo, remarx
+
+@app.cell
+def _(mo, subprocess, sys):
+    # Launch notebook if its being run as as script
+    if not mo.running_in_notebook():
+        try:
+            subprocess.run(["marimo", "run", __file__])
+        except KeyboardInterrupt:
+            sys.exit(0)
+    return
 
 
 @app.cell
 def _(mo):
     mo.vstack(
         [
-            mo.md("# `remarx`").center(),
+            mo.md("# `remarx`: Quotation Finder").center(),
             mo.md(
                 "This is the preliminary graphical user interface for the `remarx` software tool."
             ).center(),

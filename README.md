@@ -10,29 +10,30 @@ published in _Die Neue Zeit_ between 1891 and 1918.
 
 ### Installation
 
-Use [`uv`](https://docs.astral.sh/uv/getting-started/installation/) to install
+#### Create a `uv` environment
+
+Create a new virtual environment using
+[`uv`](https://docs.astral.sh/uv/getting-started/installation/).
+
+```
+uv venv
+```
+
+#### Install `remarx`
+
 remarx as a python package directly from GitHub. Use a branch or tag name, e.g.
 `@develop` or `@0.1` if you need to install a specific version.
 
 ```
-uv add "remarx @ git+https://github.com/Princeton-CDH/remarx"
+uv pip install "remarx @ git+https://github.com/Princeton-CDH/remarx"
 ```
 
-### Launch remarx app (GUI)
+### Launch quote finder app
 
-To launch the remarx application run the `remarx-gui` command:
-
-```
-uv run remarx-gui
-```
-
-### Launch other notebooks as apps
-
-To launch other `remarx` notebooks run the `remarx-nb` command with the
-name of the notebook to be launched.
+To launch the remarx quote finder application run the `remarx-app` command:
 
 ```
-uv run remarx-nb remarx_gui
+uv run remarx-app
 ```
 
 ## Development instructions

@@ -41,8 +41,7 @@ optional-dependencies.test = [
   "pytest-cov",
 ]
 
-scripts.remarx-gui = "remarx.launch_gui:main"
-scripts.remarx-nb = "remarx.launch_notebook:main"
+scripts.remarx-app = "remarx.app:app.run"
 
 [tool.hatch.version]
 path = "src/remarx/__init__.py"
@@ -56,8 +55,8 @@ allow-direct-references = true
 target-version = "py312"
 # Configure src path so ruff import fixes can identify local imports
 src = [ "src" ]
-# Also ignore marimo notebooks
-extend-exclude = [ "src/remarx/notebooks" ]
+# Also ignore the app notebook
+extend-exclude = [ "src/remarx/app.py" ]
 
 # Include these rules in addition to ruff's defaults
 lint.extend-select = [
