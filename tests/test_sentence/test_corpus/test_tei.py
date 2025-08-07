@@ -9,7 +9,7 @@ TEST_TEI_FILE = FIXTURE_DIR / "sample_tei.xml"
 
 
 def test_tei_tag():
-    # test that tei tags object is constructed as expected
+    # test that tei tags object is  nstructed as expected
     assert TEI_TAG.pb == "{http://www.tei-c.org/ns/1.0}pb"
 
 
@@ -35,3 +35,34 @@ class TestTEIDocument:
         assert len(tei_doc.pages) == 2
         # for these pages, edition attribute is not present
         assert all(p.edition is None for p in tei_doc.pages)
+
+
+class TestTEIPage:
+    def test_attributes(self):
+        tei_doc = TEIDocument.init_from_file(TEST_TEI_FILE)
+        # test first page and first manuscript page
+        page = tei_doc.all_pages[0]
+        ms_page = tei_doc.all_pages[1]
+
+        assert page.number == "12"
+        assert page.edition is None
+
+        assert ms_page.number == "IX"
+        assert ms_page.edition == "manuscript"
+
+    def test_str(self):
+        tei_doc = TEIDocument.init_from_file(TEST_TEI_FILE)
+        # test first page
+        page = tei_doc.all_pages[0]
+        # includes some leading whitespace from <pb> and <p> tags
+        # remove whitespace for testing for now
+        text = str(page).strip()
+
+        # first text content after the pb tag
+        assert text.startswith("als in der ersten Darstellung.")  # codespell:ignore
+        # last text content after the next standard pb tag
+        assert text.endswith("entwickelten nur das Bild der eignen Zukunft!")
+        # should not include editorial content
+        assert "|" not in text
+        assert "IX" not in text
+        # TODO: should not include footnote content

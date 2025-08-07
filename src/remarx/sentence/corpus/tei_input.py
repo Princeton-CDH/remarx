@@ -55,21 +55,22 @@ class TEIPage(BaseTEIXmlObject):
     def text_contents(self) -> Generator[str]:
         """
         Generator of text content on this page, between the current
-        and following page begin tags.
+        and following page begin tags.  MEGA specific logic:
+        ignores page indicators for the manuscript edition
+        (<pb> tags with ed="manuscript"); assumes standard pb tags have no edition.
         """
         # for now, ignore partial content, footnotes, hyphenation, etc
         for text in self.text_nodes:
+            # text here is an lxml smart string, which preserves context
+            # in the xml tree and is associated with a parent tag.
             parent = text.getparent()
             # stop iterating when we hit the next page break;
             if (
-                parent != self.node
+                parent != self.node  # not the current pb tag
                 and parent.tag == TEI_TAG.pb
                 # ignore alternate edition page breaks (MEGA specific)
                 and parent.get("ed") is None
             ):
-                # TODO move to docstring
-                # mega-specific: there are two sets of page numbers, we want
-                # the main pagination, not the editorial manuscript pagination
                 break
 
             # omit editorial content (e.g. original page numbers)
