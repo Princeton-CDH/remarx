@@ -27,7 +27,7 @@ def segment_text(text: str, language: str = "de") -> list[tuple[int, str]]:
     # Segment the plain text
     processed_doc = segmenter(text)
 
-    # Extract sentences with character indices
+    # Extract sentences with character-level indices
     sentences = []
     for sentence in processed_doc.sentences:
         # Get the character start position of the sentence
