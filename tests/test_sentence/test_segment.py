@@ -4,6 +4,7 @@ Unit tests for sentence segmentation functionality.
 
 from unittest.mock import Mock, patch
 
+import pytest
 from stanza import Pipeline
 from stanza.models.common.doc import Document, Sentence
 
@@ -73,3 +74,9 @@ class TestSegmentTextIntoSentences:
         # Test with default language (should be "de")
         segment_text("Hallo Welt.")
         mock_pipeline_class.assert_called_with(lang="de", processors="tokenize")
+
+    @patch("remarx.sentence.segment.stanza", None)
+    def test_segment_text_no_stanza(self) -> None:
+        """Test that function fails gracefully when stanza is not available."""
+        with pytest.raises(AttributeError):
+            segment_text("Test text.")
