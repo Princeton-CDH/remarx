@@ -951,7 +951,6 @@ dependencies = [
     { name = "polars" },
     { name = "ruff" },
     { name = "stanza" },
-    { name = "tqdm" },
 ]
 
 [package.optional-dependencies]
@@ -964,11 +963,6 @@ dev = [
 test = [
     { name = "pytest" },
     { name = "pytest-cov" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pytest" },
 ]
 
 [package.metadata]
@@ -984,12 +978,8 @@ requires-dist = [
     { name = "ruff" },
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "stanza" },
-    { name = "tqdm", specifier = ">=4.67.1" },
 ]
 provides-extras = ["dev", "test"]
-
-[package.metadata.requires-dev]
-dev = [{ name = "pytest", specifier = ">=8.4.1" }]
 
 [[package]]
 name = "requests"

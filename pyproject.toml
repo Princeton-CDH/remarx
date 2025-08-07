@@ -43,11 +43,6 @@ optional-dependencies.test = [
   "pytest-cov",
 ]
 
-[dependency-groups]
-dev = [
-  "pytest>=8.4.1",
-]
-
 [tool.hatch.version]
 path = "src/remarx/__init__.py"
 
