@@ -4,16 +4,15 @@ Unit tests for sentence segmentation functionality.
 
 from unittest.mock import Mock, patch
 
+from stanza import Pipeline
+from stanza.models.common.doc import Document, Sentence
+
 from remarx.sentence.segment import segment_text
 
 
 def create_mock_sentence(text: str, start_char: int = 0) -> Mock:
     """Helper function: create a mock sentence with the given text and start character."""
-    mock_sentence = Mock()
-    mock_sentence.text = text
-    mock_sentence.tokens = [Mock()]
-    mock_sentence.tokens[0].start_char = start_char
-    return mock_sentence
+    return Mock(spec=Sentence, text=text, tokens=[Mock(start_char=start_char)])
 
 
 class TestSegmentTextIntoSentences:
@@ -26,10 +25,9 @@ class TestSegmentTextIntoSentences:
         mock_sentence1 = create_mock_sentence("Erster Satz.", 0)
         mock_sentence2 = create_mock_sentence("Zweiter Satz.", 14)
 
-        mock_doc = Mock()
-        mock_doc.sentences = [mock_sentence1, mock_sentence2]
+        mock_doc = Mock(spec=Document, sentences=[mock_sentence1, mock_sentence2])
 
-        mock_pipeline = Mock(return_value=mock_doc)
+        mock_pipeline = Mock(spec=Pipeline, return_value=mock_doc)
         mock_pipeline_class.return_value = mock_pipeline
 
         # Test
@@ -45,10 +43,9 @@ class TestSegmentTextIntoSentences:
     def test_segment_text_empty_text(self, mock_pipeline_class: Mock) -> None:
         """Test segmentation of empty text."""
         # Setup mock
-        mock_doc = Mock()
-        mock_doc.sentences = []
+        mock_doc = Mock(spec=Document, sentences=[])
 
-        mock_pipeline = Mock(return_value=mock_doc)
+        mock_pipeline = Mock(spec=Pipeline, return_value=mock_doc)
         mock_pipeline_class.return_value = mock_pipeline
 
         # Test
@@ -56,3 +53,23 @@ class TestSegmentTextIntoSentences:
 
         # Assertions
         assert result == []
+
+    @patch("remarx.sentence.segment.stanza.Pipeline")
+    def test_segment_text_language_parameter(self, mock_pipeline_class: Mock) -> None:
+        """Test that language parameter works whether 'de' is explicitly provided or not."""
+        # Setup mock
+        mock_sentence = create_mock_sentence("Hallo Welt.", 0)
+        mock_doc = Mock(spec=Document, sentences=[mock_sentence])
+        mock_pipeline = Mock(spec=Pipeline, return_value=mock_doc)
+        mock_pipeline_class.return_value = mock_pipeline
+
+        # Test with explicit "en" language
+        segment_text("Hello world.", language="en")
+        mock_pipeline_class.assert_called_with(lang="en", processors="tokenize")
+
+        # Reset mock for second test
+        mock_pipeline_class.reset_mock()
+
+        # Test with default language (should be "de")
+        segment_text("Hallo Welt.")
+        mock_pipeline_class.assert_called_with(lang="de", processors="tokenize")

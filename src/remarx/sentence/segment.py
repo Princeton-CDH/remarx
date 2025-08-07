@@ -1,8 +1,7 @@
 """
-Sentence segmentation utilities for text processing.
-
-This utility module provides functionality to segment text into sentences and
-return character-indexed sentence pairs.
+Provides functionality to break down input text into individual
+sentences and return them as tuples containing the character index where each
+sentence begins and the sentence text itself.
 """
 
 import stanza
@@ -24,16 +23,10 @@ def segment_text(text: str, language: str = "de") -> list[tuple[int, str]]:
     # Use minimal processors (tokenize) for sentence segmentation only
     segmenter = stanza.Pipeline(lang=language, processors="tokenize")
 
-    # Segment input text
     processed_doc = segmenter(text)
 
     # Extract sentences with character-level indices
-    sentences = []
-    for sentence in processed_doc.sentences:
-        # Get the character start position of the sentence
-        char_start = sentence.tokens[0].start_char
-        # Get the sentence text
-        sentence_text = sentence.text
-        sentences.append((char_start, sentence_text))
-
-    return sentences
+    return [
+        (sentence.tokens[0].start_char, sentence.text)
+        for sentence in processed_doc.sentences
+    ]
