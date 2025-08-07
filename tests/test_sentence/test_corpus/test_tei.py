@@ -28,3 +28,10 @@ class TestTEIDocument:
         txtfile.write_text("this is not tei or xml")
         with pytest.raises(ValueError, match="Error parsing"):
             TEIDocument.init_from_file(txtfile)
+
+    def test_pages(self):
+        tei_doc = TEIDocument.init_from_file(TEST_TEI_FILE)
+        # pages should be filtered to the standard edition only
+        assert len(tei_doc.pages) == 2
+        # for these pages, edition attribute is not present
+        assert all(p.edition is None for p in tei_doc.pages)
