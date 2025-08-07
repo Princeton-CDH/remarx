@@ -10,10 +10,15 @@ published in _Die Neue Zeit_ between 1891 and 1918.
 
 ### Installation
 
+Documentation assumes the use of `uv` for installing python and python packages, as
+well as running python scripts. The first time you follow these instructions, you
+should install `uv` per
+[`uv` installation documentation](https://docs.astral.sh/uv/getting-started/installation/).
+This only step only needs to be done once.
+
 #### Create a `uv` environment
 
-Create a new virtual environment using
-[`uv`](https://docs.astral.sh/uv/getting-started/installation/).
+Create a new virtual environment using `uv`.
 
 ```
 uv venv
