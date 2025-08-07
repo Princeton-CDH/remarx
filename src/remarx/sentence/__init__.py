@@ -1,5 +1,5 @@
 """
-Sentence processing utilities.
+This module contains libraries for sentence segmentation and sentence corpus construction.
 """
 
 from .segment import segment_text
