@@ -57,7 +57,7 @@ class TestSegmentTextIntoSentences:
 
     @patch("remarx.sentence.segment.stanza.Pipeline")
     def test_segment_text_language_parameter(self, mock_pipeline_class: Mock) -> None:
-        """Test that language parameter works whether 'de' is explicitly provided or not."""
+        """Test that language parameter works or not."""
         # Setup mock
         mock_sentence = create_mock_sentence("Hallo Welt.", 0)
         mock_doc = Mock(spec=Document, sentences=[mock_sentence])
