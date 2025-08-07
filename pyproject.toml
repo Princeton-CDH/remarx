@@ -47,7 +47,7 @@ test = [
 path = "src/remarx/__init__.py"
 
 [tool.pytest.ini_options]
-testpaths = ["test"]
+testpaths = ["tests"]
 
 [tool.ruff]
 # Always generate Python 3.12-compatible code
@@ -82,6 +82,12 @@ select = [
 ]
 # Can use to ignore specific rules within above selection
 ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402"]
+# for test files, don't require docstrings or return type annotations
+"tests/**" = ["D100", "D103", "ANN201"]
+
 
 [tool.marimo.display]
 cell_output = "below"

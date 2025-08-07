@@ -7,11 +7,12 @@ import re
 from collections import namedtuple
 from collections.abc import Generator
 from dataclasses import dataclass, field
+from functools import cached_property
 from typing import ClassVar, Self
 
 from neuxml import xmlmap
 
-from remarx.sentence.corpus.input.base import TextInput
+from remarx.sentence.corpus.input import TextInput
 
 # requirements:
 # takes one input file
@@ -45,7 +46,6 @@ class TEIPage(BaseTEIXmlObject):
 
     number = xmlmap.StringField("@n")
     edition = xmlmap.StringField("@ed")
-    next_page_number = xmlmap.StringField("following::t:pb[1]/@n")
 
     # page beginning tags delimit content instead of containing it;
     # use following axis to find all text nodes following this page beginning
@@ -97,7 +97,16 @@ class TEIDocument(BaseTEIXmlObject):
     """
 
     #: list of page objects, identified by standard (non-editorial) page begin tag (pb)
-    pages = xmlmap.NodeListField("..//t:text//t:pb", TEIPage)
+    all_pages = xmlmap.NodeListField("//t:text//t:pb", TEIPage)
+
+    @cached_property
+    def pages(self) -> list[TEIPage]:
+        """
+        Standard pages.  Returns a list of :class:`TEIPage` objects
+        for this document, with  pages marked as manuscript edition excluded.
+        """
+        # it's more efficient to to filter in python than in xpath
+        return [page for page in self.all_pages if page.edition != "manuscript"]
 
     @classmethod
     def init_from_file(cls, path: pathlib.Path) -> Self:
@@ -128,7 +137,7 @@ class TEIinput(TextInput):
         # parse the input file as xml and save the result
         self.xml_doc = TEIDocument.init_from_file(self.input_file)
 
-    def get_text_chunks(self) -> Generator[str]:
+    def get_text(self) -> Generator[str]:
         """
         Get document content page by page.
         """

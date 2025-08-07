@@ -27,7 +27,7 @@ class TextInput:
         """
         return self.input_file.name
 
-    def get_text_chunks(self) -> Generator[str]:
+    def get_text(self) -> Generator[str]:
         """
         Get plain-text contents for this file with any desired chunking.
         For initial text files, don't do any chunking.
