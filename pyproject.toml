@@ -84,7 +84,7 @@ extend-select = [
 ignore = []
 
 [tool.ruff.lint.per-file-ignores]
-"test/**.py" = ["D", "ANN"]
+"tests/**.py" = ["D", "ANN"]
 
 [tool.marimo.display]
 cell_output = "below"
