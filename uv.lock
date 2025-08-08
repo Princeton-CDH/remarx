@@ -955,18 +955,22 @@ dependencies = [
 
 [package.optional-dependencies]
 dev = [
+    { name = "coverage" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
 ]
 test = [
+    { name = "coverage" },
     { name = "pytest" },
     { name = "pytest-cov" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "coverage", extras = ["toml"], marker = "extra == 'dev'" },
+    { name = "coverage", extras = ["toml"], marker = "extra == 'test'" },
     { name = "marimo", specifier = ">=0.13.11" },
     { name = "marimo", extras = ["lsp"] },
     { name = "polars" },
