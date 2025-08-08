@@ -30,7 +30,7 @@ theme:
     - content.code.copy
 nav:
   - Overview: index.md
-  # - Developer Notes: DEVELOPERNOTES.md
+  - Developer Notes: DEVELOPERNOTES.md
   - Code Documentation:
       - Overview: api/index.md
       - sentence: api/sentence.md
