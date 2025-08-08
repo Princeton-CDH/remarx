@@ -6,33 +6,39 @@ The primary purpose of this software is to identify quotes of Karl Marx's _Manif
 der Kommunistischen Partei_ and the first volume of _Das Kapital_ within articles
 published in _Die Neue Zeit_ between 1891 and 1918.
 
-## Development instructions
+## Basic Usage
 
-This repo uses [git-flow](https://github.com/nvie/gitflow) branching conventions;
-**main** contains the most recent release, and work in progress will be on the
-**develop** branch. Pull requests for new features should be made against develop.
+### Installation
 
-### Developer setup and installation
+Documentation assumes the use of `uv` for installing python and python packages, as
+well as running python scripts. The first time you follow these instructions, you
+should install `uv` per
+[`uv` installation documentation](https://docs.astral.sh/uv/getting-started/installation/).
+This only step only needs to be done once.
 
-- **Recommended:** Create a python virtual environment with your tool of choice
-  (uv, mamba, venv, etc); use python 3.12.
+#### Create a `uv` environment
 
-- Install the local checked out version of this package in editable mode (`-e`),
-  including all python dependencies and optional dependencies for development and testing:
+Create a new virtual environment using `uv`.
 
-```sh
-# Using uv (recommended)
-uv sync
-
-# Or using pip
-pip install -e ".[dev]"
+```
+uv venv
 ```
 
-- This repository uses [pre-commit](https://pre-commit.com/) for python code linting
-  and consistent formatting. Run this command to initialize and install pre-commit hooks:
+#### Install `remarx`
 
-```sh
-uv tool run pre-commit install
+remarx as a python package directly from GitHub. Use a branch or tag name, e.g.
+`@develop` or `@0.1` if you need to install a specific version.
+
+```
+uv pip install "remarx @ git+https://github.com/Princeton-CDH/remarx"
+```
+
+### Launch quote finder app
+
+To launch the remarx quote finder application run the `remarx-app` command:
+
+```
+uv run remarx-app
 ```
 
 ## License
