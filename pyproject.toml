@@ -4,28 +4,28 @@ build-backend = "hatchling.build"
 
 [project]
 name = "remarx"
-description = "Code for identifiying Marx citations associated with the CDH project Citing Marx"
+description = "Code for identifying Marx citations associated with the CDH project Citing Marx"
 authors = [
   {name = "Center for Digital Humanities at Princeton", email = "cdh@princeton.edu"},
 ]
 requires-python = ">=3.12"
 readme = "README.md"
 license = {text = "Apache-2"}
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.12",
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Science/Research",
-    "Operating System :: OS Independent",
-    "Topic :: Scientific/Engineering :: Information Analysis",
-    "Topic :: Text Processing",
-]
 dynamic = ["version"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering :: Information Analysis",
+  "Topic :: Text Processing",
+]
 dependencies = [
   "marimo>=0.13.11",
-  "marimo[lsp]", # marimo language server protocol
-  "ruff",
+  "marimo[lsp]",     # marimo language server protocol
   "polars",
+  "ruff",
   "stanza",
 ]
 
@@ -52,7 +52,7 @@ testpaths = ["test"]
 # Always generate Python 3.12-compatible code
 target-version = "py312"
 # Configure src path so ruff import fixes can identify local imports
-src = ["src"]
+src = [ "src" ]
 
 [tool.ruff.lint]
 select = [
@@ -84,11 +84,11 @@ ignore = []
 
 [tool.marimo.display]
 cell_output = "below"
-theme = "system"  # honor user preference, including in static html exports
+theme = "system"      # honor user preference, including in static html exports
 
 [tool.marimo.runtime]
 # Add project source directory to python path
-pythonpath = ["src"]
+pythonpath = [ "src" ]
 
 [tool.marimo.save]
 format_on_save = true
