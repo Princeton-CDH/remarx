@@ -1156,6 +1156,7 @@ dependencies = [
 
 [package.optional-dependencies]
 dev = [
+    { name = "coverage" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -1167,6 +1168,7 @@ docs = [
     { name = "mkdocstrings", extra = ["python"] },
 ]
 test = [
+    { name = "coverage" },
     { name = "pytest" },
     { name = "pytest-cov" },
 ]
@@ -1181,6 +1183,8 @@ docs = [
 
 [package.metadata]
 requires-dist = [
+    { name = "coverage", extras = ["toml"], marker = "extra == 'dev'" },
+    { name = "coverage", extras = ["toml"], marker = "extra == 'test'" },
     { name = "marimo", specifier = ">=0.13.11" },
     { name = "marimo", extras = ["lsp"] },
     { name = "mkdocs", marker = "extra == 'docs'" },

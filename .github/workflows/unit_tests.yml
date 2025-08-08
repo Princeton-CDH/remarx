@@ -1,0 +1,36 @@
+name: Unit Tests & Code Coverage
+on:
+  push: # Run on all branches
+  pull_request:
+    branches: [develop, main]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        uv-version: ["0.8.6"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ matrix.uv-version }}
+      - name: Install dependencies
+        run: |
+          uv sync --extra dev --extra test
+      - name: Run tests with coverage
+        run: |
+          uv run pytest \
+            --cov=src/remarx \
+            --cov=tests \
+            --cov-report=xml \
+            --cov-report=term \
+            tests
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          fail_ci_if_error: false
