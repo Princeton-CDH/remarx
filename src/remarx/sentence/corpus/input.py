@@ -26,6 +26,7 @@ class TextInput:
         """
         List of field names for sentences from this format input.
         """
+        # should this be a class method? static class variable ?
         return ["file_id", "offset", "text"]
 
     def get_text(self) -> Generator[str]:

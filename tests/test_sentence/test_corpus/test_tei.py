@@ -76,6 +76,10 @@ class TestTEIinput:
         # xml is parsed as tei document
         assert isinstance(tei_input.xml_doc, TEIDocument)
 
+    def test_field_names(self, tmp_path: pathlib.Path):
+        tei_input = TEIinput(input_file=TEST_TEI_FILE)
+        assert tei_input.field_names() == ["file_id", "offset", "text", "page_id"]
+
     def test_get_text(self):
         tei_input = TEIinput(input_file=TEST_TEI_FILE)
         text_result = tei_input.get_text()

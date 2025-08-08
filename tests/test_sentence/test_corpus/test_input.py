@@ -18,6 +18,12 @@ def test_file_id(tmp_path: pathlib.Path):
     assert txt_input.file_id == txt_filename
 
 
+def test_field_names(tmp_path: pathlib.Path):
+    txt_file = tmp_path / "input.txt"
+    txt_input = TextInput(input_file=txt_file)
+    assert txt_input.field_names() == ["file_id", "offset", "text"]
+
+
 def test_get_text(tmp_path: pathlib.Path):
     txt_file = tmp_path / "input.txt"
     text_contents = "placeholder content"
