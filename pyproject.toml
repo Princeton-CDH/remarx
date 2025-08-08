@@ -50,7 +50,7 @@ remarx-app = "remarx.app:app.run"
 path = "src/remarx/__init__.py"
 
 [tool.pytest.ini_options]
-testpaths = ["test"]
+testpaths = ["tests"]
 
 [tool.ruff]
 # Always generate Python 3.12-compatible code
