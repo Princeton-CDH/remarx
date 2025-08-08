@@ -1,8 +1,9 @@
 import pathlib
+from collections.abc import Generator
 
 import pytest
 
-from remarx.sentence.corpus.tei_input import TEI_TAG, TEIDocument, TEIPage
+from remarx.sentence.corpus.tei_input import TEI_TAG, TEIDocument, TEIinput, TEIPage
 
 FIXTURE_DIR = pathlib.Path(__file__).parent / "fixtures"
 TEST_TEI_FILE = FIXTURE_DIR / "sample_tei.xml"
@@ -66,3 +67,27 @@ class TestTEIPage:
         assert "|" not in text
         assert "IX" not in text
         # TODO: should not include footnote content
+
+
+class TestTEIinput:
+    def test_init(self):
+        tei_input = TEIinput(input_file=TEST_TEI_FILE)
+        assert tei_input.input_file == TEST_TEI_FILE
+        # xml is parsed as tei document
+        assert isinstance(tei_input.xml_doc, TEIDocument)
+
+    def test_get_text(self):
+        tei_input = TEIinput(input_file=TEST_TEI_FILE)
+        text_result = tei_input.get_text()
+        # should be a generator
+        assert isinstance(text_result, Generator)
+        text_result = list(text_result)
+        # expect two pages
+        assert len(text_result) == 2
+        # right now result is just str
+        assert all(isinstance(txt, str) for txt in text_result)
+        # check for expected contents
+        assert (
+            text_result[0].strip().startswith("als in der ersten")  # codespell:ignore
+        )
+        assert text_result[1].strip().startswith("Aber abgesehn hiervon")
