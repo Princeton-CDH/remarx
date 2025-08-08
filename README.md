@@ -6,6 +6,41 @@ The primary purpose of this software is to identify quotes of Karl Marx's _Manif
 der Kommunistischen Partei_ and the first volume of _Das Kapital_ within articles
 published in _Die Neue Zeit_ between 1891 and 1918.
 
+## Basic Usage
+
+### Installation
+
+Documentation assumes the use of `uv` for installing python and python packages, as
+well as running python scripts. The first time you follow these instructions, you
+should install `uv` per
+[`uv` installation documentation](https://docs.astral.sh/uv/getting-started/installation/).
+This only step only needs to be done once.
+
+#### Create a `uv` environment
+
+Create a new virtual environment using `uv`.
+
+```
+uv venv
+```
+
+#### Install `remarx`
+
+remarx as a python package directly from GitHub. Use a branch or tag name, e.g.
+`@develop` or `@0.1` if you need to install a specific version.
+
+```
+uv pip install "remarx @ git+https://github.com/Princeton-CDH/remarx"
+```
+
+### Launch quote finder app
+
+To launch the remarx quote finder application run the `remarx-app` command:
+
+```
+uv run remarx-app
+```
+
 ## Development instructions
 
 This repo uses [git-flow](https://github.com/nvie/gitflow) branching conventions;
