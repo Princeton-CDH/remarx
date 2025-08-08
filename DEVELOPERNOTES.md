@@ -31,7 +31,13 @@ uv sync
   and consistent formatting. Run this command to initialize and install pre-commit hooks:
 
 ```
-uv tool run pre-commit install
+uv tool install pre-commit --with pre-commit-uv
+```
+
+- To run `pre-commit` explicitly run:
+
+```
+uv tool run pre-commit
 ```
 
 ## Useful `uv` commands
