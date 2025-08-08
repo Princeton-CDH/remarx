@@ -40,6 +40,9 @@ test = [
   "pytest-cov",
 ]
 
+[dependency-groups]
+dev = [ "remarx[dev]" ]
+
 [project.scripts]
 remarx-app = "remarx.app:app.run"
 
