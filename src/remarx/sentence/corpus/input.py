@@ -22,6 +22,12 @@ class TextInput:
         """
         return self.input_file.name
 
+    def field_names(self) -> str:
+        """
+        List of field names for sentences from this format input.
+        """
+        return ["file_id", "offset", "text"]
+
     def get_text(self) -> Generator[str]:
         """
         Get plain-text contents for this file with any desired chunking.
@@ -34,5 +40,5 @@ class TextInput:
         Get sentences for this file, with any associated metadata.
         """
         for chunk in self.get_text():
-            for _char_idx, sentence in segment_text(chunk):
-                yield {"text": sentence, "file_id": self.file_id}
+            for char_idx, sentence in segment_text(chunk):
+                yield {"text": sentence, "offset": char_idx, "file_id": self.file_id}

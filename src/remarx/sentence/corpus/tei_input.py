@@ -141,6 +141,14 @@ class TEIinput(TextInput):
         # parse the input file as xml and save the result
         self.xml_doc = TEIDocument.init_from_file(self.input_file)
 
+    def field_names(self) -> str:
+        """
+        List of field names for sentences from TEI input.
+        """
+        field_names = super().field_names()
+        field_names.append("page_id")
+        return field_names
+
     def get_text(self) -> Generator[str]:
         """
         Get document content page by page.
