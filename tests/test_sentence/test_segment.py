@@ -4,7 +4,6 @@ Unit tests for sentence segmentation functionality.
 
 from unittest.mock import Mock, patch
 
-import pytest
 from stanza import Pipeline
 from stanza.models.common.doc import Document, Sentence
 
@@ -74,4 +73,3 @@ class TestSegmentTextIntoSentences:
         # Test with default language (should be "de")
         segment_text("Hallo Welt.")
         mock_pipeline_class.assert_called_with(lang="de", processors="tokenize")
-

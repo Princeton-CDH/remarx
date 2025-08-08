@@ -38,6 +38,7 @@ dev = [
 test = [
   "pytest",
   "pytest-cov",
+  "coverage[toml]", # Enables coverage to read config from pyproject.toml
 ]
 
 [dependency-groups]
@@ -51,6 +52,15 @@ path = "src/remarx/__init__.py"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+show_missing = true   # Helpful for debugging
+
+[tool.coverage.html]
+directory = "coverage_html_report"
 
 [tool.ruff]
 # Always generate Python 3.12-compatible code
