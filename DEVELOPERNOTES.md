@@ -11,21 +11,27 @@ package is also compatible with the use of `pip` for python package management a
 a tool of your choice for creating python virtual environments (`mamba`, `venv`, etc).
 
 - Install `uv` if it's not already installed. `uv` can be installed via
-[Homebrew](https://docs.astral.sh/uv/getting-started/installation/#homebrew) or a
-[standalone installer](https://docs.astral.sh/uv/getting-started/installation/#standalone-installer).
-See uv's installation [documentation](https://docs.astral.sh/uv/getting-started/installation/#installing-uv)
-for more details.
+  [Homebrew](https://docs.astral.sh/uv/getting-started/installation/#homebrew) or a
+  [standalone installer](https://docs.astral.sh/uv/getting-started/installation/#standalone-installer).
+  See uv's installation [documentation](https://docs.astral.sh/uv/getting-started/installation/#installing-uv)
+  for more details.
 
 - To explicitly sync the project's dependencies, including optional dependencies
-for devlopment and testing, to your local environment run:
+  for development and testing, to your local environment run:
 
 ```
 uv sync
 ```
 
 Note that `uv` performs syncing and locking automatically (e.g., any time `uv run`
-is invoked). By default, syncing will remove 
+is invoked). By default, syncing will remove any packages not specified in the
+`pyproject.toml`.
 
+- This repository uses [pre-commit](https://pre-commit.com/) for python code linting
+  and consistent formatting. Run this command to initialize and install pre-commit hooks:
+
+```sh
+uv tool pre-commit install
 
 ## Useful `uv` commands
 
@@ -35,11 +41,4 @@ is invoked). By default, syncing will remove
 - `uv remove --dev`: Remove a development dependency from the project
 - `uv run`: Run a command or script
 - `uv run marimo edit [notebook.py]`: Launch marimo notebook in edit mode
-
-<!---
-TODO: Uncomment this section once pre-commit is set up
-- This repository uses [pre-commit](https://pre-commit.com/) for python code linting
-and consistent formatting. Run this command to initialize and install pre-commit hooks:
-```sh
-pre-commit install
---->
+```
