@@ -14,10 +14,12 @@ def segment_text(text: str, language: str = "de") -> list[tuple[int, str]]:
     index where each sentence starts and the sentence text itself.
 
     Example:
+        ```python
         >>> text = "This is sentence one. This is sentence two."
         >>> sentences = segment_text(text, language="en")
         >>> sentences
         [(0, 'This is sentence one.'), (22, 'This is sentence two.')]
+        ```
     """
     # Initialize the NLP pipeline for sentence segmentation
     # Use minimal processors (tokenize) for sentence segmentation only

@@ -1175,7 +1175,7 @@ test = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "remarx", extra = ["dev"] },
+    { name = "remarx", extra = ["dev", "docs"] },
 ]
 docs = [
     { name = "remarx", extra = ["docs"] },
@@ -1203,7 +1203,10 @@ requires-dist = [
 provides-extras = ["dev", "docs", "test"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "remarx", extras = ["dev"] }]
+dev = [
+    { name = "remarx", extras = ["dev"] },
+    { name = "remarx", extras = ["docs"] },
+]
 docs = [{ name = "remarx", extras = ["docs"] }]
 
 [[package]]

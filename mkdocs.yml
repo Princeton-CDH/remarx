@@ -1,7 +1,7 @@
 site_name: Remarx Documentation
 site_description: Code for identifying Marx quotes associated with the CDH project Citing Marx
 site_author: Center for Digital Humanities at Princeton
-site_url: https://github.com/Princeton-CDH/remarx
+site_url: https://princeton-cdh.github.io/remarx/
 repo_name: Princeton-CDH/remarx
 repo_url: https://github.com/Princeton-CDH/remarx
 theme:
@@ -30,7 +30,7 @@ theme:
     - content.code.copy
 nav:
   - Overview: index.md
-  - Developer Notes: DEVELOPERNOTES.md
+  - Developer Notes: devnotes.md
   - Code Documentation:
       - Overview: api/index.md
       - sentence: api/sentence.md
@@ -42,7 +42,7 @@ plugins:
           options:
             docstring_style: google
             show_root_heading: true
-            show_source: true
+            show_source: false
             show_bases: true
             show_inheritance_diagram: true
             members_order: source

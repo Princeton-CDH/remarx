@@ -41,6 +41,10 @@ To launch the remarx quote finder application run the `remarx-app` command:
 uv run remarx-app
 ```
 
+## Development
+
+For development setup, documentation generation, and contributing guidelines, see [Developer Notes](docs/devnotes.md).
+
 ## License
 
 This project is licensed under the [Apache 2.0 License](LICENSE).

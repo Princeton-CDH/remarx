@@ -47,7 +47,7 @@ docs = [
 ]
 
 [dependency-groups]
-dev = [ "remarx[dev]" ]
+dev = [ "remarx[dev]", "remarx[docs]" ]
 docs = [ "remarx[docs]" ]
 
 [project.scripts]

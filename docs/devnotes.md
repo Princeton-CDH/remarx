@@ -40,6 +40,48 @@ uv tool install pre-commit --with pre-commit-uv
 uv tool run pre-commit
 ```
 
+## Documentation
+
+This project uses [MkDocs](https://www.mkdocs.org/) for documentation generation.
+
+### Development setup
+
+Documentation dependencies can be installed separately or together with dev dependencies:
+
+```
+# Install docs dependencies only
+uv sync --group docs
+
+# Install both dev and docs dependencies
+uv sync --group dev
+```
+
+### Working with documentation
+
+- **Preview documentation locally**: `uv run mkdocs serve`
+
+  - Opens at `http://127.0.0.1:8000/`
+  - Auto-reloads on file changes
+
+- **Build documentation**: `uv run mkdocs build`
+
+  - Generates static site in `site/` directory
+
+### Writing documentation
+
+- **Files**: Documentation files are located in `docs/` directory.
+- **API documentation**: Auto-generated from docstrings using [mkdocstrings](https://mkdocstrings.github.io/).
+- **Code examples**: To display examples correctly, be sure to wrap them with triple backticks and specify `python`.
+  ````python
+      """
+      Usage example:
+          ```python
+            result = add(2, 3)
+            print(result)  # 5
+          ```
+      """
+  ````
+
 ## Useful `uv` commands
 
 - `uv add`: Add a new dependency to the project (i.e., updates `pyproject.toml`)
