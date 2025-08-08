@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "remarx"
-description = "Code for identifying Marx citations associated with the CDH project Citing Marx"
+description = "Code for identifying Marx quotes associated with the CDH project Citing Marx"
 authors = [
   {name = "Center for Digital Humanities at Princeton", email = "cdh@princeton.edu"},
 ]
@@ -39,9 +39,15 @@ test = [
   "pytest",
   "pytest-cov",
 ]
+docs = [
+  "mkdocs",
+  "mkdocs-material",
+  "mkdocstrings[python]",
+]
 
 [dependency-groups]
 dev = [ "remarx[dev]" ]
+docs = [ "remarx[docs]" ]
 
 [project.scripts]
 remarx-app = "remarx.app:app.run"
