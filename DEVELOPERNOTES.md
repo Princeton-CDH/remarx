@@ -23,15 +23,16 @@ a tool of your choice for creating python virtual environments (`mamba`, `venv`,
 uv sync
 ```
 
-Note that `uv` performs syncing and locking automatically (e.g., any time `uv run`
-is invoked). By default, syncing will remove any packages not specified in the
-`pyproject.toml`.
+- Note that `uv` performs syncing and locking automatically (e.g., any time `uv run`
+  is invoked). By default, syncing will remove any packages not specified in the
+  `pyproject.toml`.
 
 - This repository uses [pre-commit](https://pre-commit.com/) for python code linting
   and consistent formatting. Run this command to initialize and install pre-commit hooks:
 
-```sh
+```
 uv tool pre-commit install
+```
 
 ## Useful `uv` commands
 
@@ -41,4 +42,3 @@ uv tool pre-commit install
 - `uv remove --dev`: Remove a development dependency from the project
 - `uv run`: Run a command or script
 - `uv run marimo edit [notebook.py]`: Launch marimo notebook in edit mode
-```
