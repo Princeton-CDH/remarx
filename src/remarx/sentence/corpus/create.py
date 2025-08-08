@@ -5,6 +5,7 @@ files in supported formats.
 """
 
 import argparse
+import csv
 import pathlib
 
 from remarx.sentence.corpus.input import TextInput
@@ -33,9 +34,18 @@ def main() -> None:
     if args.format == "tei":
         input_class = TEIinput
 
+    # initialize appropriate text input class
     text_input = input_class(args.input_file)
-    for i, sent in enumerate(text_input.get_sentences()):
-        print(f"{i}: length = {len(sent)}")
+    # Determine output csv path based on input file
+    output_csv = (args.input_file).with_suffix(".csv")
+
+    with output_csv.open(mode="w", newline="") as csvfile:
+        # field names may vary depending on input format
+        csvwriter = csv.DictWriter(csvfile, fieldnames=text_input.field_names())
+        csvwriter.writeheader()
+        csvwriter.writerows(text_input.get_sentences())
+
+    print(f"\nSaved sentence corpus as {output_csv}")
 
 
 if __name__ == "__main__":
