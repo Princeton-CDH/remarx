@@ -145,9 +145,6 @@ class TEIinput(TextInput):
         """
         Get document content page by page.
         """
-        # get body text content chunked by page
+        # yield body text content chunked by page
         for page in self.xml_doc.pages:
-            if page.edition != "manuscript":
-                # maybe yield tuple of page metadata + page text? or dict?
-
-                yield (str(page))
+            yield (str(page))
