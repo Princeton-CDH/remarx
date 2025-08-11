@@ -170,7 +170,7 @@ def _(input_file, mo, output_dir):
     dir_msg = (
         f"`{output_dir.path}`"
         if output_dir
-        else f"*Please select a save location."
+        else f"*Please select a save location*"
     )
 
     button = mo.ui.run_button(
