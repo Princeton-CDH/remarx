@@ -35,7 +35,12 @@ def test_get_text(tmp_path: pathlib.Path):
     assert isinstance(text_result, Generator)
     text_result = list(text_result)
     assert len(text_result) == 1
-    assert next(iter(text_result)) == text_contents
+    first_result = next(iter(text_result))
+    assert isinstance(first_result, dict)
+    # text content matches expected results
+    assert first_result["text"] == text_contents
+    # dict should only includes text
+    assert list(first_result.keys()) == ["text"]
 
 
 @patch("remarx.sentence.corpus.input.segment_text")

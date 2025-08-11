@@ -146,13 +146,14 @@ class TEIinput(TextInput):
         List of field names for sentences from TEI input.
         """
         field_names = super().field_names()
-        field_names.append("page_id")
+        field_names.append("page_number")
         return field_names
 
-    def get_text(self) -> Generator[str]:
+    def get_text(self) -> Generator[dict[str, str]]:
         """
-        Get document content page by page.
+        Get document content as plain text. Chunked by page, dictionary
+        includes page number.
         """
-        # yield body text content chunked by page
+        # yield body text content chunked by page with page number
         for page in self.xml_doc.pages:
-            yield (str(page))
+            yield {"text": str(page), "page_number": page.number}

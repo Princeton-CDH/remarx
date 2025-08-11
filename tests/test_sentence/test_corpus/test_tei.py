@@ -1,5 +1,6 @@
 import pathlib
 from collections.abc import Generator
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -66,7 +67,7 @@ class TestTEIPage:
         # should not include editorial content
         assert "|" not in text
         assert "IX" not in text
-        # TODO: should not include footnote content
+        # TODO: eventually should not include footnote content
 
 
 class TestTEIinput:
@@ -78,7 +79,7 @@ class TestTEIinput:
 
     def test_field_names(self, tmp_path: pathlib.Path):
         tei_input = TEIinput(input_file=TEST_TEI_FILE)
-        assert tei_input.field_names() == ["file_id", "offset", "text", "page_id"]
+        assert tei_input.field_names() == ["file_id", "offset", "text", "page_number"]
 
     def test_get_text(self):
         tei_input = TEIinput(input_file=TEST_TEI_FILE)
@@ -88,10 +89,33 @@ class TestTEIinput:
         text_result = list(text_result)
         # expect two pages
         assert len(text_result) == 2
-        # right now result is just str
-        assert all(isinstance(txt, str) for txt in text_result)
+        # result type is dictionary
+        assert all(isinstance(txt, dict) for txt in text_result)
         # check for expected contents
+        # - page text
         assert (
-            text_result[0].strip().startswith("als in der ersten")  # codespell:ignore
+            text_result[0]["text"]
+            .strip()
+            .startswith("als in der ersten")  # codespell:ignore
         )
-        assert text_result[1].strip().startswith("Aber abgesehn hiervon")
+        assert text_result[1]["text"].strip().startswith("Aber abgesehn hiervon")
+        # - page number
+        assert text_result[0]["page_number"] == "12"
+        assert text_result[1]["page_number"] == "13"
+
+    @patch("remarx.sentence.corpus.input.segment_text")
+    def test_get_sentences(self, mock_segment_text: Mock):
+        tei_input = TEIinput(input_file=TEST_TEI_FILE)
+        # segment text returns a tuple of character index, sentence text
+        mock_segment_text.return_value = [(0, "Aber abgesehn hiervon")]
+        sentences = tei_input.get_sentences()
+        # expect a generator with one item, with the content added to the file
+        assert isinstance(sentences, Generator)
+        sentences = list(sentences)
+        assert len(sentences) == 2  # 2 pages, one mock sentence each
+        assert all(isinstance(sentence, dict) for sentence in sentences)
+        # file id set (handled by base input class)
+        assert sentences[0]["file_id"] == TEST_TEI_FILE.name
+        # page number set
+        assert sentences[0]["page_number"] == "12"
+        assert sentences[1]["page_number"] == "13"
