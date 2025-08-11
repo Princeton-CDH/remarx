@@ -15,19 +15,6 @@ def _():
 
 
 @app.cell
-def _(mo, sys):
-    # Launch notebook if its being run as as script
-    from marimo._cli import cli
-
-    if not mo.running_in_notebook():
-        try:
-            cli.main(["run", __file__])
-        except KeyboardInterrupt:
-            sys.exit(0)
-    return
-
-
-@app.cell
 def _(mo):
     mo.vstack(
         [
