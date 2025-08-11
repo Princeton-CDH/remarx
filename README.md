@@ -47,7 +47,7 @@ Find public documentation at: [Remarx Documentation](https://princeton-cdh.githu
 
 ## Development
 
-For development setup, documentation generation, and contributing guidelines, see [Developer Notes](devnotes.md).
+For development setup, documentation generation, and contributing guidelines, see [Developer Notes](DEVELOPERNOTES.md).
 
 ## License
 
