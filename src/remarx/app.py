@@ -79,9 +79,9 @@ def _(mo):
 def _(mo):
     mo.md(
         r"""
-    ## Select Save Location
-    Select the folder where the resulting corpus will be saved.
-    The name of the csv will be the same as the input file's.
+    ## Select Output Location
+    Select the folder where the resulting sentence corpus file should be saved.
+    The output CSV file will be named based on the input file.
     """
     )
     return
