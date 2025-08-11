@@ -47,7 +47,7 @@ uv run remarx-app
 
 ## Development
 
-For development setup, documentation generation, and contributing guidelines, see [Developer Notes](docs/devnotes.md).
+For development setup, documentation generation, and contributing guidelines, see [Developer Notes](devnotes.md).
 
 ## License
 
