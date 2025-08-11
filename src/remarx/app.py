@@ -50,8 +50,8 @@ def _(mo, remarx):
 def _(mo):
     mo.md(
         r"""
-    ## Sentence Corpus Builder
-    In this part of the application, a sentence corpus (`CSV`) will be created for a selected text file.
+    ## Sentence Corpus Prep
+    Create a sentence corpus (`CSV`) from a text file.
     """
     )
     return
