@@ -9,3 +9,7 @@
 ### Application
 
 - Add initial placeholder application
+
+### Documentation
+
+- Set up Mkdocs for documentation

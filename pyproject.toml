@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "remarx"
-description = "Code for identifying Marx citations associated with the CDH project Citing Marx"
+description = "Code for identifying Marx quotes associated with the CDH project Citing Marx"
 authors = [
   {name = "Center for Digital Humanities at Princeton", email = "cdh@princeton.edu"},
 ]
@@ -34,11 +34,17 @@ dev = [
   "pre-commit",
   "ruff",
   "remarx[test]",
+  "remarx[docs]",
 ]
 test = [
   "pytest",
   "pytest-cov",
   "coverage[toml]", # Enables coverage to read config from pyproject.toml
+]
+docs = [
+  "mkdocs",
+  "mkdocs-material",
+  "mkdocstrings[python]",
 ]
 
 [dependency-groups]
