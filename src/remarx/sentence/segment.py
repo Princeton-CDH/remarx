@@ -9,17 +9,11 @@ import stanza
 
 def segment_text(text: str, language: str = "de") -> list[tuple[int, str]]:
     """
-    Segment text into sentences with character indices.
-    Takes a string of text and returns a list of tuples containing the character
-    index where each sentence starts and the sentence text itself.
+    Segment a string of text into sentences with character indices.
 
-    Example:
-        ```python
-        >>> text = "This is sentence one. This is sentence two."
-        >>> sentences = segment_text(text, language="en")
-        >>> sentences
-        [(0, 'This is sentence one.'), (22, 'This is sentence two.')]
-        ```
+    :param text: Input text to be segmented into sentences
+    :param language: Language code for the Stanza pipeline
+    :return: List of tuples where each tuple contains (start_char_index, sentence_text)
     """
     # Initialize the NLP pipeline for sentence segmentation
     # Use minimal processors (tokenize) for sentence segmentation only
