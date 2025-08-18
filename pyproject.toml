@@ -45,6 +45,7 @@ docs = [
   "mkdocs",
   "mkdocs-material",
   "mkdocstrings[python]",
+  "mkdocs-gen-files",
 ]
 
 [dependency-groups]

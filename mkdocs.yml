@@ -32,12 +32,15 @@ nav:
   - Overview: index.md
   - Developer Notes: devnotes.md
   - Code Documentation:
-      # - Overview: api/index.md
+      - Overview: api/index.md
       - sentence: api/sentence.md
 hooks:
   - docs/hooks.py
 plugins:
   - search
+  - gen-files:
+      scripts:
+        - docs/hooks.py
   - mkdocstrings:
       handlers:
         python:

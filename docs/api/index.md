@@ -1,19 +1,6 @@
-# Code Documentation
+# Overview
 
-::: remarx
-options:
-show_submodules: false
-show_source: false
-members: false
-
-::: remarx.sentence
-options:
-show_submodules: false
-show_source: false
-members: false
-
-::: remarx.sentence.segment
-options:
-show_submodules: false
-show_source: false
-members: false
+| Module | Description |
+|--------|-------------|
+| [sentence](sentence.md) | This module contains libraries for sentence segmentation and sentence corpus construction. |
+| [sentence.segment](sentence.md) | Provides functionality to break down input text into individual sentences and return them as tuples containing the character index where each sentence begins and the sentence text itself. |
