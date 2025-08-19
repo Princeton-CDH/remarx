@@ -62,6 +62,7 @@ testpaths = ["tests"]
 
 [tool.coverage.run]
 branch = true
+omit = ["docs/hooks.py"]
 
 [tool.coverage.report]
 show_missing = true   # Helpful for debugging
