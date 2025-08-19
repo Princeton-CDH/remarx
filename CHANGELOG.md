@@ -13,3 +13,7 @@
 ### Documentation
 
 - Set up Mkdocs for documentation
+
+### CI/CD
+
+- Add GitHub Action to check for changelog entries in pull requests
