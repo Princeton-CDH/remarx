@@ -79,7 +79,7 @@ class TestTEIinput:
 
     def test_field_names(self, tmp_path: pathlib.Path):
         # includes defaults from text input and adds page number
-        assert TEIinput.field_names == ("file_id", "offset", "text", "page_number")
+        assert TEIinput.field_names == ("file", "offset", "text", "page_number")
 
     def test_get_text(self):
         tei_input = TEIinput(input_file=TEST_TEI_FILE)
@@ -117,7 +117,7 @@ class TestTEIinput:
         assert mock_segment_text.call_count == 2
         assert all(isinstance(sentence, dict) for sentence in sentences)
         # file id set (handled by base input class)
-        assert sentences[0]["file_id"] == TEST_TEI_FILE.name
+        assert sentences[0]["file"] == TEST_TEI_FILE.name
         # page number set
         assert sentences[0]["page_number"] == "12"
         assert sentences[1]["page_number"] == "13"

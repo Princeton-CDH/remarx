@@ -15,13 +15,12 @@ class TextInput:
     input_file: pathlib.Path
 
     #: List of field names for sentences from text input files
-    field_names: tuple[str] = ("file_id", "offset", "text")
+    field_names: tuple[str] = ("file", "offset", "text")
 
     @cached_property
-    def file_id(self) -> str:
+    def file_name(self) -> str:
         """
-        Identifier for this file, to be associated with sentences in
-        generated corpus. Default implementation is filename.
+        Input file name. Associated with sentences in generated corpus.
         """
         return self.input_file.name
 
@@ -41,11 +40,12 @@ class TextInput:
         for chunk_info in self.get_text():
             # each chunk of text is a dictionary that at minimum
             # contains text for that chunk; it may include other metadata
-            chunk_text = chunk_info.pop("text")
-            for char_idx, sentence in segment_text(chunk_text):
+            for char_idx, sentence in segment_text(chunk_info):
+                # for each sentence, yield text, offset, and filename
+                # with any other metadata included in chunk_info
                 sentence_info = {
                     "text": sentence,
                     "offset": char_idx,
-                    "file_id": self.file_id,
+                    "file": self.file_name,
                 } | chunk_info
                 yield sentence_info

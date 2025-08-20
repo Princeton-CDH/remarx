@@ -11,15 +11,15 @@ def test_init(tmp_path: pathlib.Path):
     assert txt_input.input_file == txt_file
 
 
-def test_file_id(tmp_path: pathlib.Path):
+def test_file_name(tmp_path: pathlib.Path):
     txt_filename = "my_input.txt"
     txt_file = tmp_path / txt_filename
     txt_input = TextInput(input_file=txt_file)
-    assert txt_input.file_id == txt_filename
+    assert txt_input.file_name == txt_filename
 
 
 def test_field_names(tmp_path: pathlib.Path):
-    assert TextInput.field_names == ("file_id", "offset", "text")
+    assert TextInput.field_names == ("file", "offset", "text")
 
 
 def test_get_text(tmp_path: pathlib.Path):
@@ -56,10 +56,11 @@ def test_get_sentences(mock_segment_text: Mock, tmp_path: pathlib.Path):
     # consume the generator
     sentences = list(sentences)
     assert len(sentences) == 1
+
     # expect segmentation method to be called only once
     assert mock_segment_text.call_count == 1
 
     first_sentence = sentences[0]
     assert isinstance(first_sentence, dict)
     assert first_sentence["text"] == text_content
-    assert first_sentence["file_id"] == txt_file.name
+    assert first_sentence["file"] == txt_file.name
