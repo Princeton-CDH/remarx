@@ -47,13 +47,9 @@ class TextInput:
             # contains text for that chunk; it may include other metadata
             chunk_text = chunk_info.pop("text")
             for char_idx, sentence in segment_text(chunk_text):
-                sentence_info = {
+                sentence_info = chunk_info + {
                     "text": sentence,
                     "offset": char_idx,
                     "file_id": self.file_id,
                 }
-                # if the text dictionary includes anything other than text,
-                # (e.g., page number), add to each sentence result
-                if chunk_info:
-                    sentence_info.update(chunk_info)
                 yield sentence_info
