@@ -1,4 +1,4 @@
-name: Check Changelog
+name: Changelog Updated
 on:
   pull_request:
     types: [assigned, opened, synchronize, reopened, labeled, unlabeled]
