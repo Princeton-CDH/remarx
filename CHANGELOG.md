@@ -8,7 +8,7 @@
 
 ### Application
 
-- Add initial placeholder application
+- Add initial application that can build sentence corpora for text files
 
 ### Documentation
 

@@ -51,7 +51,7 @@ docs = [
 dev = [ "remarx[dev]" ]
 
 [project.scripts]
-remarx-app = "remarx.app:app.run"
+remarx-app = "remarx.app_utils:launch_app"
 
 [tool.hatch.version]
 path = "src/remarx/__init__.py"
@@ -61,6 +61,7 @@ testpaths = ["tests"]
 
 [tool.coverage.run]
 branch = true
+omit = ["src/remarx/app.py"]
 
 [tool.coverage.report]
 show_missing = true   # Helpful for debugging
