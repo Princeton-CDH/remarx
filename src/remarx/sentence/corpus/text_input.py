@@ -33,19 +33,28 @@ class TextInput:
         """
         yield {"text": self.input_file.read_text(encoding="utf-8")}
 
-    def get_sentences(self) -> Generator[dict]:
+    def get_sentences(self) -> Generator[dict[str, any]]:
         """
         Get sentences for this file, with any associated metadata.
         """
+        # zero-based sentence index for this file, across all chunks
+        sentence_index = 0
         for chunk_info in self.get_text():
             # each chunk of text is a dictionary that at minimum
             # contains text for that chunk; it may include other metadata
-            for char_idx, sentence in segment_text(chunk_info):
-                # for each sentence, yield text, offset, and filename
+            for _char_idx, sentence in segment_text(chunk_info):
+                # for each sentence, yield text, filename, and sentence index
                 # with any other metadata included in chunk_info
+
+                # character index is not included in output,
+                # but may be useful for sub-chunk metadata (e.g., line number)
+
                 sentence_info = {
                     "text": sentence,
-                    "offset": char_idx,
                     "file": self.file_name,
+                    "sent_index": sentence_index,
                 } | chunk_info
                 yield sentence_info
+
+                # increment sentence index
+                sentence_index += 1

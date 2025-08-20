@@ -121,3 +121,6 @@ class TestTEIinput:
         # page number set
         assert sentences[0]["page_number"] == "12"
         assert sentences[1]["page_number"] == "13"
+        # sentence index is set and continues across pages
+        assert sentences[0]["sent_index"] == 0
+        assert sentences[1]["sent_index"] == 1

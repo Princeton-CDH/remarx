@@ -64,3 +64,4 @@ def test_get_sentences(mock_segment_text: Mock, tmp_path: pathlib.Path):
     assert isinstance(first_sentence, dict)
     assert first_sentence["text"] == text_content
     assert first_sentence["file"] == txt_file.name
+    assert first_sentence["sent_index"] == 0
