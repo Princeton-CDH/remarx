@@ -14,7 +14,7 @@ from remarx.sentence.corpus.tei_input import TEIinput
 
 def main() -> None:
     """
-    command-line access to sentence corpus creation for supported input formats
+    Command-line access to sentence corpus creation for supported input formats
     """
     parser = argparse.ArgumentParser(
         description="Generate a sentence corpus from a supported input file"
