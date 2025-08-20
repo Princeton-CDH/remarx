@@ -14,6 +14,9 @@ class TextInput:
 
     input_file: pathlib.Path
 
+    #: List of field names for sentences from text input files
+    field_names: tuple[str] = ("file_id", "offset", "text")
+
     @cached_property
     def file_id(self) -> str:
         """
@@ -21,13 +24,6 @@ class TextInput:
         generated corpus. Default implementation is filename.
         """
         return self.input_file.name
-
-    def field_names(self) -> str:
-        """
-        List of field names for sentences from this format input.
-        """
-        # should this be a class method? static class variable ?
-        return ["file_id", "offset", "text"]
 
     def get_text(self) -> Generator[dict[str, str]]:
         """

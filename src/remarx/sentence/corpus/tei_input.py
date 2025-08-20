@@ -133,6 +133,9 @@ class TEIinput(TextInput):
     #: parsed xml document; initialized from inherited input_file
     xml_doc: TEIDocument = field(init=False)
 
+    #: List of field names for sentences from TEI XML input files
+    field_names: tuple[str] = (*TextInput.field_names, "page_number")
+
     def __post_init__(self) -> None:
         """
         After default initialization, parse :attr:`input_file` as
@@ -140,14 +143,6 @@ class TEIinput(TextInput):
         """
         # parse the input file as xml and save the result
         self.xml_doc = TEIDocument.init_from_file(self.input_file)
-
-    def field_names(self) -> str:
-        """
-        List of field names for sentences from TEI input.
-        """
-        field_names = super().field_names()
-        field_names.append("page_number")
-        return field_names
 
     def get_text(self) -> Generator[dict[str, str]]:
         """

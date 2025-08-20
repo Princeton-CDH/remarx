@@ -78,8 +78,8 @@ class TestTEIinput:
         assert isinstance(tei_input.xml_doc, TEIDocument)
 
     def test_field_names(self, tmp_path: pathlib.Path):
-        tei_input = TEIinput(input_file=TEST_TEI_FILE)
-        assert tei_input.field_names() == ["file_id", "offset", "text", "page_number"]
+        # includes defaults from text input and adds page number
+        assert TEIinput.field_names == ("file_id", "offset", "text", "page_number")
 
     def test_get_text(self):
         tei_input = TEIinput(input_file=TEST_TEI_FILE)

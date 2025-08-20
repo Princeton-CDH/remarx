@@ -41,7 +41,7 @@ def main() -> None:
 
     with output_csv.open(mode="w", newline="") as csvfile:
         # field names may vary depending on input format
-        csvwriter = csv.DictWriter(csvfile, fieldnames=text_input.field_names())
+        csvwriter = csv.DictWriter(csvfile, fieldnames=text_input.field_names)
         csvwriter.writeheader()
         csvwriter.writerows(text_input.get_sentences())
 
