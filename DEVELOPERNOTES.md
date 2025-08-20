@@ -46,17 +46,17 @@ This project uses [MkDocs](https://www.mkdocs.org/) for documentation generation
 
 ### Working with documentation
 
-- **Preview documentation locally**:
-
-  - run `uv run mkdocs serve`
-
-  - Opens at `http://127.0.0.1:8000/` and auto-reloads on file changes
-
-- **Build documentation**:
+- **Step 1: Build documentation locally**:
 
   - run `uv run mkdocs build`
 
   - Generates static site in `site/` directory
+
+- **Step 2: Preview documentation locally**:
+
+  - run `uv run mkdocs serve`
+
+  - Opens at `http://127.0.0.1:8000/` and auto-reloads on file changes
 
 ### Writing documentation
 
