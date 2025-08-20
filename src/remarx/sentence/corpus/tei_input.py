@@ -107,7 +107,7 @@ class TEIDocument(BaseTEIXmlObject):
         Standard pages.  Returns a list of :class:`TEIPage` objects
         for this document, with  pages marked as manuscript edition excluded.
         """
-        # it's more efficient to to filter in python than in xpath
+        # it's more efficient to filter in python than in xpath
         return [page for page in self.all_pages if page.edition != "manuscript"]
 
     @classmethod

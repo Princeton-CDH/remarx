@@ -1,4 +1,4 @@
-"base text input class with common functionality"
+"Base text input class with common functionality"
 
 import pathlib
 from collections.abc import Generator
@@ -10,7 +10,7 @@ from remarx.sentence.segment import segment_text
 
 @dataclass
 class TextInput:
-    """base class for file input for sentence corpus creation"""
+    """Base class for file input for sentence corpus creation"""
 
     input_file: pathlib.Path
 
