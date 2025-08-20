@@ -10,19 +10,9 @@ import mkdocs_gen_files
 def on_pre_build(config: dict[str, Any]) -> None:
     """
     Replace Developer Notes link in README.md before MkDocs builds the site.
-    Now works with snippets by modifying the README directly.
     """
-    # Read the original README from the root of the project
-    root_readme_path = Path("README.md")
-    content = root_readme_path.read_text(encoding="utf-8")
-
-    # Replace GitHub links with MkDocs-compatible links
-    content = content.replace(
-        "[Developer Notes](DEVELOPERNOTES.md)", "[Developer Notes](devnotes.md)"
-    )
-
-    # Write the processed content back to README.md so snippets pick it up
-    root_readme_path.write_text(content, encoding="utf-8")
+    # DISABLED: Now using snippets instead of copying files
+    pass
 
 
 def get_module_docstring(module_path: Path) -> str:

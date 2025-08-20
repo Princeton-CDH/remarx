@@ -71,10 +71,6 @@ instance/
 # Sphinx documentation
 docs/_build/
 
-# MkDocs auto-generated files
-docs/api/index.md
-docs/index.md
-
 # PyBuilder
 .pybuilder/
 target/
