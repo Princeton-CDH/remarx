@@ -8,8 +8,8 @@ import argparse
 import csv
 import pathlib
 
-from remarx.sentence.corpus.input import TextInput
 from remarx.sentence.corpus.tei_input import TEIinput
+from remarx.sentence.corpus.text_input import TextInput
 
 
 def main() -> None:

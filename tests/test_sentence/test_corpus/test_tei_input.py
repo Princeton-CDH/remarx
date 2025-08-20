@@ -103,7 +103,7 @@ class TestTEIinput:
         assert text_result[0]["page_number"] == "12"
         assert text_result[1]["page_number"] == "13"
 
-    @patch("remarx.sentence.corpus.input.segment_text")
+    @patch("remarx.sentence.corpus.text_input.segment_text")
     def test_get_sentences(self, mock_segment_text: Mock):
         tei_input = TEIinput(input_file=TEST_TEI_FILE)
         # segment text returns a tuple of character index, sentence text

@@ -2,7 +2,7 @@ import pathlib
 from collections.abc import Generator
 from unittest.mock import Mock, patch
 
-from remarx.sentence.corpus.input import TextInput
+from remarx.sentence.corpus.text_input import TextInput
 
 
 def test_init(tmp_path: pathlib.Path):
@@ -43,7 +43,7 @@ def test_get_text(tmp_path: pathlib.Path):
     assert list(first_result.keys()) == ["text"]
 
 
-@patch("remarx.sentence.corpus.input.segment_text")
+@patch("remarx.sentence.corpus.text_input.segment_text")
 def test_get_sentences(mock_segment_text: Mock, tmp_path: pathlib.Path):
     txt_file = tmp_path / "input.txt"
     text_content = "more placeholder content"

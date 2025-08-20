@@ -47,9 +47,9 @@ class TextInput:
             # contains text for that chunk; it may include other metadata
             chunk_text = chunk_info.pop("text")
             for char_idx, sentence in segment_text(chunk_text):
-                sentence_info = chunk_info + {
+                sentence_info = {
                     "text": sentence,
                     "offset": char_idx,
                     "file_id": self.file_id,
-                }
+                } | chunk_info
                 yield sentence_info

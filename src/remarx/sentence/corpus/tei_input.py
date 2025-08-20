@@ -13,7 +13,7 @@ from typing import ClassVar, Self
 from lxml.etree import XMLSyntaxError
 from neuxml import xmlmap
 
-from remarx.sentence.corpus.input import TextInput
+from remarx.sentence.corpus.text_input import TextInput
 
 # requirements:
 # takes one input file
