@@ -1,0 +1,67 @@
+site_name: remarx Documentation
+site_description: Code for identifying Marx quotes associated with the CDH project Citing Marx
+site_author: Center for Digital Humanities at Princeton
+site_url: https://princeton-cdh.github.io/remarx/
+repo_name: Princeton-CDH/remarx
+repo_url: https://github.com/Princeton-CDH/remarx
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - search.share
+    - content.code.copy
+nav:
+  - Overview: index.md
+  - Developer Notes: devnotes.md
+  - Code Documentation:
+      # - Overview: api/index.md
+      - sentence: api/sentence.md
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: sphinx
+            show_root_heading: true
+            show_source: false
+            show_bases: true
+            show_inheritance_diagram: true
+            members_order: source
+            separate_signature: true
+            show_signature_annotations: true
+            signature_crossrefs: true
+          paths: [src]
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+extra:
+  version:
+    provider: mike

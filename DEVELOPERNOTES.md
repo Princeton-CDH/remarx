@@ -19,9 +19,9 @@ a tool of your choice for creating python virtual environments (`mamba`, `venv`,
 - To explicitly sync the project's dependencies, including optional dependencies
   for development and testing, to your local environment run:
 
-```
-uv sync
-```
+  ```
+  uv sync
+  ```
 
 - Note that `uv` performs syncing and locking automatically (e.g., any time `uv run`
   is invoked). By default, syncing will remove any packages not specified in the
@@ -30,15 +30,50 @@ uv sync
 - This repository uses [pre-commit](https://pre-commit.com/) for python code linting
   and consistent formatting. Run this command to initialize and install pre-commit hooks:
 
-```
-uv tool install pre-commit --with pre-commit-uv
-```
+  ```
+  uv tool install pre-commit --with pre-commit-uv
+  ```
 
 - To run `pre-commit` explicitly run:
 
-```
-uv tool run pre-commit
-```
+  ```
+  uv tool run pre-commit
+  ```
+
+## Documentation
+
+This project uses [MkDocs](https://www.mkdocs.org/) for documentation generation.
+
+### Working with documentation
+
+- **Preview documentation locally**:
+
+  - run `uv run mkdocs serve`
+
+  - Opens at `http://127.0.0.1:8000/` and auto-reloads on file changes
+
+- **Build documentation**:
+
+  - run `uv run mkdocs build`
+
+  - Generates static site in `site/` directory
+
+### Writing documentation
+
+- **Files**: Documentation files are located in `docs/` directory.
+  \- `docs/index.md` is a symlink to `README.md`. Edit `README.md` to update the docs homepage.
+  \- `docs/devnotes.md` is a symlink to `DEVELOPERNOTES.md`. Edit `DEVELOPERNOTES.md` to update developer notes.
+- **API documentation**: Auto-generated from docstrings using [mkdocstrings](https://mkdocstrings.github.io/).
+- **Code examples**: To display examples correctly, be sure to wrap them with triple backticks and specify `python`.
+  ````python
+      """
+      Usage example:
+          ```python
+            result = add(2, 3)
+            print(result)  # 5
+          ```
+      """
+  ````
 
 ## Useful `uv` commands
 

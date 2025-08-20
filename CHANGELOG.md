@@ -9,3 +9,7 @@
 ### Application
 
 - Add initial application that can build sentence corpora for text files
+
+### Documentation
+
+- Set up Mkdocs for documentation
