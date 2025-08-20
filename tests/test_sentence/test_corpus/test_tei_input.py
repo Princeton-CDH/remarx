@@ -11,7 +11,7 @@ TEST_TEI_FILE = FIXTURE_DIR / "sample_tei.xml"
 
 
 def test_tei_tag():
-    # test that tei tags object is  nstructed as expected
+    # test that tei tags object is constructed as expected
     assert TEI_TAG.pb == "{http://www.tei-c.org/ns/1.0}pb"
 
 
@@ -113,6 +113,8 @@ class TestTEIinput:
         assert isinstance(sentences, Generator)
         sentences = list(sentences)
         assert len(sentences) == 2  # 2 pages, one mock sentence each
+        # method called once for each page of text
+        assert mock_segment_text.call_count == 2
         assert all(isinstance(sentence, dict) for sentence in sentences)
         # file id set (handled by base input class)
         assert sentences[0]["file_id"] == TEST_TEI_FILE.name

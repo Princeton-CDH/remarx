@@ -53,8 +53,12 @@ def test_get_sentences(mock_segment_text: Mock, tmp_path: pathlib.Path):
     sentences = txt_input.get_sentences()
     # expect a generator with one item, with the content added to the file
     assert isinstance(sentences, Generator)
+    # consume the generator
     sentences = list(sentences)
     assert len(sentences) == 1
+    # expect segmentation method to be called only once
+    assert mock_segment_text.call_count == 1
+
     first_sentence = sentences[0]
     assert isinstance(first_sentence, dict)
     assert first_sentence["text"] == text_content
