@@ -1,6 +1,8 @@
 name: Changelog Updated
 on:
   pull_request:
+    # opened/synchronize/reopened: Check changelog when PR is created or updated
+    # labeled/unlabeled: Re-run check when "no changelog" label is added/removed
     types: [opened, synchronize, reopened, labeled, unlabeled]
     branches: [develop, main]
 jobs:
