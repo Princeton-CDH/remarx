@@ -9,7 +9,7 @@ use [FileInput.init()][remarx.sentence.corpus.base_input.FileInput.init].
 For a list of supported file types across all registered input classes,
 use [FileInput.supported_types()][remarx.sentence.corpus.base_input.FileInput.supported_types].
 
-Subclasses must define a supported `file_type` extension, implement
+Subclasses must define a supported `file_type` extension and implement
 the `get_text` method. For discovery, input classes must be imported in
 `remarx.sentence.corpus.__init__` and included in `__all__` to ensure
 they are found as available input classes.
