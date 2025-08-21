@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.14.16"
+__generated_with = "0.14.17"
 app = marimo.App(width="medium")
 
 
@@ -8,10 +8,12 @@ app = marimo.App(width="medium")
 def _():
     import csv
     import marimo as mo
+    import pathlib
+    import tempfile
 
     import remarx
-    from remarx.sentence.segment import segment_text
-    return csv, mo, remarx
+    from remarx.sentence.corpus.text_input import TextInput
+    return TextInput, csv, mo, pathlib, remarx, tempfile
 
 
 @app.cell
@@ -61,7 +63,7 @@ def _(mo):
 def _(mo):
     select_input_form = mo.ui.file(
         kind="area",
-        filetypes=[".txt"],
+        filetypes=[".txt"],  # TODO: replace with remarx variable when possible
     ).form(
         submit_button_label="Select Text",
         submit_button_tooltip="Click to confirm selection",
@@ -98,10 +100,12 @@ def _(mo):
 
 
 @app.cell
-def _(mo):
+def _(mo, pathlib):
     select_output_dir_form = mo.ui.file_browser(
         selection_mode="directory",
         multiple=False,
+        initial_path=pathlib.Path.home(),
+        filetypes=[],  # only show directories
     ).form(
         submit_button_label="Select Folder",
         submit_button_tooltip="Click to confirm selection",
@@ -178,29 +182,35 @@ def _(input_file, mo, output_dir):
 
 
 @app.cell
-def _(button, csv, input_file, mo, output_csv, output_dir, remarx):
+def _(TextInput, button, csv, input_file, mo, output_csv, pathlib, tempfile):
     # Build Sentence Corpus
     building_msg = f'Click "Build Corpus" button to start'
 
     if button.value:
-        spinner_msg = f"Building sentence corpus for {input_file.name}..."
+        spinner_msg = f"Building sentence corpus for {input_file.name}"
         with mo.status.spinner(title=spinner_msg) as _spinner:
-            file_text = input_file.contents.decode("utf-8")
-            sentences = remarx.sentence.segment.segment_text(file_text)
+            with tempfile.NamedTemporaryFile(delete_on_close=False) as _tf:
+                temp_fp = pathlib.Path(_tf.name)
+                _tf.write(input_file.contents)
+                corpus_input = TextInput(temp_fp)
 
-            _spinner.update(
-                f"Saving corpus {output_csv.name} to {output_dir.path}..."
-            )
-            with open(output_csv, mode="w", newline="") as file_handler:
-                fieldnames = ["id", "offset", "text"]
-                writer = csv.writer(file_handler)
-                writer.writerow(fieldnames)
-                for i, sentence in enumerate(sentences):
-                    writer.writerow([i, *sentence])
+                with open(output_csv, mode="w", newline="") as file_handler:
+                    writer = csv.DictWriter(
+                        file_handler,
+                        fieldnames=corpus_input.field_names,
+                        extrasaction="ignore",
+                    )
+                    writer.writeheader()
+                    writer.writerows(corpus_input.get_sentences())
             _spinner.update(f"Done!")
         building_msg = "✅ Done"
 
     mo.md(building_msg).center()
+    return
+
+
+@app.cell
+def _():
     return
 
 
