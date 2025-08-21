@@ -44,6 +44,7 @@ class FileInput:
         """
         Register an input class subclass with associated file type.
         """
+        # NOTE: likely to change when we add support for METS-ALTO
         cls._input_classes[subclass.file_type] = subclass
 
     @cached_property
@@ -111,6 +112,7 @@ class FileInput:
         """
         input_cls = cls._input_classes.get(input_file.suffix)
         # for now, check based on file extension
+        # NOTE: this will change when we add support for METS-ALTO
         if input_cls is None:
             raise ValueError(f"{input_file.suffix} is not a supported input type")
         return input_cls(input_file=input_file)
