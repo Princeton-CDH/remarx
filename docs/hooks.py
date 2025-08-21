@@ -7,14 +7,6 @@ from typing import Any
 import mkdocs_gen_files
 
 
-def on_pre_build(config: dict[str, Any]) -> None:
-    """
-    Replace Developer Notes link in README.md before MkDocs builds the site.
-    """
-    # DISABLED: Now using snippets instead of copying files
-    pass
-
-
 def get_module_docstring(module_path: Path) -> str:
     """Extract the module docstring from a Python file."""
     try:
