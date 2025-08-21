@@ -49,5 +49,8 @@ def test_init_tei(mock_tei_doc, tmp_path: pathlib.Path):
 
 def test_init_unsupported(tmp_path: pathlib.Path):
     test_file = tmp_path / "input.test"
-    with pytest.raises(ValueError, match="not a supported input type"):
+    with pytest.raises(
+        ValueError,
+        match="\\.test is not a supported input type \\(must be one of \\.txt, \\.xml\\)",
+    ):
         FileInput.init(input_file=test_file)

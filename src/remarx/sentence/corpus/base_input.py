@@ -120,5 +120,10 @@ class FileInput:
         # for now, check based on file extension
         # NOTE: this will change when we add support for METS-ALTO
         if input_cls is None:
-            raise ValueError(f"{input_file.suffix} is not a supported input type")
+            # include supported types in error to aid debugging
+            # sort so display order is reliable
+            supported_types = ", ".join(sorted(cls.supported_types()))
+            raise ValueError(
+                f"{input_file.suffix} is not a supported input type (must be one of {supported_types})"
+            )
         return input_cls(input_file=input_file)
