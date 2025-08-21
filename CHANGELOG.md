@@ -5,6 +5,7 @@
 ### Sentence Module
 
 - Add `segment_text` function for breaking text into sentences with character-level indices
+- Add `corpus` submodule with input classes for text and TEI/XML
 
 ### Application
 

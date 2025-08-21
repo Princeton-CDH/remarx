@@ -1,0 +1,69 @@
+"Base text input class with common functionality"
+
+import pathlib
+from collections.abc import Generator
+from dataclasses import dataclass
+from functools import cached_property
+from typing import Any
+
+from remarx.sentence.segment import segment_text
+
+
+@dataclass
+class TextInput:
+    """Base class for file input for sentence corpus creation"""
+
+    input_file: pathlib.Path
+    "Reference to input file. Source of content for sentences."
+
+    field_names: tuple[str, ...] = ("file", "offset", "text")
+    "List of field names for sentences from text input files."
+
+    @cached_property
+    def file_name(self) -> str:
+        """
+        Input file name. Associated with sentences in generated corpus.
+        """
+        return self.input_file.name
+
+    def get_text(self) -> Generator[dict[str, str]]:
+        """
+        Get plain-text contents for this file with any desired chunking (e.g.
+        pages or other semantic unit).
+        Default implementation does no chunking, no additional metadata.
+
+        :returns: Generator with a dictionary of text and any other metadata
+        that applies to this unit of text.
+        """
+        yield {"text": self.input_file.read_text(encoding="utf-8")}
+
+    def get_sentences(self) -> Generator[dict[str, Any]]:
+        """
+        Get sentences for this file, with associated metadata.
+
+        :returns: Generator of one dictionary per sentence; dictionary
+        always includes: `text` (text content), `file` (filename),
+        `sent_index` (sentence index within the document). It may include
+        other metadata, depending on the input file type.
+        """
+        # zero-based sentence index for this file, across all chunks
+        sentence_index = 0
+        for chunk_info in self.get_text():
+            # each chunk of text is a dictionary that at minimum
+            # contains text for that chunk; it may include other metadata
+            chunk_text = chunk_info["text"]
+            for _char_idx, sentence in segment_text(chunk_text):
+                # for each sentence, yield text, filename, and sentence index
+                # with any other metadata included in chunk_info
+
+                # character index is not included in output,
+                # but may be useful for sub-chunk metadata (e.g., line number)
+                sentence_info = chunk_info | {
+                    "text": sentence,
+                    "file": self.file_name,
+                    "sent_index": sentence_index,
+                }
+                yield sentence_info
+
+                # increment sentence index
+                sentence_index += 1

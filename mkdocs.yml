@@ -49,6 +49,9 @@ plugins:
             separate_signature: true
             show_signature_annotations: true
             signature_crossrefs: true
+            extra:
+              inventories:
+                - https://docs.python.org/3/objects.inv
           paths: [src]
 markdown_extensions:
   - admonition
@@ -62,6 +65,10 @@ markdown_extensions:
       alternate_style: true
   - toc:
       permalink: true
+watch:
+  - docs
+  - mkdocs.yml
+  - src
 extra:
   version:
     provider: mike
