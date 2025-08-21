@@ -19,7 +19,7 @@ def test_file_name(tmp_path: pathlib.Path):
 
 
 def test_field_names(tmp_path: pathlib.Path):
-    assert TextInput.field_names == ("file", "offset", "text")
+    assert TextInput.field_names == ("file", "offset", "text", "sent_index")
 
 
 def test_get_text(tmp_path: pathlib.Path):
@@ -83,3 +83,4 @@ def test_get_sentences(mock_segment_text: Mock, tmp_path: pathlib.Path):
     # but should _end_ with the text content
     assert second_sentence["text"].endswith(text_content[-5:])
     assert second_sentence["file"] == txt_file.name
+    assert second_sentence["sent_index"] == 1
