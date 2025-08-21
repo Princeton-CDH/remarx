@@ -15,7 +15,7 @@ from typing import ClassVar, NamedTuple, Self
 from lxml.etree import XMLSyntaxError
 from neuxml import xmlmap
 
-from remarx.sentence.corpus.text_input import TextInput
+from remarx.sentence.corpus.text_input import FileInput
 
 TEI_NAMESPACE = "http://www.tei-c.org/ns/1.0"
 
@@ -126,7 +126,7 @@ class TEIDocument(BaseTEIXmlObject):
 
 
 @dataclass
-class TEIinput(TextInput):
+class TEIinput(FileInput):
     """
     Input class for TEI/XML content.  Takes a single input file,
     and yields text content by page, with page number.
@@ -137,8 +137,11 @@ class TEIinput(TextInput):
     xml_doc: TEIDocument = field(init=False)
     "Parsed XML document; initialized from inherited input_file"
 
-    field_names: tuple[str, ...] = (*TextInput.field_names, "page_number")
+    field_names: ClassVar[tuple[str, ...]] = (*FileInput.field_names, "page_number")
     "List of field names for sentences from TEI XML input files"
+
+    file_type = ".xml"
+    "Supported file extension for TEI/XML input"
 
     def __post_init__(self) -> None:
         """
