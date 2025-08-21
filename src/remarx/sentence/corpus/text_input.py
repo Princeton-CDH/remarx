@@ -4,6 +4,7 @@ import pathlib
 from collections.abc import Generator
 from dataclasses import dataclass
 from functools import cached_property
+from typing import Any
 
 from remarx.sentence.segment import segment_text
 
@@ -36,7 +37,7 @@ class TextInput:
         """
         yield {"text": self.input_file.read_text(encoding="utf-8")}
 
-    def get_sentences(self) -> Generator[dict[str, any]]:
+    def get_sentences(self) -> Generator[dict[str, Any]]:
         """
         Get sentences for this file, with associated metadata.
 
@@ -50,18 +51,18 @@ class TextInput:
         for chunk_info in self.get_text():
             # each chunk of text is a dictionary that at minimum
             # contains text for that chunk; it may include other metadata
-            for _char_idx, sentence in segment_text(chunk_info):
+            chunk_text = chunk_info["text"]
+            for _char_idx, sentence in segment_text(chunk_text):
                 # for each sentence, yield text, filename, and sentence index
                 # with any other metadata included in chunk_info
 
                 # character index is not included in output,
                 # but may be useful for sub-chunk metadata (e.g., line number)
-
                 sentence_info = chunk_info | {
                     "text": sentence,
                     "file": self.file_name,
                     "sent_index": sentence_index,
-                } 
+                }
                 yield sentence_info
 
                 # increment sentence index
