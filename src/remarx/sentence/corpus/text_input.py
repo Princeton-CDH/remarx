@@ -10,7 +10,7 @@ from remarx.sentence.segment import segment_text
 
 
 @dataclass
-class TextInput:
+class FileInput:
     """Base class for file input for sentence corpus creation"""
 
     input_file: pathlib.Path
@@ -28,14 +28,14 @@ class TextInput:
 
     def get_text(self) -> Generator[dict[str, str]]:
         """
-        Get plain-text contents for this file with any desired chunking (e.g.
-        pages or other semantic unit).
-        Default implementation does no chunking, no additional metadata.
+        Get plain-text contents for this input file with any desired chunking
+        (e.g. pages or other semantic unit).
+        Subclasses must implement, no default implementation..
 
         :returns: Generator with a dictionary of text and any other metadata
         that applies to this unit of text.
         """
-        yield {"text": self.input_file.read_text(encoding="utf-8")}
+        raise NotImplementedError
 
     def get_sentences(self) -> Generator[dict[str, Any]]:
         """
@@ -67,3 +67,19 @@ class TextInput:
 
                 # increment sentence index
                 sentence_index += 1
+
+
+@dataclass
+class TextInput(FileInput):
+    """Class for text file input for sentence corpus creation"""
+
+    def get_text(self) -> Generator[dict[str, str]]:
+        """
+        Get plain-text contents for this file with any desired chunking (e.g.
+        pages or other semantic unit).
+        Default implementation does no chunking, no additional metadata.
+
+        :returns: Generator with a dictionary of text and any other metadata
+        that applies to this unit of text.
+        """
+        yield {"text": self.input_file.read_text(encoding="utf-8")}
