@@ -31,16 +31,9 @@ theme:
 nav:
   - Overview: index.md
   - Developer Notes: devnotes.md
-  - Code Documentation:
-      - Overview: api/index.md
-      - sentence: api/sentence.md
-hooks:
-  - docs/hooks.py
+  - Code Documentation: api/index.md
 plugins:
   - search
-  - gen-files:
-      scripts:
-        - docs/hooks.py
   - mkdocstrings:
       handlers:
         python:
@@ -68,6 +61,3 @@ markdown_extensions:
       alternate_style: true
   - toc:
       permalink: true
-extra:
-  version:
-    provider: mike
