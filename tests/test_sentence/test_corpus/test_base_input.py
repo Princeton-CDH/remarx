@@ -4,37 +4,21 @@ from unittest.mock import patch
 import pytest
 
 from remarx.sentence.corpus.base_input import FileInput
-from remarx.sentence.corpus.tei_input import TEIinput
-from remarx.sentence.corpus.text_input import TextInput
 
 
-class MyTestInput(FileInput):
-    file_type = ".foo"
-    pass
-
-
-FileInput.register_input(MyTestInput)
-
-# expected input classes, real and test
-input_classes = [TextInput, TEIinput, MyTestInput]
-
-
-def test_register_input():
-    assert ".foo" in FileInput._input_classes
-    assert FileInput._input_classes[".foo"] == MyTestInput
-
-
-def test_default_registration():
-    # check that expected input classes are available
-    for input_cls in input_classes:
-        assert input_cls.file_type in FileInput._input_classes
-        assert FileInput._input_classes[input_cls.file_type] == input_cls
+def test_subclasses():
+    # check that expected input subclasses are found
+    subclass_names = [cls.__name__ for cls in FileInput.subclasses()]
+    # NOTE: that we use names here rather than importing, to
+    # confirm subclasses are found without a direct import
+    for input_cls_name in ["TextInput", "TEIinput"]:
+        assert input_cls_name in subclass_names
 
 
 def test_supported_types():
     # check for expected supported types
-    expected_types = {input_cls.file_type for input_cls in input_classes}
-    assert set(FileInput.supported_types()) == expected_types
+    # NOTE: checking directly to avoid importing input classes
+    assert set(FileInput.supported_types()) == {".txt", ".xml"}
 
 
 def test_get_text(tmp_path: pathlib.Path):
@@ -46,6 +30,8 @@ def test_get_text(tmp_path: pathlib.Path):
 
 
 def test_init_txt(tmp_path: pathlib.Path):
+    from remarx.sentence.corpus.text_input import TextInput
+
     txt_file = tmp_path / "input.txt"
     txt_input = FileInput.init(input_file=txt_file)
     assert isinstance(txt_input, TextInput)
@@ -53,6 +39,8 @@ def test_init_txt(tmp_path: pathlib.Path):
 
 @patch("remarx.sentence.corpus.tei_input.TEIDocument")
 def test_init_tei(mock_tei_doc, tmp_path: pathlib.Path):
+    from remarx.sentence.corpus.tei_input import TEIinput
+
     xml_input_file = tmp_path / "input.xml"
     xml_input = FileInput.init(input_file=xml_input_file)
     assert isinstance(xml_input, TEIinput)

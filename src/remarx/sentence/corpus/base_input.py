@@ -3,15 +3,16 @@ Base file input class with common functionality. Provides a factory
 method for initialization of known input classes based on supported
 file types.
 
-Subclasses must define a supported `file_type` extension and call
-`FileInput.register_input` to register the input class for use with
-the factory method.
-
 To initialize the appropriate subclass for a supported file type,
 use [FileInput.init()][remarx.sentence.corpus.base_input.FileInput.init].
 
 For a list of supported file types across all registered input classes,
 use [FileInput.supported_types()][remarx.sentence.corpus.base_input.FileInput.supported_types].
+
+Subclasses must define a supported `file_type` extension, implement
+the `get_text` method. For discovery, input classes must be imported in
+`remarx.sentence.corpus.__init__` and included in `__all__` to ensure
+they are found as available input classes.
 
 """
 
@@ -38,14 +39,6 @@ class FileInput:
 
     file_type: ClassVar[str]
     "Supported file extension; subclasses must define"
-
-    @classmethod
-    def register_input(cls, subclass: type[Self]) -> None:
-        """
-        Register an input class subclass with associated file type.
-        """
-        # NOTE: likely to change when we add support for METS-ALTO
-        cls._input_classes[subclass.file_type] = subclass
 
     @cached_property
     def file_name(self) -> str:
@@ -96,11 +89,26 @@ class FileInput:
                 sentence_index += 1
 
     @classmethod
+    def subclasses(cls) -> list[type[Self]]:
+        """
+        List of available file input classes.
+        """
+        return cls.__subclasses__()
+
+    @classmethod
+    def subclass_by_type(cls) -> dict[str, type[Self]]:
+        """
+        Dictionary of subclass by supported file extension for available
+        input classes.
+        """
+        return {subcls.file_type: subcls for subcls in cls.subclasses()}
+
+    @classmethod
     def supported_types(cls) -> list[str]:
         """
         Unique list of supported file extensions for available input classes.
         """
-        return list(set(cls._input_classes.keys()))
+        return list({subcls.file_type for subcls in cls.subclasses()})
 
     @classmethod
     def init(cls, input_file: pathlib.Path) -> Self:
@@ -110,7 +118,7 @@ class FileInput:
 
         :raises ValueError: if input_file is not a supported type
         """
-        input_cls = cls._input_classes.get(input_file.suffix)
+        input_cls = cls.subclass_by_type().get(input_file.suffix)
         # for now, check based on file extension
         # NOTE: this will change when we add support for METS-ALTO
         if input_cls is None:

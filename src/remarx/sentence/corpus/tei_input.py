@@ -137,7 +137,7 @@ class TEIinput(FileInput):
     xml_doc: TEIDocument = field(init=False)
     "Parsed XML document; initialized from inherited input_file"
 
-    field_names: tuple[str, ...] = (*FileInput.field_names, "page_number")
+    field_names: ClassVar[tuple[str, ...]] = (*FileInput.field_names, "page_number")
     "List of field names for sentences from TEI XML input files"
 
     file_type = ".xml"
@@ -163,6 +163,3 @@ class TEIinput(FileInput):
         # yield body text content chunked by page with page number
         for page in self.xml_doc.pages:
             yield {"text": str(page), "page_number": page.number}
-
-
-FileInput.register_input(TEIinput)

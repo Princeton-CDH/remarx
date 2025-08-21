@@ -26,6 +26,3 @@ class TextInput(FileInput):
         that applies to this unit of text.
         """
         yield {"text": self.input_file.read_text(encoding="utf-8")}
-
-
-FileInput.register_input(TextInput)
