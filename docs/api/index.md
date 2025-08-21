@@ -17,3 +17,9 @@ options:
 show_submodules: false
 show_source: false
 members: false
+
+::: remarx.sentence.corpus
+options:
+show_submodules: false
+show_source: false
+members: false
