@@ -1,5 +1,7 @@
 """
-Base file input class with baseline functionality and factory method.
+Base file input class with common functionality. Provides a factory
+method for initialization of known input classes based on supported
+file types.
 
 Subclasses must define a supported `file_type` extension and call
 `FileInput.register_input` to register the input class for use with

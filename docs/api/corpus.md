@@ -2,16 +2,10 @@
 
 ::: remarx.sentence.corpus
 
-## File input classes
+## File inputs
 
-::: remarx.sentence.corpus.text_input.TextInput
+::: remarx.sentence.corpus.base_input
 
-::: remarx.sentence.corpus.tei_input.TEIinput
+::: remarx.sentence.corpus.text_input
 
-### TEI XML
-
-::: remarx.sentence.corpus.tei_input.BaseTEIXmlObject
-
-::: remarx.sentence.corpus.tei_input.TEIDocument
-
-::: remarx.sentence.corpus.tei_input.TEIPage
+::: remarx.sentence.corpus.tei_input

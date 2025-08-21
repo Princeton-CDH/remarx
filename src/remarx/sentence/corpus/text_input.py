@@ -1,4 +1,4 @@
-"Base text input class with common functionality"
+"Input class for handling basic text file as input for corpus creation."
 
 from collections.abc import Generator
 from dataclasses import dataclass
@@ -8,7 +8,10 @@ from remarx.sentence.corpus.base_input import FileInput
 
 @dataclass
 class TextInput(FileInput):
-    """Class for text file input for sentence corpus creation"""
+    """
+    Basic text file input handling for sentence corpus creation. Takes
+    a single text input file and returns text without chunking.
+    """
 
     file_type = ".txt"
     "Supported file extension for text input"
