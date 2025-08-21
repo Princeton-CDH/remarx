@@ -44,7 +44,7 @@ a tool of your choice for creating python virtual environments (`mamba`, `venv`,
 
 The `CHANGELOG.md` is meant for end users and should document user-facing changes only.
 Internal changes like CI/CD updates, build system modifications, or development tooling
-changes should not be included in the changelog.
+changes should not be included in the changelog unless it is substantial enough to potentially impact functionality, such as a major refactor.
 
 ## Documentation
 
