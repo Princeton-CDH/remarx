@@ -15,7 +15,7 @@ from typing import ClassVar, NamedTuple, Self
 from lxml.etree import XMLSyntaxError
 from neuxml import xmlmap
 
-from remarx.sentence.corpus.text_input import FileInput
+from remarx.sentence.corpus.base_input import FileInput
 
 TEI_NAMESPACE = "http://www.tei-c.org/ns/1.0"
 
@@ -53,14 +53,17 @@ class TEIPage(BaseTEIXmlObject):
     text_nodes = xmlmap.StringListField("following::text()")
     "list of all text nodes following this tag"
 
-    def text_contents(self) -> Generator[str]:
+    def text_contents(self) -> Generator[tuple[str, str]]:
         """
         Generator of text content on this page, between the current
-        and following page begin tags.  MEGA specific logic:
-        ignores page indicators for the manuscript edition
+        and following page begin tags. Enhanced to return 2 chunks per page:
+        body text separate from footnotes, with section type information.
+        MEGA specific logic: ignores page indicators for the manuscript edition
         (<pb> tags with ed="manuscript"); assumes standard pb tags have no edition.
+        Note: Footnotes that span multiple pages are excluded for now.
         """
-        # for now, ignore partial content, footnotes, hyphenation, etc
+        # Extract body text (ignore partial content, hyphenation, etc, and skip footnotes)
+        body_text_parts = []
         for text in self.text_nodes:
             # text here is an lxml smart string, which preserves context
             # in the xml tree and is associated with a parent tag.
@@ -74,24 +77,55 @@ class TEIPage(BaseTEIXmlObject):
             ):
                 break
 
-            # omit editorial content (e.g. original page numbers)
-            if (
-                parent.tag == TEI_TAG.add
-                or (parent.tag == TEI_TAG.label and parent.get("type") == "mpb")
-            ) and (text.is_text or (text.is_tail and text.strip() == "")):
-                # omit if text is inside an editorial tag (is_text)
-                # OR if text comes immediately after (is_tail) and is whitespace only
-                continue
+            # Skip this text node if it's inside a footnote
+            ancestor = parent
+            while ancestor is not None:
+                if ancestor.tag == TEI_TAG.note and ancestor.get("type") == "footnote":
+                    break
+                ancestor = ancestor.getparent()
+            else:
+                # omit editorial content (e.g. original page numbers)
+                if (
+                    parent.tag == TEI_TAG.add
+                    or (parent.tag == TEI_TAG.label and parent.get("type") == "mpb")
+                ) and (text.is_text or (text.is_tail and text.strip() == "")):
+                    # omit if text is inside an editorial tag (is_text)
+                    # OR if text comes immediately after (is_tail) and is whitespace only
+                    continue
 
-            # consolidate whitespace if it includes a newline
-            # (i.e., space between indented tags in the XML)
-            yield re.sub(r"\s*\n\s*", "\n", text)
+                # consolidate whitespace if it includes a newline
+                # (i.e., space between indented tags in the XML)
+                body_text_parts.append(re.sub(r"\s*\n\s*", "\n", text))
+
+        # Yield body text as first chunk
+        body_text = "".join(body_text_parts).strip()
+        if body_text:
+            yield (body_text, "text")
+
+        # Extract and yield combined footnotes as second chunk
+        notes = self.node.xpath(
+            "following::t:note[@type='footnote'][not(.//t:pb[not(@ed)])]",
+            namespaces=self.ROOT_NAMESPACES,
+        )
+
+        if notes:
+            footnote_texts = []
+            for note in notes:
+                footnote_text = "".join(
+                    note.xpath(".//text()", namespaces=self.ROOT_NAMESPACES)
+                ).strip()
+                if footnote_text:
+                    footnote_texts.append(footnote_text)
+
+            if footnote_texts:
+                yield ("\n\n".join(footnote_texts), "footnote")
 
     def __str__(self) -> str:
         """
         Page text contents as a string
         """
-        return "".join(self.text_contents())
+        # Extract just the text content from the tuples
+        return "".join(text for text, section_type in self.text_contents())
 
 
 class TEIDocument(BaseTEIXmlObject):
@@ -137,7 +171,11 @@ class TEIinput(FileInput):
     xml_doc: TEIDocument = field(init=False)
     "Parsed XML document; initialized from inherited input_file"
 
-    field_names: ClassVar[tuple[str, ...]] = (*FileInput.field_names, "page_number")
+    field_names: ClassVar[tuple[str, ...]] = (
+        *FileInput.field_names,
+        "page_number",
+        "section_type",
+    )
     "List of field names for sentences from TEI XML input files"
 
     file_type = ".xml"
@@ -154,12 +192,17 @@ class TEIinput(FileInput):
 
     def get_text(self) -> Generator[dict[str, str]]:
         """
-        Get document content as plain text. Chunked by page, dictionary
-        includes page number.
+        Get document content as plain text. Chunked by page and section type
+        (body text & footnotes), with page number and section type.
 
-        :returns: Generator with a dictionary of text content by page,
-        with page number.
+        :returns: Generator with a dictionary of text content by page section,
+        including page number and section_type ("text" or "footnote").
         """
-        # yield body text content chunked by page with page number
+        # yield body text and footnotes content chunked by page with page number
         for page in self.xml_doc.pages:
-            yield {"text": str(page), "page_number": page.number}
+            for text_content, section_type in page.text_contents():
+                yield {
+                    "text": text_content,
+                    "page_number": page.number,
+                    "section_type": section_type,
+                }
