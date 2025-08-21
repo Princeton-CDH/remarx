@@ -40,6 +40,23 @@ a tool of your choice for creating python virtual environments (`mamba`, `venv`,
   uv tool run pre-commit
   ```
 
+## Changelog
+
+The `CHANGELOG.md` is meant for end users and should document user-facing changes only.
+Internal changes like CI/CD updates, build system modifications, or development tooling
+changes should not be included in the changelog unless it is substantial enough to potentially impact functionality, such as a major refactor.
+
+### To Skip Changelog Check for Specific PRs
+
+1. Add the `no changelog` label to your PR:
+
+   - Via GitHub web interface: Go to your PR → Labels section in right sidebar → Click gear icon → Type "no changelog" and select it
+   - Via GitHub CLI: Run `gh pr edit --add-label "no changelog"`
+
+1. The changelog check will automatically re-run and pass when the label is applied
+
+1. Remove the label if you later decide the PR does need a changelog entry
+
 ## Documentation
 
 This project uses [MkDocs](https://www.mkdocs.org/) for documentation generation.
