@@ -13,7 +13,8 @@ def _():
 
     import remarx
     from remarx.sentence.corpus.text_input import TextInput
-    return TextInput, csv, mo, pathlib, remarx, tempfile
+    from remarx.app_utils import create_temp_input
+    return TextInput, create_temp_input, csv, mo, pathlib, remarx
 
 
 @app.cell
@@ -182,17 +183,15 @@ def _(input_file, mo, output_dir):
 
 
 @app.cell
-def _(TextInput, button, csv, input_file, mo, output_csv, pathlib, tempfile):
+def _(TextInput, button, create_temp_input, csv, input_file, mo, output_csv):
     # Build Sentence Corpus
     building_msg = f'Click "Build Corpus" button to start'
 
     if button.value:
         spinner_msg = f"Building sentence corpus for {input_file.name}"
         with mo.status.spinner(title=spinner_msg) as _spinner:
-            with tempfile.NamedTemporaryFile(delete_on_close=False) as _tf:
-                temp_fp = pathlib.Path(_tf.name)
-                _tf.write(input_file.contents)
-                corpus_input = TextInput(temp_fp)
+            with create_temp_input(input_file.contents) as temp_path:
+                corpus_input = TextInput(temp_path)
 
                 with open(output_csv, mode="w", newline="") as file_handler:
                     writer = csv.DictWriter(
