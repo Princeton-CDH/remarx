@@ -35,8 +35,6 @@ class FileInput:
     field_names: ClassVar[tuple[str, ...]] = ("file", "offset", "text")
     "List of field names for sentences from text input files."
 
-    _input_classes: ClassVar[dict[str, type[Self]]] = {}
-
     file_type: ClassVar[str]
     "Supported file extension; subclasses must define"
 
