@@ -61,7 +61,6 @@ testpaths = ["tests"]
 
 [tool.coverage.run]
 branch = true
-omit = ["src/remarx/app.py", "docs/hooks.py"]
 
 [tool.coverage.report]
 show_missing = true   # Helpful for debugging
