@@ -46,20 +46,16 @@ The `CHANGELOG.md` is meant for end users and should document user-facing change
 Internal changes like CI/CD updates, build system modifications, or development tooling
 changes should not be included in the changelog unless it is substantial enough to potentially impact functionality, such as a major refactor.
 
-### To Skipping Changelog Check for Specific PRs
+### To Skip Changelog Check for Specific PRs
 
-Not all changes require a changelog entry. For PRs that contain non-user-visible changes (such as CI/CD updates, internal refactoring, documentation fixes, or development tooling changes), you can skip the changelog requirement:
+1. Add the `no changelog` label to your PR:
 
-1. **Add the `no changelog` label** to your PR:
+   - Via GitHub web interface: Go to your PR → Labels section in right sidebar → Click gear icon → Type "no changelog" and select it
+   - Via GitHub CLI: Run `gh pr edit --add-label "no changelog"`
 
-   - **Via GitHub web interface**: Go to your PR → Labels section in right sidebar → Click gear icon → Type "no changelog" and select/create it
-   - **Via GitHub CLI**: Run `gh pr edit --add-label "no changelog"`
+1. The changelog check will automatically re-run and pass when the label is applied
 
-1. **The changelog check will automatically re-run and pass** when the label is applied
-
-1. **Remove the label** if you later decide the PR does need a changelog entry
-
-This approach allows you to explicitly acknowledge that a change doesn't require user documentation while still maintaining the changelog discipline for user-facing changes.
+1. Remove the label if you later decide the PR does need a changelog entry
 
 ## Documentation
 
