@@ -48,7 +48,7 @@ def simple_segmenter(text: str):
     return ((0, text[:half_text_len]), (half_text_len, text[half_text_len:]))
 
 
-@patch("remarx.sentence.corpus.text_input.segment_text")
+@patch("remarx.sentence.corpus.base_input.segment_text")
 def test_get_sentences(mock_segment_text: Mock, tmp_path: pathlib.Path):
     txt_file = tmp_path / "input.txt"
     text_content = "more placeholder content"
