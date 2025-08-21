@@ -62,7 +62,10 @@ testpaths = ["tests"]
 
 [tool.coverage.run]
 branch = true
-omit = ["src/remarx/app.py"]
+omit = [
+  "src/remarx/app.py",   # marimo app notebook
+  "src/remarx/sentence/corpus/create.py"  # preliminary cli corpus creation script, untested
+]
 
 [tool.coverage.report]
 show_missing = true   # Helpful for debugging

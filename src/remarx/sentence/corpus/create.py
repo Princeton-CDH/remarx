@@ -2,6 +2,11 @@
 """
 Preliminary script and method to create sentence corpora from input
 files in supported formats.
+
+NOTE: This script was created for manual testing of corpus input classes.
+It is not complete or unit tested, and is expected substantially to change
+when properly implemented.
+
 """
 
 import argparse
