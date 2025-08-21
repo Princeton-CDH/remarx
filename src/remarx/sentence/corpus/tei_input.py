@@ -1,5 +1,7 @@
 """
-Functionality related to TEI XML input content for sentence corpora
+Functionality related to parsing MEGA TEI/XML content with the
+goal of creating a sentence corpora with associated metadata
+from the TEI.
 """
 
 import pathlib
@@ -15,12 +17,6 @@ from neuxml import xmlmap
 
 from remarx.sentence.corpus.text_input import TextInput
 
-# requirements:
-# takes one input file
-# yields text content in chunks
-# combines sentences with metadata;
-
-
 TEI_NAMESPACE = "http://www.tei-c.org/ns/1.0"
 
 # namespaced tags look like {http://www.tei-c.org/ns/1.0}tagname
@@ -28,12 +24,13 @@ TEI_NAMESPACE = "http://www.tei-c.org/ns/1.0"
 _tei_tags = ["pb", "lb", "note", "add", "label", "ref", "div3"]
 TagNames = namedtuple("TagNames", _tei_tags)
 TEI_TAG = TagNames(**{tag: f"{{{TEI_NAMESPACE}}}{tag}" for tag in _tei_tags})
+"Convenience access to namespaced TEI tag names"
 
 
 class BaseTEIXmlObject(xmlmap.XmlObject):
     """
-    Base class for TEI xml objects with TEI namespace included in root namespaces,
-    for use in xpath expressions
+    Base class for TEI XML objects with TEI namespace included in root namespaces,
+    for use in XPath expressions.
     """
 
     ROOT_NAMESPACES: ClassVar[dict[str, str]] = {"t": TEI_NAMESPACE}
@@ -46,11 +43,14 @@ class TEIPage(BaseTEIXmlObject):
     """
 
     number = xmlmap.StringField("@n")
+    "page number"
     edition = xmlmap.StringField("@ed")
+    "page edition, if any"
 
     # page beginning tags delimit content instead of containing it;
     # use following axis to find all text nodes following this page beginning
     text_nodes = xmlmap.StringListField("following::text()")
+    "list of all text nodes following this tag"
 
     def text_contents(self) -> Generator[str]:
         """
@@ -96,16 +96,19 @@ class TEIPage(BaseTEIXmlObject):
 class TEIDocument(BaseTEIXmlObject):
     """
     Custom :class:`eulxml.xmlmap.XmlObject` instance for TEI XML document.
+    Customized for MEGA TEI XML.
     """
 
-    #: list of page objects, identified by standard (non-editorial) page begin tag (pb)
     all_pages = xmlmap.NodeListField("//t:text//t:pb", TEIPage)
+    """List of page objects, identified by page begin tag (pb). Includes all
+    pages (standard and manuscript edition), because the XPath is significantly
+    faster without filtering."""
 
     @cached_property
     def pages(self) -> list[TEIPage]:
         """
-        Standard pages.  Returns a list of :class:`TEIPage` objects
-        for this document, with  pages marked as manuscript edition excluded.
+        Standard pages for this document.  Returns a list of TEIPage objects
+        for this document, omitting any pages marked as manuscript edition.
         """
         # it's more efficient to filter in python than in xpath
         return [page for page in self.all_pages if page.edition != "manuscript"]
@@ -124,22 +127,23 @@ class TEIDocument(BaseTEIXmlObject):
 @dataclass
 class TEIinput(TextInput):
     """
-    Input class for TEI/XML content.
+    Input class for TEI/XML content.  Takes a single input file,
+    and yields text content by page, with page number.
+    Customized for MEGA TEI/XML: follows standard edition page numbering
+    and ignores pages marked as manuscript edition.
     """
 
-    # inherit filename as file id for now
-    # (is there any id in the file we should use instead?)
-
-    #: parsed xml document; initialized from inherited input_file
     xml_doc: TEIDocument = field(init=False)
+    "Parsed XML document; initialized from inherited input_file"
 
-    #: List of field names for sentences from TEI XML input files
     field_names: tuple[str] = (*TextInput.field_names, "page_number")
+    "List of field names for sentences from TEI XML input files"
 
     def __post_init__(self) -> None:
         """
-        After default initialization, parse :attr:`input_file` as
-        a :class:`TEIDocument` and store on :attr:`xml_doc`.
+        After default initialization, parse [input_file][remarx.sentence.corpus.text_input.TextInput.input_file]
+        as a [TEIDocument][remarx.sentence.corpus.tei_input.TEIDocument] and store as
+        [xml_doc][remarx.sentence.corpus.tei_input.TEIinput.xml_doc].
         """
         # parse the input file as xml and save the result
         self.xml_doc = TEIDocument.init_from_file(self.input_file)
@@ -148,6 +152,9 @@ class TEIinput(TextInput):
         """
         Get document content as plain text. Chunked by page, dictionary
         includes page number.
+
+        :returns: Generator with a dictionary of text content by page,
+        with page number.
         """
         # yield body text content chunked by page with page number
         for page in self.xml_doc.pages:

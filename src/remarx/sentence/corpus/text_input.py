@@ -13,9 +13,10 @@ class TextInput:
     """Base class for file input for sentence corpus creation"""
 
     input_file: pathlib.Path
+    "Reference to input file. Source of content for sentences."
 
-    #: List of field names for sentences from text input files
     field_names: tuple[str] = ("file", "offset", "text")
+    "List of field names for sentences from text input files."
 
     @cached_property
     def file_name(self) -> str:
@@ -27,15 +28,22 @@ class TextInput:
     def get_text(self) -> Generator[dict[str, str]]:
         """
         Get plain-text contents for this file with any desired chunking (e.g.
-        pages or other semantic unit). Returns a dictionary of
-        text and any other metadata appropriate to this unit of text.
+        pages or other semantic unit).
         Default implementation does no chunking, no additional metadata.
+
+        :returns: Generator with a dictionary of text and any other metadata
+        that applies to this unit of text.
         """
         yield {"text": self.input_file.read_text(encoding="utf-8")}
 
     def get_sentences(self) -> Generator[dict[str, any]]:
         """
-        Get sentences for this file, with any associated metadata.
+        Get sentences for this file, with associated metadata.
+
+        :returns: Generator of one dictionary per sentence; dictionary
+        always includes: `text` (text content), `file` (filename),
+        `sent_index` (sentence index within the document). It may include
+        other metadata, depending on the input file type.
         """
         # zero-based sentence index for this file, across all chunks
         sentence_index = 0
