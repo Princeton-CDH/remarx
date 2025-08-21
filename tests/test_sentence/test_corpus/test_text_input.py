@@ -58,7 +58,7 @@ def test_get_sentences(mock_segment_text: Mock, tmp_path: pathlib.Path):
     assert len(sentences) == 1
 
     # expect segmentation method to be called only once
-    assert mock_segment_text.call_count == 1
+    mock_segment_text.assert_called_once()
 
     first_sentence = sentences[0]
     assert isinstance(first_sentence, dict)
