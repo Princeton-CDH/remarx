@@ -10,7 +10,7 @@ from collections import namedtuple
 from collections.abc import Generator
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import ClassVar, Self
+from typing import ClassVar, NamedTuple, Self
 
 from lxml.etree import XMLSyntaxError
 from neuxml import xmlmap
@@ -21,9 +21,10 @@ TEI_NAMESPACE = "http://www.tei-c.org/ns/1.0"
 
 # namespaced tags look like {http://www.tei-c.org/ns/1.0}tagname
 # create a named tuple of short tag name -> namespaced tag name
-_tei_tags = ["pb", "lb", "note", "add", "label", "ref", "div3"]
-TagNames = namedtuple("TagNames", _tei_tags)
-TEI_TAG = TagNames(**{tag: f"{{{TEI_NAMESPACE}}}{tag}" for tag in _tei_tags})
+TagNames: NamedTuple = namedtuple(
+    "TagNames", ("pb", "lb", "note", "add", "label", "ref", "div3")
+)
+TEI_TAG = TagNames(**{tag: f"{{{TEI_NAMESPACE}}}{tag}" for tag in TagNames._fields})
 "Convenience access to namespaced TEI tag names"
 
 
@@ -136,7 +137,7 @@ class TEIinput(TextInput):
     xml_doc: TEIDocument = field(init=False)
     "Parsed XML document; initialized from inherited input_file"
 
-    field_names: tuple[str] = (*TextInput.field_names, "page_number")
+    field_names: tuple[str, ...] = (*TextInput.field_names, "page_number")
     "List of field names for sentences from TEI XML input files"
 
     def __post_init__(self) -> None:
