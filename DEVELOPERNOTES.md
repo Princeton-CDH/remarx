@@ -53,7 +53,7 @@ changes should not be included in the changelog unless it is substantial enough 
    - Via GitHub web interface: Go to your PR → Labels section in right sidebar → Click gear icon → Type "no changelog" and select it
    - Via GitHub CLI: Run `gh pr edit --add-label "no changelog"`
 
-1. The changelog check will automatically re-run and pass\*\* when the label is applied
+1. The changelog check will automatically re-run and pass when the label is applied
 
 1. Remove the label if you later decide the PR does need a changelog entry
 
