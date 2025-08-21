@@ -4,7 +4,7 @@ This repo uses [git-flow](https://github.com/nvie/gitflow) branching conventions
 **main** contains the most recent release, and work in progress will be on the
 **develop** branch. Pull requests for new features should be made against develop.
 
-## Developer setup and installation
+## **Developer setup and installation**
 
 **Note:** While the usage of [`uv`](https://docs.astral.sh/uv/) is assumed, this
 package is also compatible with the use of `pip` for python package management and
@@ -40,42 +40,23 @@ a tool of your choice for creating python virtual environments (`mamba`, `venv`,
   uv tool run pre-commit
   ```
 
-## Documentation
+## **Documentation**
 
-This project uses [MkDocs](https://www.mkdocs.org/) for documentation generation.
+This project uses [MkDocs](https://www.mkdocs.org/) for documentation generation. To work with documentation:
 
-### Working with documentation
+Step 1: Build documentation locally
 
-- **Step 1: Build documentation locally**:
+- run `uv run mkdocs build`
 
-  - run `uv run mkdocs build`
+- Generates static site in `site/` directory
 
-  - Generates static site in `site/` directory
+Step 2: Preview documentation locally
 
-- **Step 2: Preview documentation locally**:
+- run `uv run mkdocs serve`
 
-  - run `uv run mkdocs serve`
+- Opens at `http://127.0.0.1:8000/` and auto-reloads on file changes
 
-  - Opens at `http://127.0.0.1:8000/` and auto-reloads on file changes
-
-### Writing documentation
-
-- **Files**: Documentation files are located in `docs/` directory.
-  \- `docs/index.md` is a symlink to `README.md`. Edit `README.md` to update the docs homepage.
-  \- `docs/devnotes.md` is a symlink to `DEVELOPERNOTES.md`. Edit `DEVELOPERNOTES.md` to update developer notes.
-- **API documentation**: Auto-generated from docstrings using [mkdocstrings](https://mkdocstrings.github.io/).
-- **Code examples**: To display examples correctly, be sure to wrap them with triple backticks and specify `python`.
-  ````python
-      """
-      Usage example:
-          ```python
-            result = add(2, 3)
-            print(result)  # 5
-          ```
-      """
-  ````
-
-## Useful `uv` commands
+## **Useful `uv` commands**
 
 - `uv add`: Add a new dependency to the project (i.e., updates `pyproject.toml`)
 - `uv add --dev`: Add a new development dependency to the project
