@@ -140,6 +140,9 @@ class TEIinput(FileInput):
     field_names: tuple[str, ...] = (*FileInput.field_names, "page_number")
     "List of field names for sentences from TEI XML input files"
 
+    file_type = ".xml"
+    "Supported file extension for TEI/XML input"
+
     def __post_init__(self) -> None:
         """
         After default initialization, parse [input_file][remarx.sentence.corpus.text_input.TextInput.input_file]
@@ -160,3 +163,6 @@ class TEIinput(FileInput):
         # yield body text content chunked by page with page number
         for page in self.xml_doc.pages:
             yield {"text": str(page), "page_number": page.number}
+
+
+FileInput.register_input(TEIinput)

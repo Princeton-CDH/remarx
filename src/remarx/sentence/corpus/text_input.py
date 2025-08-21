@@ -4,7 +4,7 @@ import pathlib
 from collections.abc import Generator
 from dataclasses import dataclass
 from functools import cached_property
-from typing import Any
+from typing import Any, ClassVar, Self
 
 from remarx.sentence.segment import segment_text
 
@@ -16,8 +16,19 @@ class FileInput:
     input_file: pathlib.Path
     "Reference to input file. Source of content for sentences."
 
-    field_names: tuple[str, ...] = ("file", "offset", "text")
+    field_names: ClassVar[tuple[str, ...]] = ("file", "offset", "text")
     "List of field names for sentences from text input files."
+
+    _input_classes: ClassVar[dict[str, type[Self]]] = {}
+
+    file_type: ClassVar[str]
+
+    @classmethod
+    def register_input(cls, subclass: type[Self]) -> None:
+        """
+        Register an input class subclass with associated file type.
+        """
+        cls._input_classes[subclass.file_type] = subclass
 
     @cached_property
     def file_name(self) -> str:
@@ -68,10 +79,34 @@ class FileInput:
                 # increment sentence index
                 sentence_index += 1
 
+    @classmethod
+    def supported_types(cls) -> list[str]:
+        """
+        Unique list of supported file extensions for available input classes.
+        """
+        return list(set(cls._input_classes.keys()))
+
+    @classmethod
+    def init(cls, input_file: pathlib.Path) -> Self:
+        """
+        Instantiate and return the appropriate input class for the specified
+        input file.
+
+        :raises ValueError: if input_file is not a supported type
+        """
+        input_cls = cls._input_classes.get(input_file.suffix)
+        # for now, check based on file extension
+        if input_cls is None:
+            raise ValueError(f"{input_file.suffix} is not a supported input type")
+        return input_cls(input_file=input_file)
+
 
 @dataclass
 class TextInput(FileInput):
     """Class for text file input for sentence corpus creation"""
+
+    file_type = ".txt"
+    "Supported file extension for text input"
 
     def get_text(self) -> Generator[dict[str, str]]:
         """
@@ -83,3 +118,6 @@ class TextInput(FileInput):
         that applies to this unit of text.
         """
         yield {"text": self.input_file.read_text(encoding="utf-8")}
+
+
+FileInput.register_input(TextInput)
