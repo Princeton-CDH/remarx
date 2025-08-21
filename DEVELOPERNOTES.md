@@ -40,6 +40,12 @@ a tool of your choice for creating python virtual environments (`mamba`, `venv`,
   uv tool run pre-commit
   ```
 
+## Changelog
+
+The `CHANGELOG.md` is meant for end users and should document user-facing changes only.
+Internal changes like CI/CD updates, build system modifications, or development tooling
+changes should not be included in the changelog.
+
 ## Documentation
 
 This project uses [MkDocs](https://www.mkdocs.org/) for documentation generation.
