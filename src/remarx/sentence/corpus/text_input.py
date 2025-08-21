@@ -57,11 +57,11 @@ class TextInput:
                 # character index is not included in output,
                 # but may be useful for sub-chunk metadata (e.g., line number)
 
-                sentence_info = {
+                sentence_info = chunk_info | {
                     "text": sentence,
                     "file": self.file_name,
                     "sent_index": sentence_index,
-                } | chunk_info
+                } 
                 yield sentence_info
 
                 # increment sentence index
