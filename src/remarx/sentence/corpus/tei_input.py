@@ -56,13 +56,14 @@ class TEIPage(BaseTEIXmlObject):
     def text_contents(self) -> Generator[tuple[str, str]]:
         """
         Generator of text content on this page, between the current
-        and following page begin tags.  MEGA specific logic:
-        ignores page indicators for the manuscript edition
+        and following page begin tags. Enhanced to return 2 chunks per page:
+        body text separate from footnotes, with section type information.
+        MEGA specific logic: ignores page indicators for the manuscript edition
         (<pb> tags with ed="manuscript"); assumes standard pb tags have no edition.
-        Returns two chunks per page: body text and footnotes.
-        Note: Footnotes that span multiple pages are ignored for now.
+        Note: Footnotes that span multiple pages are excluded for now.
         """
-        # Extract body text (ignore partial content, hyphenation, etc.)
+        # Step 1: Extract and yield body text as first chunk
+        # for now, ignore partial content, hyphenation, etc
         body_text_parts = []
         for text in self.text_nodes:
             # text here is an lxml smart string, which preserves context
@@ -77,7 +78,7 @@ class TEIPage(BaseTEIXmlObject):
             ):
                 break
 
-            # Skip the current text node if it's inside a footnote
+            # Skip this text node if it's inside a footnote tag
             ancestor = parent
             while ancestor is not None:
                 if ancestor.tag == TEI_TAG.note and ancestor.get("type") == "footnote":
@@ -97,28 +98,30 @@ class TEIPage(BaseTEIXmlObject):
                 # (i.e., space between indented tags in the XML)
                 body_text_parts.append(re.sub(r"\s*\n\s*", "\n", text))
 
-        # Yield body text as first chunk
         body_text = "".join(body_text_parts).strip()
         if body_text:
             yield (body_text, "text")
 
-        # Extract and yield combined footnotes as second chunk
+        # Step 2: Extract and yield combined footnotes as second chunk
         notes = self.node.xpath(
+            # not(@ed) ignores standard alternate edition footnotes (<pb ed="manuscript">)
             "following::t:note[@type='footnote'][not(.//t:pb[not(@ed)])]",
             namespaces=self.ROOT_NAMESPACES,
         )
 
         if notes:
-            footnote_texts = []
+            footnote_text_parts = []
             for note in notes:
                 footnote_text = "".join(
                     note.xpath(".//text()", namespaces=self.ROOT_NAMESPACES)
                 ).strip()
                 if footnote_text:
-                    footnote_texts.append(footnote_text)
+                    # consolidate whitespace for footnotes
+                    footnote_text = re.sub(r"\s*\n\s*", "\n", footnote_text)
+                    footnote_text_parts.append(footnote_text)
 
-            if footnote_texts:
-                yield ("\n\n".join(footnote_texts), "footnote")
+            if footnote_text_parts:
+                yield ("\n\n".join(footnote_text_parts), "footnote")
 
     def __str__(self) -> str:
         """
@@ -171,12 +174,15 @@ class TEIinput(TextInput):
     xml_doc: TEIDocument = field(init=False)
     "Parsed XML document; initialized from inherited input_file"
 
-    field_names: tuple[str, ...] = (
+    field_names: ClassVar[tuple[str, ...]] = (
         *TextInput.field_names,
         "page_number",
         "section_type",
     )
     "List of field names for sentences from TEI XML input files"
+
+    file_type = ".xml"
+    "Supported file extension for TEI/XML input"
 
     def __post_init__(self) -> None:
         """
