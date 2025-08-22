@@ -37,6 +37,18 @@ def test_init_txt(tmp_path: pathlib.Path):
     assert isinstance(txt_input, TextInput)
 
 
+def test_init_exts(tmp_path: pathlib.Path):
+    from remarx.sentence.corpus.text_input import TextInput
+
+    txt_file = tmp_path / "upper.TXT"
+    txt_input = FileInput.init(input_file=txt_file)
+    assert isinstance(txt_input, TextInput)
+
+    txt_file = tmp_path / "mixed.TxT"
+    txt_input = FileInput.init(input_file=txt_file)
+    assert isinstance(txt_input, TextInput)
+
+
 @patch("remarx.sentence.corpus.tei_input.TEIDocument")
 def test_init_tei(mock_tei_doc, tmp_path: pathlib.Path):
     from remarx.sentence.corpus.tei_input import TEIinput
