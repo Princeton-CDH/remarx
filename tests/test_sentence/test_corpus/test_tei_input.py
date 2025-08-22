@@ -151,6 +151,7 @@ class TestTEIPage:
         assert "Die natürliche Eigenschaft" not in body_text
         assert "John Locke" not in body_text
 
+    def test_empty_footnotes(self):
         """Test edge cases: empty body, empty footnotes, empty page."""
         xml = """<TEI xmlns="http://www.tei-c.org/ns/1.0"><text><group><text><pb n="1"/><p>sampletext</p><note type="footnote"></note></text></group></text></TEI>"""
         tei_doc = TEIDocument(etree.ElementTree(etree.fromstring(xml)))
