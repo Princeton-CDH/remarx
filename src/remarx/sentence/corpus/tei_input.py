@@ -56,11 +56,10 @@ class TEIPage(BaseTEIXmlObject):
     def text_contents(self) -> Generator[tuple[str, str]]:
         """
         Generator of text content on this page, between the current
-        and following page begin tags. Enhanced to return 2 chunks per page:
+        and following page begin tags. Returns up to 2 chunks per page:
         body text separate from footnotes, with section type information.
         MEGA specific logic: ignores page indicators for the manuscript edition
         (<pb> tags with ed="manuscript"); assumes standard pb tags have no edition.
-        Note: Footnotes that span multiple pages are excluded for now.
         """
         # Step 1: Extract and yield body text as first chunk
         # for now, ignore partial content, hyphenation, etc
@@ -102,30 +101,25 @@ class TEIPage(BaseTEIXmlObject):
         if body_text:
             yield (body_text, "text")
 
-        # Step 2: Extract and yield combined footnotes as second chunk
+        # Step 2: Extract and yield individual footnotes as separate chunks
         notes = self.node.xpath(
             # not(@ed) ignores standard alternate edition footnotes (<pb ed="manuscript">)
             "following::t:note[@type='footnote'][not(.//t:pb[not(@ed)])]",
             namespaces=self.ROOT_NAMESPACES,
         )
 
-        if notes:
-            footnote_text_parts = []
-            for note in notes:
-                footnote_text = "".join(
-                    note.xpath(".//text()", namespaces=self.ROOT_NAMESPACES)
-                ).strip()
-                if footnote_text:
-                    # consolidate whitespace for footnotes
-                    footnote_text = re.sub(r"\s*\n\s*", "\n", footnote_text)
-                    footnote_text_parts.append(footnote_text)
-
-            if footnote_text_parts:
-                yield ("\n\n".join(footnote_text_parts), "footnote")
+        for note in notes:
+            footnote_text = "".join(
+                note.xpath(".//text()", namespaces=self.ROOT_NAMESPACES)
+            ).strip()
+            if footnote_text:
+                # consolidate whitespace for footnotes
+                footnote_text = re.sub(r"\s*\n\s*", "\n", footnote_text)
+                yield (footnote_text, "footnote")
 
     def __str__(self) -> str:
         """
-        Page body text contents as a string
+        Page text contents as a string
         """
         # Extract just the text content from the tuples
         return "".join(text for text, section_type in self.text_contents())
