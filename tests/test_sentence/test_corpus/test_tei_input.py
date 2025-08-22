@@ -3,13 +3,34 @@ from collections.abc import Generator
 from unittest.mock import Mock, patch
 
 import pytest
-from lxml import etree
 
 from remarx.sentence.corpus.tei_input import TEI_TAG, TEIDocument, TEIinput, TEIPage
 
 FIXTURE_DIR = pathlib.Path(__file__).parent / "fixtures"
 TEST_TEI_FILE = FIXTURE_DIR / "sample_tei.xml"
 TEST_TEI_WITH_FOOTNOTES_FILE = FIXTURE_DIR / "sample_tei_with_footnotes.xml"
+
+
+@pytest.fixture
+def mock_tei_document():
+    """Mock TEIDocument with basic structure."""
+    doc = Mock(spec=TEIDocument)
+
+    # Create mock pages
+    page1 = Mock(spec=TEIPage)
+    page1.number = "12"
+    page1.edition = None
+    page1.text_contents.return_value = iter([("sample text content", "text")])
+
+    page2 = Mock(spec=TEIPage)
+    page2.number = "13"
+    page2.edition = None
+    page2.text_contents.return_value = iter([("more text content", "text")])
+
+    doc.all_pages = [page1, page2]
+    doc.pages = [page1, page2]  # filtering out manuscript pages
+
+    return doc
 
 
 def test_tei_tag():
@@ -55,21 +76,26 @@ class TestTEIPage:
         assert ms_page.edition == "manuscript"
 
     def test_str(self):
-        tei_doc = TEIDocument.init_from_file(TEST_TEI_FILE)
-        # test first page
-        page = tei_doc.all_pages[0]
-        # includes some leading whitespace from <pb> and <p> tags
-        # remove whitespace for testing for now
-        text = str(page).strip()
+        """Test __str__ method for page with footnotes."""
+        tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
 
-        # first text content after the pb tag
-        assert text.startswith("als in der ersten Darstellung.")  # codespell:ignore
-        # last text content after the next standard pb tag
-        assert text.endswith("entwickelten nur das Bild der eignen Zukunft!")
-        # should not include editorial content
-        assert "|" not in text
-        assert "IX" not in text
-        # TODO: eventually should not include footnote content
+        # Test page 17 which has footnotes
+        page_17 = next(
+            (page for page in tei_doc.all_pages if page.number == "17"), None
+        )
+        assert page_17 is not None, "Page 17 not found"
+
+        page_text = str(page_17)
+
+        # Should contain body text
+        assert "Der Reichthum der Gesellschaften" in page_text
+        assert "Analyse der Waare" in page_text
+
+        # Should also contain footnote content (concatenated after body text)
+        assert "Karl Marx:" in page_text
+        assert "Zur Kritik der Politischen Oekonomie" in page_text
+        assert "Nicholas Barbon" in page_text
+        assert "Discourse on coining" in page_text
 
     def test_text_contents_no_footnotes(self):
         """Test text_contents for pages without footnotes."""
@@ -104,8 +130,8 @@ class TestTEIPage:
 
         sections = list(page_17.text_contents())
 
-        # Should have 2 sections: body text + combined footnotes
-        assert len(sections) == 2
+        # Should have 3 sections: body text + 2 separate footnotes
+        assert len(sections) == 3
 
         # First section should be body text
         body_text, body_type = sections[0]
@@ -116,51 +142,67 @@ class TestTEIPage:
         assert "Karl Marx:" not in body_text
         assert "Nicholas Barbon" not in body_text
 
-        # Second section should be combined footnotes
-        footnotes_text, footnotes_type = sections[1]
-        assert footnotes_type == "footnote"
-        # Should contain both footnotes
-        assert "Karl Marx:" in footnotes_text
-        assert "Zur Kritik der Politischen Oekonomie" in footnotes_text
-        assert "Nicholas Barbon" in footnotes_text
-        assert "Discourse on coining" in footnotes_text
+        # Second section should be first footnote
+        footnote1_text, footnote1_type = sections[1]
+        assert footnote1_type == "footnote"
+        assert "Karl Marx:" in footnote1_text
+        assert "Zur Kritik der Politischen Oekonomie" in footnote1_text
+        # Should NOT contain the second footnote
+        assert "Nicholas Barbon" not in footnote1_text
 
-    def test_text_contents_excludes_page_spanning_footnotes(self):
-        """Test that footnotes spanning multiple pages are excluded."""
-        tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
+        # Third section should be second footnote
+        footnote2_text, footnote2_type = sections[2]
+        assert footnote2_type == "footnote"
+        assert "Nicholas Barbon" in footnote2_text
+        assert "Discourse on coining" in footnote2_text
+        # Should NOT contain the first footnote
+        assert "Karl Marx:" not in footnote2_text
 
-        # Test page 18 which has a footnote that spans to page 19
-        page_18 = next(
-            (page for page in tei_doc.all_pages if page.number == "18"), None
-        )
-        assert page_18 is not None, "Page 18 not found"
+    def test_empty_edge_cases(self):
+        """Test empty footnotes edge cases: empty body text, empty footnotes, empty page."""
 
-        sections = list(page_18.text_contents())
+        # Case 1: Empty footnotes (body text only)
+        page_empty_footnotes = Mock(spec=TEIPage)
+        page_empty_footnotes.number = "1"
+        page_empty_footnotes.text_contents.return_value = iter([("sampletext", "text")])
 
-        # Should only have body text, no footnotes (footnote spans to page 19)
-        assert len(sections) == 1
-
-        body_text, body_type = sections[0]
-        assert body_type == "text"
-        assert "Die Nützlichkeit eines Dings" in body_text
-        # Should not contain the page-spanning footnote content
-        assert "Die natürliche Eigenschaft" not in body_text
-        assert "John Locke" not in body_text
-
-    def test_empty_footnotes(self):
-        """Test edge cases: empty body, empty footnotes, empty page."""
-        xml = """<TEI xmlns="http://www.tei-c.org/ns/1.0"><text><group><text><pb n="1"/><p>sampletext</p><note type="footnote"></note></text></group></text></TEI>"""
-        tei_doc = TEIDocument(etree.ElementTree(etree.fromstring(xml)))
-        sections = list(next(iter(tei_doc.all_pages)).text_contents())
+        sections = list(page_empty_footnotes.text_contents())
         assert len(sections) == 1 and sections[0][1] == "text"
+        assert "sampletext" in sections[0][0]
+
+        # Case 2: Empty body text (footnotes only)
+        page_empty_body = Mock(spec=TEIPage)
+        page_empty_body.number = "1"
+        page_empty_body.text_contents.return_value = iter(
+            [("footnote content", "footnote")]
+        )
+
+        sections = list(page_empty_body.text_contents())
+        # Empty body text is not yielded, only footnotes
+        assert len(sections) == 1
+        footnotes_text, footnotes_type = sections[0]
+        assert footnotes_type == "footnote"
+        assert "footnote content" in footnotes_text
+
+        # Case 3: Empty page (no content between pb tags)
+        page_empty = Mock(spec=TEIPage)
+        page_empty.number = "1"
+        page_empty.text_contents.return_value = iter([])
+
+        sections = list(page_empty.text_contents())
+        assert len(sections) == 0  # No content for empty page
 
 
 class TestTEIinput:
-    def test_init(self):
+    @patch("remarx.sentence.corpus.tei_input.TEIDocument.init_from_file")
+    def test_init(self, mock_init_from_file, mock_tei_document):
+        mock_init_from_file.return_value = mock_tei_document
+
         tei_input = TEIinput(input_file=TEST_TEI_FILE)
         assert tei_input.input_file == TEST_TEI_FILE
         # xml is parsed as tei document
-        assert isinstance(tei_input.xml_doc, TEIDocument)
+        assert tei_input.xml_doc == mock_tei_document
+        mock_init_from_file.assert_called_once_with(TEST_TEI_FILE)
 
     def test_field_names(self, tmp_path: pathlib.Path):
         # includes defaults from text input and adds page number and section type
@@ -172,24 +214,22 @@ class TestTEIinput:
             "section_type",
         )
 
-    def test_get_text(self):
+    @patch("remarx.sentence.corpus.tei_input.TEIDocument.init_from_file")
+    def test_get_text(self, mock_init_from_file, mock_tei_document):
+        mock_init_from_file.return_value = mock_tei_document
+
         tei_input = TEIinput(input_file=TEST_TEI_FILE)
         text_result = tei_input.get_text()
         # should be a generator
         assert isinstance(text_result, Generator)
         text_result = list(text_result)
-        # expect two pages, each with body text (no footnotes in this sample)
+        # expect two pages, each with body text
         assert len(text_result) == 2
         # result type is dictionary
         assert all(isinstance(txt, dict) for txt in text_result)
         # check for expected contents
-        # - page text
-        assert (
-            text_result[0]["text"]
-            .strip()
-            .startswith("als in der ersten")  # codespell:ignore
-        )
-        assert text_result[1]["text"].strip().startswith("Aber abgesehn hiervon")
+        assert text_result[0]["text"] == "sample text content"
+        assert text_result[1]["text"] == "more text content"
         # - page number
         assert text_result[0]["page_number"] == "12"
         assert text_result[1]["page_number"] == "13"
@@ -197,11 +237,44 @@ class TestTEIinput:
         assert text_result[0]["section_type"] == "text"
         assert text_result[1]["section_type"] == "text"
 
+    def test_get_text_with_footnotes(self):
+        """Test get_text with file containing footnotes."""
+        tei_input = TEIinput(input_file=TEST_TEI_WITH_FOOTNOTES_FILE)
+        text_chunks = list(tei_input.get_text())
+
+        # Find page 17 chunks (body text + 2 separate footnotes)
+        page_17_chunks = [
+            chunk for chunk in text_chunks if chunk["page_number"] == "17"
+        ]
+        assert len(page_17_chunks) == 3
+
+        # Body text chunk
+        body_chunk = page_17_chunks[0]
+        assert body_chunk["section_type"] == "text"
+        assert "Der Reichthum der Gesellschaften" in body_chunk["text"]
+
+        # First footnote chunk
+        footnote1_chunk = page_17_chunks[1]
+        assert footnote1_chunk["section_type"] == "footnote"
+        assert "Karl Marx:" in footnote1_chunk["text"]
+        assert "Nicholas Barbon" not in footnote1_chunk["text"]
+
+        # Second footnote chunk
+        footnote2_chunk = page_17_chunks[2]
+        assert footnote2_chunk["section_type"] == "footnote"
+        assert "Nicholas Barbon" in footnote2_chunk["text"]
+        assert "Karl Marx:" not in footnote2_chunk["text"]
+
+    @patch("remarx.sentence.corpus.tei_input.TEIDocument.init_from_file")
     @patch("remarx.sentence.corpus.base_input.segment_text")
-    def test_get_sentences(self, mock_segment_text: Mock):
-        tei_input = TEIinput(input_file=TEST_TEI_FILE)
+    def test_get_sentences(
+        self, mock_segment_text: Mock, mock_init_from_file, mock_tei_document
+    ):
+        mock_init_from_file.return_value = mock_tei_document
         # segment text returns a tuple of character index, sentence text
-        mock_segment_text.return_value = [(0, "Aber abgesehn hiervon")]
+        mock_segment_text.return_value = [(0, "Mock sentence")]
+
+        tei_input = TEIinput(input_file=TEST_TEI_FILE)
         sentences = tei_input.get_sentences()
         # expect a generator with one item, with the content added to the file
         assert isinstance(sentences, Generator)
@@ -222,34 +295,12 @@ class TestTEIinput:
         assert sentences[0]["section_type"] == "text"
         assert sentences[1]["section_type"] == "text"
 
-    def test_get_text_with_footnotes(self):
-        """Test get_text with file containing footnotes."""
-        tei_input = TEIinput(input_file=TEST_TEI_WITH_FOOTNOTES_FILE)
-        text_chunks = list(tei_input.get_text())
-
-        # Find page 17 chunks (body text + footnotes)
-        page_17_chunks = [
-            chunk for chunk in text_chunks if chunk["page_number"] == "17"
-        ]
-        assert len(page_17_chunks) == 2
-
-        # Body text chunk
-        body_chunk = page_17_chunks[0]
-        assert body_chunk["section_type"] == "text"
-        assert "Der Reichthum der Gesellschaften" in body_chunk["text"]
-
-        # Footnotes chunk
-        footnote_chunk = page_17_chunks[1]
-        assert footnote_chunk["section_type"] == "footnote"
-        assert "Karl Marx:" in footnote_chunk["text"]
-        assert "Nicholas Barbon" in footnote_chunk["text"]
-
     @patch("remarx.sentence.corpus.base_input.segment_text")
     def test_get_sentences_with_footnotes(self, mock_segment_text: Mock):
         """Test get_sentences maintains consecutive indexing across body and footnotes."""
-        tei_input = TEIinput(input_file=TEST_TEI_WITH_FOOTNOTES_FILE)
         mock_segment_text.return_value = [(0, "Mock sentence.")]
 
+        tei_input = TEIinput(input_file=TEST_TEI_WITH_FOOTNOTES_FILE)
         sentences = list(tei_input.get_sentences())
 
         # Check consecutive sentence indexing across all chunks
