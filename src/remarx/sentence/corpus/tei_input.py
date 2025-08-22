@@ -62,7 +62,8 @@ class TEIPage(BaseTEIXmlObject):
         (<pb> tags with ed="manuscript"); assumes standard pb tags have no edition.
         Note: Footnotes that span multiple pages are excluded for now.
         """
-        # Extract body text (ignore partial content, hyphenation, etc, and skip footnotes)
+        # Extract body text
+        # for now, ignore partial content, hyphenation, etc
         body_text_parts = []
         for text in self.text_nodes:
             # text here is an lxml smart string, which preserves context
@@ -77,7 +78,7 @@ class TEIPage(BaseTEIXmlObject):
             ):
                 break
 
-            # Skip this text node if it's inside a footnote
+            # Skip this text node if it's inside a footnote tag
             ancestor = parent
             while ancestor is not None:
                 if ancestor.tag == TEI_TAG.note and ancestor.get("type") == "footnote":
@@ -115,6 +116,8 @@ class TEIPage(BaseTEIXmlObject):
                     note.xpath(".//text()", namespaces=self.ROOT_NAMESPACES)
                 ).strip()
                 if footnote_text:
+                    # consolidate whitespace for footnotes
+                    footnote_text = re.sub(r"\s*\n\s*", "\n", footnote_text)
                     footnote_texts.append(footnote_text)
 
             if footnote_texts:
