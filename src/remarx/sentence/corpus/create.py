@@ -1,11 +1,12 @@
-#!/usr/bin/env python
 """
 Preliminary script and method to create sentence corpora from input
 files in supported formats.
 
-NOTE: This script was created for manual testing of corpus input classes.
-It is not complete or unit tested, and is expected substantially to change
-when properly implemented.
+NOTE: Currently this script can only take single input file
+
+Example Usage:
+
+    `create.py input_text.txt out.csv`
 
 """
 
@@ -13,8 +14,27 @@ import argparse
 import csv
 import pathlib
 
-from remarx.sentence.corpus.tei_input import TEIinput
-from remarx.sentence.corpus.text_input import TextInput
+from remarx.sentence.corpus.base_input import FileInput
+
+
+def create_corpus(input_file: pathlib.Path, output_csv: pathlib.Path) -> None:
+    """
+    Create and save a sentence corpus from the provided input file to the
+    provided output path `output_csv`.
+
+    NOTE: An error will be raised if the input file is not a type supported by
+    `FileInput`.
+    """
+    if not input_file.is_file():
+        raise ValueError(f"Input file {input_file} does not exist")
+
+    text_input = FileInput.init(input_file)
+    field_names = text_input.field_names
+
+    with output_csv.open(mode="w", newline="") as csvfile:
+        csvwriter = csv.DictWriter(csvfile, field_names, extrasaction="ignore")
+        csvwriter.writeheader()
+        csvwriter.writerows(text_input.get_sentences())
 
 
 def main() -> None:
@@ -30,27 +50,15 @@ def main() -> None:
         help="Path to input file",
     )
     parser.add_argument(
-        "format", choices=["text", "tei"], help="Input file format", default="text"
+        "output_csv", type=pathlib.Path, help="Path to output sentence corpus (CSV)"
     )
 
     args = parser.parse_args()
 
-    input_class = TextInput
-    if args.format == "tei":
-        input_class = TEIinput
-
-    # initialize appropriate text input class
-    text_input = input_class(args.input_file)
-    # Determine output csv path based on input file
-    output_csv = (args.input_file).with_suffix(".csv")
-
-    with output_csv.open(mode="w", newline="") as csvfile:
-        # field names may vary depending on input format
-        csvwriter = csv.DictWriter(csvfile, fieldnames=text_input.field_names)
-        csvwriter.writeheader()
-        csvwriter.writerows(text_input.get_sentences())
-
-    print(f"\nSaved sentence corpus as {output_csv}")
+    create_corpus(
+        args.input_file,
+        args.output_csv,
+    )
 
 
 if __name__ == "__main__":

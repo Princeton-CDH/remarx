@@ -12,9 +12,10 @@ def _():
     import tempfile
 
     import remarx
-    from remarx.sentence.corpus.text_input import TextInput
     from remarx.app_utils import create_temp_input
-    return TextInput, create_temp_input, csv, mo, pathlib, remarx
+    from remarx.sentence.corpus.create import create_corpus
+    from remarx.sentence.corpus import FileInput
+    return FileInput, create_corpus, create_temp_input, mo, pathlib, remarx
 
 
 @app.cell
@@ -41,8 +42,8 @@ def _(mo):
     mo.md(
         r"""
     ## Sentence Corpus Prep
-    Create a sentence corpus (`CSV`) from a text file.
-    This process can be run multiple times for different text files.
+    Create a sentence corpus (`CSV`) from a text.
+    This process can be run multiple times for different texts.
     """
     )
     return
@@ -53,7 +54,7 @@ def _(mo):
     mo.md(
         r"""
     ### Select Input Text File
-    Please select the text file whose sentences will be extracted to build a sentence corpus.
+    Please select the text whose sentences will be extracted to build a sentence corpus.
     Currently, only a single file may be selected.
     """
     )
@@ -61,10 +62,10 @@ def _(mo):
 
 
 @app.cell
-def _(mo):
+def _(FileInput, mo):
     select_input_form = mo.ui.file(
         kind="area",
-        filetypes=[".txt"],  # TODO: replace with remarx variable when possible
+        filetypes=FileInput.supported_types(),
     ).form(
         submit_button_label="Select Text",
         submit_button_tooltip="Click to confirm selection",
@@ -183,33 +184,19 @@ def _(input_file, mo, output_dir):
 
 
 @app.cell
-def _(TextInput, button, create_temp_input, csv, input_file, mo, output_csv):
+def _(button, create_corpus, create_temp_input, input_file, mo, output_csv):
     # Build Sentence Corpus
     building_msg = f'Click "Build Corpus" button to start'
 
     if button.value:
         spinner_msg = f"Building sentence corpus for {input_file.name}"
         with mo.status.spinner(title=spinner_msg) as _spinner:
-            with create_temp_input(input_file.contents) as temp_path:
-                corpus_input = TextInput(temp_path)
-
-                with open(output_csv, mode="w", newline="") as file_handler:
-                    writer = csv.DictWriter(
-                        file_handler,
-                        fieldnames=corpus_input.field_names,
-                        extrasaction="ignore",
-                    )
-                    writer.writeheader()
-                    writer.writerows(corpus_input.get_sentences())
+            with create_temp_input(input_file) as temp_path:
+                create_corpus(temp_path, output_csv)
             _spinner.update(f"Done!")
         building_msg = "✅ Done"
 
     mo.md(building_msg).center()
-    return
-
-
-@app.cell
-def _():
     return
 
 
