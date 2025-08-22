@@ -10,7 +10,7 @@ from collections.abc import Generator
 from marimo._cli import cli
 
 # Does this class have a public facing type definition?
-from marimo.ui._impl.input import FileUploadResults
+from marimo._plugins.ui._impl.input import FileUploadResults
 
 from remarx import app
 
