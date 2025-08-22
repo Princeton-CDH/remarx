@@ -54,7 +54,7 @@ def _(mo):
     mo.md(
         r"""
     ### Select Input Text File
-    Please select the text whose sentences will be extracted to build a sentence corpus.
+    Upload and select an input file for sentence corpus creation.
     Currently, only a single file may be selected.
     """
     )
