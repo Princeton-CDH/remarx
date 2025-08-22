@@ -11,14 +11,17 @@ def test_launch_app(mock_cli):
     mock_cli.main.assert_called_once_with(["run", remarx.app.__file__])
 
 
+@patch("remarx.app_utils.FileUploadResults")
 @patch("remarx.app_utils.tempfile.NamedTemporaryFile")
-def test_create_temp_input(mock_temp_file):
+def test_create_temp_input(mock_temp_file, mock_upload):
     working_tf = MagicMock()
-    working_tf.name = "foo"
+    working_tf.name = "temp"
     mock_temp_file.return_value = working_tf
+    mock_upload.name = "file.txt"
+    mock_upload.contents = "bytes"
 
-    with create_temp_input("bytes") as tf:
-        mock_temp_file.assert_called_once_with(delete=False)
+    with create_temp_input(mock_upload) as tf:
+        mock_temp_file.assert_called_once_with(delete=False, suffix=".txt")
         working_tf.write.assert_called_once_with("bytes")
-        assert tf == pathlib.Path("foo")
+        assert tf == pathlib.Path("temp")
     working_tf.close.assert_called_once_with()
