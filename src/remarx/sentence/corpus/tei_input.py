@@ -62,7 +62,7 @@ class TEIPage(BaseTEIXmlObject):
         (<pb> tags with ed="manuscript"); assumes standard pb tags have no edition.
         Note: Footnotes that span multiple pages are excluded for now.
         """
-        # Extract body text
+        # Step 1: Extract and yield body text as first chunk
         # for now, ignore partial content, hyphenation, etc
         body_text_parts = []
         for text in self.text_nodes:
@@ -98,19 +98,19 @@ class TEIPage(BaseTEIXmlObject):
                 # (i.e., space between indented tags in the XML)
                 body_text_parts.append(re.sub(r"\s*\n\s*", "\n", text))
 
-        # Yield body text as first chunk
         body_text = "".join(body_text_parts).strip()
         if body_text:
             yield (body_text, "text")
 
-        # Extract and yield combined footnotes as second chunk
+        # Step 2: Extract and yield combined footnotes as second chunk
         notes = self.node.xpath(
+            # not(@ed) ignores standard alternate edition footnotes (<pb ed="manuscript">)
             "following::t:note[@type='footnote'][not(.//t:pb[not(@ed)])]",
             namespaces=self.ROOT_NAMESPACES,
         )
 
         if notes:
-            footnote_texts = []
+            footnote_text_parts = []
             for note in notes:
                 footnote_text = "".join(
                     note.xpath(".//text()", namespaces=self.ROOT_NAMESPACES)
@@ -118,14 +118,14 @@ class TEIPage(BaseTEIXmlObject):
                 if footnote_text:
                     # consolidate whitespace for footnotes
                     footnote_text = re.sub(r"\s*\n\s*", "\n", footnote_text)
-                    footnote_texts.append(footnote_text)
+                    footnote_text_parts.append(footnote_text)
 
-            if footnote_texts:
-                yield ("\n\n".join(footnote_texts), "footnote")
+            if footnote_text_parts:
+                yield ("\n\n".join(footnote_text_parts), "footnote")
 
     def __str__(self) -> str:
         """
-        Page text contents as a string
+        Page body text contents as a string
         """
         # Extract just the text content from the tuples
         return "".join(text for text, section_type in self.text_contents())
