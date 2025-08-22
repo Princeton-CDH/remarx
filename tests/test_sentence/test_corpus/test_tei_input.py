@@ -97,11 +97,9 @@ class TestTEIPage:
         tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
 
         # Test page 17 which has footnotes
-        page_17 = None
-        for page in tei_doc.all_pages:
-            if page.number == "17":
-                page_17 = page
-                break
+        page_17 = next(
+            (page for page in tei_doc.all_pages if page.number == "17"), None
+        )
         assert page_17 is not None, "Page 17 not found"
 
         sections = list(page_17.text_contents())
@@ -132,11 +130,9 @@ class TestTEIPage:
         tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
 
         # Test page 18 which has a footnote that spans to page 19
-        page_18 = None
-        for page in tei_doc.all_pages:
-            if page.number == "18":
-                page_18 = page
-                break
+        page_18 = next(
+            (page for page in tei_doc.all_pages if page.number == "18"), None
+        )
         assert page_18 is not None, "Page 18 not found"
 
         sections = list(page_18.text_contents())
