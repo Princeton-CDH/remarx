@@ -43,7 +43,7 @@ def _(mo):
         r"""
     ## Sentence Corpus Prep
     Create a sentence corpus (`CSV`) from a text.
-    This process can be run multiple times for different texts.
+    This process can be run multiple times for different files (currently one file at a time).
     """
     )
     return
