@@ -1,3 +1,14 @@
+"""
+The marimo notebook corresponding to the `remarx` application. The application
+can be launched by running the command `remarx-app` or via marimo.
+
+Example Usage:
+
+    `remarx-app`
+
+    `uv run marimo run app.py`
+"""
+
 import marimo
 
 __generated_with = "0.14.17"
