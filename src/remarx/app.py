@@ -6,7 +6,7 @@ Example Usage:
 
     `remarx-app`
 
-    `uv run marimo run app.py`
+    `marimo run app.py`
 """
 
 import marimo
@@ -108,6 +108,10 @@ def _(mo):
 
     Select the folder where the resulting sentence corpus file should be saved.
     The output CSV file will be named based on the input file.
+
+    *To select a folder, click the file icon to the left of the folder's name.
+    A checkmark will appear when a selection is made.
+    Clicking anywhere else within the folder's row will cause the browser to navigate to this folder and subsequently display any folders *within* this folder.*
     """
     )
     return
