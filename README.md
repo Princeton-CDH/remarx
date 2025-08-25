@@ -1,4 +1,4 @@
-<!-- --8<-- [start:snippet] -->
+<!-- --8<-- [start:overview] -->
 
 # remarx
 
@@ -8,7 +8,7 @@ The primary purpose of this software is to identify quotes of Karl Marx's _Manif
 der Kommunistischen Partei_ and the first volume of _Das Kapital_ within articles
 published in _Die Neue Zeit_ between 1891 and 1918.
 
-## **Basic Usage**
+## Basic Usage
 
 ### Installation
 
@@ -43,17 +43,17 @@ To launch the remarx quote finder application run the `remarx-app` command:
 uv run remarx-app
 ```
 
-## **Documentation**
+## Documentation
 
 Find public documentation at: [Remarx Documentation](https://princeton-cdh.github.io/remarx/)
 
-<!-- --8<-- [end:snippet] -->
+<!-- --8<-- [end:overview] -->
 
-## **Development**
+## Development
 
 For development setup, documentation generation, and contributing guidelines, see [Developer Notes](DEVELOPERNOTES.md).
 
-## **License**
+## License
 
 This project is licensed under the [Apache 2.0 License](LICENSE).
 
