@@ -24,6 +24,7 @@ classifiers = [
 dependencies = [
   "marimo>=0.13.11",
   "marimo[lsp]",     # marimo language server protocol
+  "neuxml>=1",
   "polars",
   "ruff",
   "stanza",
@@ -52,7 +53,7 @@ docs = [
 dev = [ "remarx[dev]" ]
 
 [project.scripts]
-remarx-app = "remarx.app:app.run"
+remarx-app = "remarx.app_utils:launch_app"
 
 [tool.hatch.version]
 path = "src/remarx/__init__.py"
@@ -62,7 +63,10 @@ testpaths = ["tests"]
 
 [tool.coverage.run]
 branch = true
-omit = ["src/remarx/app.py"]
+omit = [
+  "src/remarx/app.py",   # marimo app notebook
+  "src/remarx/sentence/corpus/create.py"  # preliminary cli corpus creation script, untested
+]
 
 [tool.coverage.report]
 show_missing = true   # Helpful for debugging
@@ -102,6 +106,7 @@ extend-select = [
 ignore = []
 
 [tool.ruff.lint.per-file-ignores]
+# for test files, don't require docstrings or return type annotations
 "tests/**.py" = ["D", "ANN"]
 
 [tool.marimo.display]

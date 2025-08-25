@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0" xmlns:m="http://www.w3.org/1998/Math/MathML" xml:lang="de-DE">
+    <teiHeader type="text">
+        <fileDesc>
+            <titleStmt>
+                <title>sample tei for test fixture</title>
+            </titleStmt>
+        </fileDesc>
+    </teiHeader>
+    <text n="2/5">
+    <group>
+        <text n="0">
+                                    <pb n="12"/>
+                                    <p n="cE">
+                                        <lb n="1"/>als in der ersten Darstellung. Ich rathe daher dem nicht durchaus in dia-
+                                         <lb n="2"/>lektisches Denken eingewohnten Leser, den <hi rendition="i">Abschnitt von p. 15</hi> (Zeile 19
+                                         <lb n="3"/>von oben) <hi rendition="i">bis Ende p. 34 ganz zu überschlagen,</hi> und statt dessen den dem
+                                         <lb n="4"/>Buch zugefügten <hi rendition="i">Anhang: „Die Werthform“</hi> zu lesen. Dort wird versucht,
+                                         <lb n="5"/>die Sache so einfach und selbst so schulmeisterlich darzustellen, als ihre
+                                         <lb n="6"/>wissenschaftliche Fassung erlaubt. Nach Beendigung des Anhangs kann der
+                                         <lb n="7"/>Leser dann im Text wieder fortfahren mit p. <hi rendition="i">35</hi>.
+                                     </p>
+                                    <p>
+                                        <lb n="8"/>
+                                        <hi rendition="i">Die Werthform,</hi> deren fertige Gestalt die <hi rendition="i">Geldform,</hi> ist sehr inhaltslos und<lb n="9"/>einfach. Dennoch hat der Menschengeist sie seit mehr als 2000 Jahren ver-
+                                         <lb n="10"/>geblich zu ergründen gesucht, während andrerseits die Analyse viel inhalts-
+                                         <lb n="11"/>vollerer und komplicirterer Formen wenigstens annähernd gelang. Warum?
+                                         <lb n="12"/>Weil der ausgebildete Körper leichter zu studiren ist als die <hi rendition="i">Körperzelle</hi>. Bei
+                                         <lb n="13"/>der Analyse der ökonomischen Formen kann außerdem weder das Mikro-
+                                         <lb n="14"/>skop dienen, noch chemische Reagentien. Die Abstraktionskraft muß beide
+                                         <lb n="15"/>ersetzen. Für die bürgerliche Gesellschaft ist aber <hi rendition="i">die Waarenform</hi> des
+                                         <lb n="16"/>Arbeitsprodukts oder <hi rendition="i">die Werthform</hi> der Waare die <hi rendition="i">ökonomische Zellen-
+                                         <lb n="17"/>form</hi>. Dem Ungebildeten scheint sich ihre Analyse in bloßen <hi rendition="i">Spitzfindig-
+                                             <lb n="18"/>keiten</hi> herumzutreiben. Es handelt sich dabei <add resp="ed" type="mpb1">|</add>
+                                        <pb n="IX" ed="manuscript"/>
+                                        <add resp="ed" type="mpb2">|</add>
+                                        <label type="mpb">IX</label>
+                                        <add resp="ed" type="mpb2">|</add> in der That um <hi rendition="i">Spitz-
+                                         <lb n="19"/>findigkeiten,</hi> aber nur so wie es sich in der <hi rendition="i">mikrologischen Anatomie</hi> darum
+                                         <lb n="20"/>handelt.
+                                     </p>
+                                    <p>
+                                        <lb n="21"/>Mit Ausnahme des Abschnitts über die <hi rendition="i">Werthform</hi> wird man daher dieß<lb n="22"/>Buch nicht wegen Schwerverständlichkeit anklagen können. Ich unterstelle
+                                         <lb n="23"/>natürlich Leser, die etwas <hi rendition="i">Neues</hi> lernen, also auch selbst denken wollen.
+                                     </p>
+                                    <p>
+                                        <lb n="24"/>Der Physiker beobachtet Naturprozesse entweder dort, wo sie in der<lb n="25"/>prägnantesten Form und von störenden Einflüssen mindest getrübt er-
+                                         <lb n="26"/>scheinen, oder, wo möglich, macht er Experimente unter Bedingungen,
+                                         <lb n="27"/>welche den reinen Vorgang des Prozesses sichern. Was ich in diesem Werk
+                                         <lb n="28"/>zu erforschen habe, ist die <hi rendition="i">kapitalistische Produktionsweise</hi> und die ihr
+                                         <lb n="29"/>entsprechenden <hi rendition="i">Produktions- und Verkehrsverhältnisse</hi>. Ihre klassische
+                                         <lb n="30"/>Stätte ist bis jetzt <hi rendition="i">England</hi>. Dieß der Grund, warum es zur Hauptillustration
+                                         <lb n="31"/>meiner theoretischen Entwicklung dient. Sollte jedoch der deutsche Leser
+                                         <lb n="32"/>pharisäisch die Achseln zucken über die Zustände der englischen Industrie-
+                                         <lb n="33"/>und Ackerbauarbeiter, oder sich optimistisch dabei beruhigen, daß in
+                                         <lb n="34"/>Deutschland die Sachen noch lange nicht so schlimm stehn, so muß ich ihm
+                                         <lb n="35"/>zurufen: <hi rendition="i">De te fabula narratur!</hi>
+                                    </p>
+
+                                        <p>
+                                        <lb n="36"/>An und für sich handelt es sich nicht um den höheren oder niedrigeren<lb n="37"/>Entwicklungsgrad der gesellschaftlichen Antagonismen, welche aus den
+                                         <lb n="38"/>Naturgesetzen der kapitalistischen Produktion entspringen. Es handelt sich
+                                         <lb n="39"/>um <hi rendition="i">diese Gesetze selbst,</hi> um diese mit eherner Nothwendigkeit wirkenden
+                                         <lb n="40"/>und sich durchsetzenden <hi rendition="i">Tendenzen</hi>. Das industriell entwickeltere Land
+                                         <lb n="41"/>zeigt dem minder entwickelten nur das Bild der eignen Zukunft!
+                                         </p>
+                                    <pb n="13"/>
+                                    <p>
+                                        <lb n="1"/>Aber abgesehn hiervon. Wo die kapitalistische Produktion völlig bei uns<lb n="2"/>eingebürgert ist, z. B. in den eigentlichen Fabriken, sind die Zustände <hi rendition="i">viel
+                                         <lb n="3"/>schlechter</hi> als in England, weil das Gegengewicht der Fabrikgesetze fehlt.
+                                         <lb n="4"/>In allen andren Sphären quält uns, gleich dem ganzen übrigen kontinentalen
+                                         <lb n="5"/>Westeuropa, nicht nur die Entwicklung der kapitalistischen Produktion,
+                                         <lb n="6"/>sondern auch der Mangel ihrer Entwicklung. Neben den modernen
+                                         <lb n="7"/>Nothständen drückt uns eine ganze Reihe vererbter Nothstände, ent-
+                                        <lb n="8"/>springend aus der Fortvegetation alterthümlicher, <add resp="ed" type="mpb1">|</add>
+                                        <pb n="X" ed="manuscript"/>
+                                        <add resp="ed" type="mpb2">|</add>
+                                        <label type="mpb">X</label>
+                                        <add resp="ed" type="mpb2">|</add> überlebter Produk-
+                                         <lb n="9"/>tionsweisen mit ihrem Gefolg von <hi rendition="i">zeitwidrigen</hi> gesellschaftlichen und poli-
+                                         <lb n="10"/>tischen Verhältnissen. Wir leiden nicht nur von den Lebenden, sondern auch
+                                         <lb n="11"/>von den Todten. <hi rendition="i">Le mort saisit le vif!</hi>
+                                    </p>
+                                </text>
+                            </group>
+                        </text>
+</TEI>

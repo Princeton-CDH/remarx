@@ -1,0 +1,56 @@
+import pathlib
+from unittest.mock import patch
+
+import pytest
+
+from remarx.sentence.corpus.base_input import FileInput
+
+
+def test_subclasses():
+    # check that expected input subclasses are found
+    subclass_names = [cls.__name__ for cls in FileInput.subclasses()]
+    # NOTE: that we use names here rather than importing, to
+    # confirm subclasses are found without a direct import
+    for input_cls_name in ["TextInput", "TEIinput"]:
+        assert input_cls_name in subclass_names
+
+
+def test_supported_types():
+    # check for expected supported types
+    # NOTE: checking directly to avoid importing input classes
+    assert set(FileInput.supported_types()) == {".txt", ".xml"}
+
+
+def test_get_text(tmp_path: pathlib.Path):
+    # get text is not implemented in the base class
+    txt_file = tmp_path / "test.txt"
+    base_input = FileInput(input_file=txt_file)
+    with pytest.raises(NotImplementedError):
+        base_input.get_text()
+
+
+def test_init_txt(tmp_path: pathlib.Path):
+    from remarx.sentence.corpus.text_input import TextInput
+
+    txt_file = tmp_path / "input.txt"
+    txt_input = FileInput.init(input_file=txt_file)
+    assert isinstance(txt_input, TextInput)
+
+
+@patch("remarx.sentence.corpus.tei_input.TEIDocument")
+def test_init_tei(mock_tei_doc, tmp_path: pathlib.Path):
+    from remarx.sentence.corpus.tei_input import TEIinput
+
+    xml_input_file = tmp_path / "input.xml"
+    xml_input = FileInput.init(input_file=xml_input_file)
+    assert isinstance(xml_input, TEIinput)
+    mock_tei_doc.init_from_file.assert_called_with(xml_input_file)
+
+
+def test_init_unsupported(tmp_path: pathlib.Path):
+    test_file = tmp_path / "input.test"
+    with pytest.raises(
+        ValueError,
+        match="\\.test is not a supported input type \\(must be one of \\.txt, \\.xml\\)",
+    ):
+        FileInput.init(input_file=test_file)

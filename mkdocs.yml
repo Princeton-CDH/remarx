@@ -72,6 +72,7 @@ plugins:
             group_by_category: false
             show_category_heading: false
             show_submodules: true
+
 markdown_extensions:
   - admonition
   - pymdownx.details
@@ -86,3 +87,11 @@ markdown_extensions:
   - toc:
       permalink: true
       toc_depth: 4
+
+watch:
+  - docs
+  - mkdocs.yml
+  - src
+extra:
+  version:
+    provider: mike
