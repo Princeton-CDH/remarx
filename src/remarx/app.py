@@ -40,7 +40,7 @@ def _(mo, remarx):
 @app.cell
 def _(mo):
     mo.md(
-        r"""
+        rf"""
     ## Sentence Corpus Prep
     Create a sentence corpus (`CSV`) from a text.
     This process can be run multiple times for different files (currently one file at a time).
@@ -50,11 +50,12 @@ def _(mo):
 
 
 @app.cell
-def _(mo):
+def _(FileInput, mo):
     mo.md(
-        r"""
-    ### Select Input Text File
-    Upload and select an input file for sentence corpus creation.
+        rf"""
+    **1. Select Input Text**
+
+    Upload and select an input file (`{"`, `".join(FileInput.supported_types())}`) for sentence corpus creation.
     Currently, only a single file may be selected.
     """
     )
@@ -63,28 +64,27 @@ def _(mo):
 
 @app.cell
 def _(FileInput, mo):
-    select_input_form = mo.ui.file(
+    select_input = mo.ui.file(
         kind="area",
         filetypes=FileInput.supported_types(),
-    ).form(
-        submit_button_label="Select Text",
-        submit_button_tooltip="Click to confirm selection",
-        clear_on_submit=True,
     )
-    return (select_input_form,)
+    return (select_input,)
 
 
 @app.cell
-def _(mo, select_input_form):
-    input_file = select_input_form.value[0] if select_input_form.value else None
-
+def _(mo, select_input):
+    input_file = select_input.value[0] if select_input.value else None
     input_file_msg = f"`{input_file.name}`" if input_file else "None selected"
+    input_callout_type = "success" if input_file else "warn"
 
-    mo.vstack(
-        [
-            select_input_form,
-            mo.md(f"**Input File:** {input_file_msg}"),
-        ]
+    mo.callout(
+        mo.vstack(
+            [
+                select_input,
+                mo.md(f"**Input File:** {input_file_msg}")
+            ]
+        ),
+        kind=input_callout_type,
     )
     return (input_file,)
 
@@ -93,7 +93,8 @@ def _(mo, select_input_form):
 def _(mo):
     mo.md(
         r"""
-    ## Select Output Location
+    **2. Select Output Location**
+
     Select the folder where the resulting sentence corpus file should be saved.
     The output CSV file will be named based on the input file.
     """
@@ -103,32 +104,31 @@ def _(mo):
 
 @app.cell
 def _(mo, pathlib):
-    select_output_dir_form = mo.ui.file_browser(
+    select_output_dir = mo.ui.file_browser(
         selection_mode="directory",
         multiple=False,
         initial_path=pathlib.Path.home(),
         filetypes=[],  # only show directories
-    ).form(
-        submit_button_label="Select Folder",
-        submit_button_tooltip="Click to confirm selection",
-        clear_on_submit=True,
     )
-    return (select_output_dir_form,)
+    return (select_output_dir,)
 
 
 @app.cell
-def _(mo, select_output_dir_form):
-    output_dir = (
-        select_output_dir_form.value[0] if select_output_dir_form.value else None
-    )
+def _(mo, select_output_dir):
+    output_dir = select_output_dir.value[0] if select_output_dir.value else None
     dir_callout_mode = "success" if output_dir else "warning"
     output_dir_msg = f"`{output_dir.path}`" if output_dir else "None selected"
+    out_callout_type = "success" if output_dir else "warn"
 
-    mo.vstack(
-        [
-            select_output_dir_form,
-            mo.md(f"**Save Location:** {output_dir_msg}"),
-        ]
+
+    mo.callout(
+        mo.vstack(
+            [
+                select_output_dir,
+                mo.md(f"**Save Location:** {output_dir_msg}"),
+            ],
+        ),
+        kind=out_callout_type,
     )
     return (output_dir,)
 
@@ -137,7 +137,8 @@ def _(mo, select_output_dir_form):
 def _(mo):
     mo.md(
         r"""
-    ### Build Sentence Corpus
+    **3. Build Sentence Corpus**
+
     Click the "Build Corpus" to run `remarx`.
     The sentence corpus for the input text will be saved as a CSV in the selected save location.
     This output file will have the same filename (but different file extension) as the selected input file.
@@ -172,13 +173,18 @@ def _(input_file, mo, output_dir):
         tooltip="Click to build sentence corpus",
     )
 
-    mo.vstack(
-        [
-            mo.md("####User Selections"),
-            mo.md(f"**Input File:** {file_msg}"),
-            mo.md(f"**Save Location**: {dir_msg}"),
-            button,
-        ]
+    mo.callout(
+        mo.vstack(
+            [
+                mo.md(
+                    f"""#### User Selections
+                - **Input File:** {file_msg}
+                - **Save Location**: {dir_msg}
+            """
+                ),
+                button,
+            ]
+        ),
     )
     return button, output_csv
 
@@ -193,8 +199,7 @@ def _(button, create_corpus, create_temp_input, input_file, mo, output_csv):
         with mo.status.spinner(title=spinner_msg) as _spinner:
             with create_temp_input(input_file) as temp_path:
                 create_corpus(temp_path, output_csv)
-            _spinner.update(f"Done!")
-        building_msg = "✅ Done"
+        building_msg = f"✅ Sentence corpus saved to: {output_csv}"
 
     mo.md(building_msg).center()
     return
