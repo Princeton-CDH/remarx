@@ -27,10 +27,10 @@ def create_temp_input(
     file_upload: FileUploadResults,
 ) -> Generator[pathlib.Path, None, None]:
     """
-    Context manager to create a temporary file with the file contents and name of a file uploaded 
+    Context manager to create a temporary file with the file contents and name of a file uploaded
     to a web browser as returned by  marimo.ui.file. This should be used in with statements.
 
-    :returns: A generator containing the path corresponding to the temporary file
+    :returns: Yields the path to the temporary file
     """
     temp_file = tempfile.NamedTemporaryFile(  # noqa: SIM115
         delete=False,
@@ -38,6 +38,10 @@ def create_temp_input(
     )
     try:
         temp_file.write(file_upload.contents)
+        # Close to ensure write occurs
+        temp_file.close()
         yield pathlib.Path(temp_file.name)
     finally:
-        temp_file.close()
+        if not temp_file.closed:
+            temp_file.close()
+        pathlib.Path.unlink(temp_file.name)
