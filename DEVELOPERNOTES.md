@@ -4,7 +4,7 @@ This repo uses [git-flow](https://github.com/nvie/gitflow) branching conventions
 **main** contains the most recent release, and work in progress will be on the
 **develop** branch. Pull requests for new features should be made against develop.
 
-## **Developer setup and installation**
+## Developer setup and installation
 
 **Note:** While the usage of [`uv`](https://docs.astral.sh/uv/) is assumed, this
 package is also compatible with the use of `pip` for python package management and
@@ -40,7 +40,7 @@ a tool of your choice for creating python virtual environments (`mamba`, `venv`,
   uv tool run pre-commit
   ```
 
-## **Documentation**
+## Documentation
 
 This project uses [MkDocs](https://www.mkdocs.org/) for documentation generation. To work with documentation:
 
@@ -56,7 +56,12 @@ Step 2: Preview documentation locally
 
 - Opens at `http://127.0.0.1:8000/` and auto-reloads on file changes
 
-## **Useful `uv` commands**
+### Writing Documentation
+
+- Use MkDocs [snippets](https://pypi.org/project/mkdocs-snippets/) plugin (`--8<-- "filename"`) to include content from other files when needed.
+- API docs are auto-generated from Python docstrings using [mkdocstrings](https://mkdocstrings.github.io/).
+
+## Useful `uv` commands
 
 - `uv add`: Add a new dependency to the project (i.e., updates `pyproject.toml`)
 - `uv add --dev`: Add a new development dependency to the project
