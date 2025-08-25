@@ -20,14 +20,19 @@ theme:
         icon: material/brightness-4
         name: Switch to light mode
   features:
+    - announce.dismiss
+    - content.code.copy
+    - content.tooltips
+    - navigation.footer
+    - navigation.instant.preview
+    - navigation.path
+    - navigation.sections
     - navigation.tabs
     - navigation.tabs.sticky
-    - navigation.sections
-    - navigation.expand
     - navigation.top
     - search.highlight
-    - search.share
-    - content.code.copy
+    - search.suggest
+    - toc.follow
 nav:
   - Overview: index.md
   - Developer Notes: devnotes.md
@@ -37,17 +42,36 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          options:
-            docstring_style: sphinx
-            show_root_heading: true
-            show_source: false
-            show_bases: true
-            show_inheritance_diagram: true
-            members_order: source
-            separate_signature: true
-            show_signature_annotations: true
-            signature_crossrefs: true
           paths: [src]
+          options:
+            backlinks: tree
+            docstring_section_style: table
+            docstring_style: sphinx
+            filters: public
+            heading_level: 1
+            inherited_members: true
+            line_length: 88
+            merge_init_into_class: true
+            parameter_headings: true
+            relative_crossrefs: true
+            scoped_crossrefs: true
+            separate_signature: true
+            show_bases: false
+            show_inheritance_diagram: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_root_toc_entry: true
+            show_signature_annotations: true
+            show_source: false
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            signature_crossrefs: true
+            summary: true
+            unwrap_annotated: true
+            members_order: source
+            group_by_category: false
+            show_category_heading: false
+            show_submodules: true
 markdown_extensions:
   - admonition
   - pymdownx.details
@@ -61,3 +85,4 @@ markdown_extensions:
       alternate_style: true
   - toc:
       permalink: true
+      toc_depth: 4
