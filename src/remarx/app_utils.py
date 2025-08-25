@@ -27,8 +27,8 @@ def create_temp_input(
     file_upload: FileUploadResults,
 ) -> Generator[pathlib.Path, None, None]:
     """
-    Create a temporary file containing the input file contents (as gathered by
-    marimo.ui.file). This should be used in with statements.
+    Context manager to create a temporary file with the file contents and name of a file uploaded 
+    to a web browser as returned by  marimo.ui.file. This should be used in with statements.
 
     :returns: A generator containing the path corresponding to the temporary file
     """
