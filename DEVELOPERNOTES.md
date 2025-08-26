@@ -11,34 +11,34 @@ package is also compatible with the use of `pip` for python package management a
 a tool of your choice for creating python virtual environments (`mamba`, `venv`, etc).
 
 - Install `uv` if it's not already installed. `uv` can be installed via
-  [Homebrew](https://docs.astral.sh/uv/getting-started/installation/#homebrew) or a
-  [standalone installer](https://docs.astral.sh/uv/getting-started/installation/#standalone-installer).
-  See uv's installation [documentation](https://docs.astral.sh/uv/getting-started/installation/#installing-uv)
-  for more details.
+    [Homebrew](https://docs.astral.sh/uv/getting-started/installation/#homebrew) or a
+    [standalone installer](https://docs.astral.sh/uv/getting-started/installation/#standalone-installer).
+    See uv's installation [documentation](https://docs.astral.sh/uv/getting-started/installation/#installing-uv)
+    for more details.
 
 - To explicitly sync the project's dependencies, including optional dependencies
-  for development and testing, to your local environment run:
+    for development and testing, to your local environment run:
 
-  ```
-  uv sync
-  ```
+    ```
+    uv sync
+    ```
 
 - Note that `uv` performs syncing and locking automatically (e.g., any time `uv run`
-  is invoked). By default, syncing will remove any packages not specified in the
-  `pyproject.toml`.
+    is invoked). By default, syncing will remove any packages not specified in the
+    `pyproject.toml`.
 
 - This repository uses [pre-commit](https://pre-commit.com/) for python code linting
-  and consistent formatting. Run this command to initialize and install pre-commit hooks:
+    and consistent formatting. Run this command to initialize and install pre-commit hooks:
 
-  ```
-  uv tool install pre-commit --with pre-commit-uv
-  ```
+    ```
+    uv tool install pre-commit --with pre-commit-uv
+    ```
 
 - To run `pre-commit` explicitly run:
 
-  ```
-  uv tool run pre-commit
-  ```
+    ```
+    uv tool run pre-commit
+    ```
 
 ## Changelog
 
@@ -50,8 +50,8 @@ changes should not be included in the changelog unless it is substantial enough 
 
 1. Add the `no changelog` label to your PR:
 
-   - Via GitHub web interface: Go to your PR → Labels section in right sidebar → Click gear icon → Type "no changelog" and select it
-   - Via GitHub CLI: Run `gh pr edit --add-label "no changelog"`
+    - Via GitHub web interface: Go to your PR → Labels section in right sidebar → Click gear icon → Type "no changelog" and select it
+    - Via GitHub CLI: Run `gh pr edit --add-label "no changelog"`
 
 1. The changelog check will automatically re-run and pass when the label is applied
 
@@ -59,7 +59,9 @@ changes should not be included in the changelog unless it is substantial enough 
 
 ## Documentation
 
-This project uses [MkDocs](https://www.mkdocs.org/) for documentation generation. To work with documentation:
+This project uses [MkDocs](https://www.mkdocs.org/) for documentation generation.
+
+### Working with Documentation
 
 Step 1: Build documentation locally
 

@@ -45,19 +45,19 @@ plugins:
           paths: [src]
           options:
             backlinks: tree
-            docstring_section_style: table
+            docstring_section_style: spacy
             docstring_style: sphinx
             filters: public
             heading_level: 1
-            inherited_members: true
+            inherited_members: false
             line_length: 88
             merge_init_into_class: true
-            parameter_headings: true
+            parameter_headings: false
             relative_crossrefs: true
             scoped_crossrefs: true
             separate_signature: true
-            show_bases: false
-            show_inheritance_diagram: true
+            show_bases: true
+            show_inheritance_diagram: false
             show_root_heading: true
             show_root_full_path: false
             show_root_toc_entry: true

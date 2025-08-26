@@ -1,7 +1,6 @@
 ---
 title: Developer Notes
-hide:
-- navigation
+hide: [navigation]
 ---
 
 --8<-- "DEVELOPERNOTES.md"

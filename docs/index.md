@@ -1,7 +1,6 @@
 ---
 title: Overview
-hide:
-- navigation
+hide: [navigation]
 ---
 
 --8<-- "README.md:overview"
@@ -9,7 +8,6 @@ hide:
 ## Development
 
 For development setup, documentation generation, and contributing guidelines, see [Developer Notes](devnotes.md).
-
 
 ## License
 

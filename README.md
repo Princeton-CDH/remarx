@@ -45,7 +45,7 @@ uv run remarx-app
 
 ## Documentation
 
-Find public documentation at: [Remarx Documentation](https://princeton-cdh.github.io/remarx/)
+Find public documentation at: [remarx Documentation](https://princeton-cdh.github.io/remarx/)
 
 <!-- --8<-- [end:overview] -->
 

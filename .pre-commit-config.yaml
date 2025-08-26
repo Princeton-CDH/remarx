@@ -21,9 +21,11 @@ repos:
     rev: 0.7.22
     hooks:
       - id: mdformat
-        # Exclude docs that use MkDocs snippet scissors (--8<--) since mdformat
-        # converts them to --8/<-- which breaks the snippet inclusion feature
-        exclude: ^docs/(index|devnotes|api/index)\.md$
+        # Add mkdocs/frontmatter plugins to fix snippet formatting issues
+        additional_dependencies:
+          - mdformat-mkdocs
+          - mdformat-frontmatter
+        args: [--wrap, keep]
   # Codespell for spell checking
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
@@ -35,8 +37,8 @@ repos:
     rev: v4.5.0
     hooks:
       - id: check-yaml
-        # Exclude mkdocs.yml because it uses a specific YAML tag (!relative) that check-yaml hook doesn't recognize
-        exclude: ^mkdocs\.yml$
+        # Allow unknown custom tags like !relative used by mkdocs.yml
+        args: [--unsafe]
       - id: check-toml
       - id: trailing-whitespace
       - id: end-of-file-fixer

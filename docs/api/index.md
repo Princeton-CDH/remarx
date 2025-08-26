@@ -1,7 +1,6 @@
 ---
 title: Code Documentation
-hide:
-- navigation
+hide: [navigation]
 ---
 
 # ::: remarx
