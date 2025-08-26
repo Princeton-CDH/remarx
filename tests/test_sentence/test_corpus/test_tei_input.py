@@ -3,6 +3,7 @@ from collections.abc import Generator
 from unittest.mock import Mock, patch
 
 import pytest
+from neuxml import xmlmap
 
 from remarx.sentence.corpus.base_input import SectionType
 from remarx.sentence.corpus.tei_input import TEI_TAG, TEIDocument, TEIinput, TEIPage
@@ -22,6 +23,35 @@ def tei_document_fixture():
 def tei_document_with_footnotes_fixture():
     """Real TEIDocument fixture with footnotes using actual XML."""
     return TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
+
+
+@pytest.fixture
+def tei_document_simple():
+    """Simple TEI document with predictable text for sentence testing."""
+    xml = (
+        '<TEI xmlns="http://www.tei-c.org/ns/1.0">\n'
+        "  <text><body>\n"
+        '    <pb n="1"/>This is a simple sentence. It has two sentences.\n'
+        '    <pb n="2"/>Another page. With more content.\n'
+        "  </body></text>\n"
+        "</TEI>"
+    )
+    return xmlmap.load_xmlobject_from_string(xml, TEIDocument)
+
+
+@pytest.fixture
+def tei_document_simple_with_footnotes():
+    """Simple TEI document with footnotes for sentence testing."""
+    xml = (
+        '<TEI xmlns="http://www.tei-c.org/ns/1.0">\n'
+        "  <text><body>\n"
+        '    <pb n="1"/>Body text here.\n'
+        '    <note type="footnote">Footnote one.</note>\n'
+        '    <note type="footnote">Footnote two.</note>\n'
+        "  </body></text>\n"
+        "</TEI>"
+    )
+    return xmlmap.load_xmlobject_from_string(xml, TEIDocument)
 
 
 def test_tei_tag():
@@ -131,41 +161,34 @@ class TestTEIPage:
         assert "Discourse on coining" in footnotes[1]
         assert "Karl Marx:" not in footnotes[1]
 
-    def test_empty_edge_cases(self):
-        """Test empty footnotes edge cases: empty body text, empty footnotes, empty page."""
+    def test_empty_edge_cases(
+        self, tei_document_fixture, tei_document_with_footnotes_fixture
+    ):
+        """Test empty edge cases using fixture files (no mocks)."""
 
-        # Case 1: Empty footnotes (body text only)
-        page_empty_footnotes = Mock(spec=TEIPage)
-        page_empty_footnotes.number = "1"
-        page_empty_footnotes.get_body_text.return_value = "sampletext"
-        page_empty_footnotes.get_footnote_contents.return_value = iter([])
+        # Use the regular fixture (no footnotes in sample)
+        page = tei_document_fixture.all_pages[0]
+        body_text = page.get_body_text()
+        footnotes = list(page.get_footnote_contents())
+        assert body_text.strip().startswith("als in der ersten")  # codespell:ignore
+        assert footnotes == []  # No footnotes in this sample
 
-        body_text = page_empty_footnotes.get_body_text()
-        footnotes = list(page_empty_footnotes.get_footnote_contents())
-        assert body_text == "sampletext"
-        assert footnotes == []
+        # Use the footnotes fixture to test footnote-only content
+        page_with_footnotes = next(
+            (
+                p
+                for p in tei_document_with_footnotes_fixture.all_pages
+                if p.number == "17"
+            ),
+            None,
+        )
+        assert page_with_footnotes is not None
 
-        # Case 2: Empty body text (footnotes only)
-        page_empty_body = Mock(spec=TEIPage)
-        page_empty_body.number = "1"
-        page_empty_body.get_body_text.return_value = ""
-        page_empty_body.get_footnote_contents.return_value = iter(["footnote content"])
-
-        body_text = page_empty_body.get_body_text()
-        footnotes = list(page_empty_body.get_footnote_contents())
-        assert body_text == ""
-        assert footnotes == ["footnote content"]
-
-        # Case 3: Empty page (no content between pb tags)
-        page_empty = Mock(spec=TEIPage)
-        page_empty.number = "1"
-        page_empty.get_body_text.return_value = ""
-        page_empty.get_footnote_contents.return_value = iter([])
-
-        body_text = page_empty.get_body_text()
-        footnotes = list(page_empty.get_footnote_contents())
-        assert body_text == ""
-        assert footnotes == []  # No content for empty page
+        # Test that footnotes are properly extracted
+        footnotes = list(page_with_footnotes.get_footnote_contents())
+        assert len(footnotes) == 2
+        assert "Karl Marx:" in footnotes[0]
+        assert "Nicholas Barbon" in footnotes[1]
 
 
 class TestTEIinput:
