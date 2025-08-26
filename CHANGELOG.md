@@ -12,6 +12,10 @@
 
 - Add initial application that can build sentence corpora for text files
 
+### Scripts
+
+- Add one-off script for parsing html pages
+
 ### Documentation
 
 - Set up Mkdocs for documentation
