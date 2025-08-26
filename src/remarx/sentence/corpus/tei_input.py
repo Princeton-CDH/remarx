@@ -145,8 +145,9 @@ class TEIinput(FileInput):
 
     def __post_init__(self) -> None:
         """
-        After default initialization, parse the input file as a TEIDocument
-        and store it as xml_doc.
+        After default initialization, parse the input file as a
+         [TEIDocument][remarx.sentence.corpus.tei_input.TEIDocument]
+        and store it as [xml_doc][remarx.sentence.corpus.tei_input.TEIinput.xml_doc].
         """
         # parse the input file as xml and save the result
         self.xml_doc = TEIDocument.init_from_file(self.input_file)
