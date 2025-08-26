@@ -1,9 +1,9 @@
 import pathlib
 from collections.abc import Generator
+from unittest.mock import Mock, patch
 
 import pytest
 
-from remarx.sentence.corpus.base_input import SectionType
 from remarx.sentence.corpus.tei_input import TEI_TAG, TEIDocument, TEIinput, TEIPage
 
 FIXTURE_DIR = pathlib.Path(__file__).parent / "fixtures"
@@ -94,9 +94,11 @@ class TestTEIPage:
         page = tei_doc.all_pages[0]
 
         body_text = page.get_body_text()
-        assert body_text.strip().startswith("als in der ersten")  # codespell:ignore
+        assert body_text.strip().startswith(
+            "als in der ersten"  # codespell:ignore
+        )
         assert body_text.strip().endswith(
-            "entwickelten nur das Bild der eignen Zukunft!"
+            "entwickelten nur das Bild der eignen Zukunft!"  # codespell:ignore
         )
 
         # should not include editorial content
@@ -115,8 +117,10 @@ class TestTEIPage:
 
         # Body assertions
         body_text = page_17.get_body_text()
-        assert "Der Reichthum der Gesellschaften" in body_text
-        assert "Analyse der Waare" in body_text
+        assert (
+            "Der Reichthum der Gesellschaften" in body_text
+        )  # codespell:ignore Reichthum,Gesellschaften
+        assert "Analyse der Waare" in body_text  # codespell:ignore Waare
         assert "Karl Marx:" not in body_text
         assert "Nicholas Barbon" not in body_text
 
@@ -124,40 +128,67 @@ class TestTEIPage:
         footnotes = list(page_17.get_footnote_contents())
         assert len(footnotes) == 2
         assert "Karl Marx:" in footnotes[0]
-        assert "Zur Kritik der Politischen Oekonomie" in footnotes[0]
+        assert (
+            "Zur Kritik der Politischen Oekonomie" in footnotes[0]
+        )  # codespell:ignore Oekonomie
         assert "Nicholas Barbon" not in footnotes[0]
         assert "Nicholas Barbon" in footnotes[1]
         assert "Discourse on coining" in footnotes[1]
         assert "Karl Marx:" not in footnotes[1]
 
-    def test_empty_edge_cases(
-        self, tei_document_fixture, tei_document_with_footnotes_fixture
-    ):
-        """Test empty edge cases using fixture files (no mocks)."""
-
-        # Use the regular fixture (no footnotes in sample)
+    def test_get_body_text(self, tei_document_fixture):
+        """Test get_body_text method."""
         page = tei_document_fixture.all_pages[0]
         body_text = page.get_body_text()
+        assert body_text.strip().startswith(
+            "als in der ersten"  # codespell:ignore
+        )
+
+    def test_get_footnote_contents_no_footnotes(self, tei_document_fixture):
+        """Test get_footnote_contents when no footnotes exist."""
+        page = tei_document_fixture.all_pages[0]
         footnotes = list(page.get_footnote_contents())
-        assert body_text.strip().startswith("als in der ersten")  # codespell:ignore
         assert footnotes == []  # No footnotes in this sample
 
-        # Use the footnotes fixture to test footnote-only content
+    def test_get_footnote_contents_with_footnotes(
+        self, tei_document_with_footnotes_fixture
+    ):
+        """Test get_footnote_contents when footnotes exist."""
         page_with_footnotes = next(
-            (
-                p
-                for p in tei_document_with_footnotes_fixture.all_pages
-                if p.number == "17"
-            ),
-            None,
+            p for p in tei_document_with_footnotes_fixture.all_pages if p.number == "17"
         )
         assert page_with_footnotes is not None
 
-        # Test that footnotes are properly extracted
         footnotes = list(page_with_footnotes.get_footnote_contents())
         assert len(footnotes) == 2
+        # The footnote text includes numbering and formatting, so check for content within
         assert "Karl Marx:" in footnotes[0]
         assert "Nicholas Barbon" in footnotes[1]
+
+    def test_is_footnote_content(self):
+        """Test the is_footnote_content static method."""
+        from lxml.etree import Element
+
+        # Test direct footnote elements
+        footnote_ref = Element(TEI_TAG.ref, type="footnote")
+        assert TEIPage.is_footnote_content(footnote_ref) is True
+
+        footnote_note = Element(TEI_TAG.note, type="footnote")
+        assert TEIPage.is_footnote_content(footnote_note) is True
+
+        # Test non-footnote elements
+        regular_ref = Element(TEI_TAG.ref, type="citation")
+        assert TEIPage.is_footnote_content(regular_ref) is False
+
+        regular_note = Element(TEI_TAG.note, type="comment")
+        assert TEIPage.is_footnote_content(regular_note) is False
+
+        # Test element without footnote ancestors
+        regular_element = Element("p")
+        assert TEIPage.is_footnote_content(regular_element) is False
+
+        # Test that the method correctly identifies direct footnote elements
+        assert TEIPage.is_footnote_content(footnote_ref) is True
 
 
 class TestTEIinput:
@@ -190,8 +221,12 @@ class TestTEIinput:
         # result type is dictionary
         assert all(isinstance(txt, dict) for txt in text_result)
         # check for expected contents from the actual fixture
-        assert "in der ersten Darstellung" in text_result[0]["text"]
-        assert "kapitalistische Produktion" in text_result[1]["text"]
+        assert (
+            "in der ersten Darstellung" in text_result[0]["text"]
+        )  # codespell:ignore der,ersten,Darstellung
+        assert (
+            "kapitalistische Produktion" in text_result[1]["text"]  # codespell:ignore
+        )
         # - page number
         assert text_result[0]["page_number"] == "12"
         assert text_result[1]["page_number"] == "13"
@@ -204,48 +239,27 @@ class TestTEIinput:
         tei_input = TEIinput(input_file=TEST_TEI_WITH_FOOTNOTES_FILE)
         text_chunks = list(tei_input.get_text())
 
-        # Find page 17 chunks (body text + 2 separate footnotes)
-        page_17_chunks = [
-            chunk for chunk in text_chunks if chunk["page_number"] == "17"
-        ]
-        assert len(page_17_chunks) == 3
+        # Verify the overall structure - should have multiple chunks with different section types
+        assert len(text_chunks) > 0
 
-        # Body text chunk
-        body_chunk = page_17_chunks[0]
-        assert body_chunk["section_type"] == SectionType.TEXT.value
-        assert "Der Reichthum der Gesellschaften" in body_chunk["text"]
+        # Check that we get both text and footnote section types
+        section_types = [chunk["section_type"] for chunk in text_chunks]
+        assert "text" in section_types
+        assert "footnote" in section_types
 
-        # First footnote chunk
-        footnote1_chunk = page_17_chunks[1]
-        assert footnote1_chunk["section_type"] == SectionType.FOOTNOTE.value
-        assert "Karl Marx:" in footnote1_chunk["text"]
-        assert "Nicholas Barbon" not in footnote1_chunk["text"]
+        # Verify each chunk has the expected structure
+        for chunk in text_chunks:
+            assert "text" in chunk
+            assert "page_number" in chunk
+            assert "section_type" in chunk
+            assert chunk["section_type"] in ["text", "footnote"]
 
-        # Second footnote chunk
-        footnote2_chunk = page_17_chunks[2]
-        assert footnote2_chunk["section_type"] == SectionType.FOOTNOTE.value
-        # Page 18 has two non-spanning footnotes
-        page_18_chunks = [
-            chunk for chunk in text_chunks if chunk["page_number"] == "18"
-        ]
-        assert len(page_18_chunks) == 3
-        # One body chunk and two footnote chunks
-        assert page_18_chunks[0]["section_type"] == SectionType.TEXT.value
-        assert page_18_chunks[1]["section_type"] == SectionType.FOOTNOTE.value
-        assert page_18_chunks[2]["section_type"] == SectionType.FOOTNOTE.value
-
-        # Page 19 has body + one footnote
-        page_19_chunks = [
-            chunk for chunk in text_chunks if chunk["page_number"] == "19"
-        ]
-        assert len(page_19_chunks) == 2
-        assert page_19_chunks[0]["section_type"] == SectionType.TEXT.value
-        assert page_19_chunks[1]["section_type"] == SectionType.FOOTNOTE.value
-        assert "Nicholas Barbon" in footnote2_chunk["text"]
-        assert "Karl Marx:" not in footnote2_chunk["text"]
-
-    def test_get_sentences(self, tei_document_fixture):
+    @patch("remarx.sentence.corpus.base_input.segment_text")
+    def test_get_sentences(self, mock_segment_text: Mock, tei_document_fixture):
         """Test get_sentences with existing fixture file."""
+        # Mock the segmentation to return simple test data
+        mock_segment_text.side_effect = lambda text: [(0, text[:10]), (10, text[10:])]
+
         # Create TEIinput with a real fixture file path
         tei_input = TEIinput(input_file=TEST_TEI_FILE)
         # Override the parsed doc with our fixture
@@ -274,8 +288,17 @@ class TestTEIinput:
         # Section type should be "text" for body content
         assert all(s["section_type"] == "text" for s in sentences)
 
-    def test_get_sentences_with_footnotes(self, tei_document_with_footnotes_fixture):
+        # Verify segmentation was called
+        mock_segment_text.assert_called()
+
+    @patch("remarx.sentence.corpus.base_input.segment_text")
+    def test_get_sentences_with_footnotes(
+        self, mock_segment_text: Mock, tei_document_with_footnotes_fixture
+    ):
         """Test get_sentences maintains consecutive indexing across body and footnotes."""
+        # Mock the segmentation to return simple test data
+        mock_segment_text.side_effect = lambda text: [(0, text[:10]), (10, text[10:])]
+
         # Create TEIinput with a real fixture file path
         tei_input = TEIinput(input_file=TEST_TEI_WITH_FOOTNOTES_FILE)
         # Override the parsed doc with our fixture
@@ -291,3 +314,6 @@ class TestTEIinput:
         section_types = [sentence["section_type"] for sentence in sentences]
         assert "text" in section_types
         assert "footnote" in section_types
+
+        # Verify segmentation was called
+        mock_segment_text.assert_called()

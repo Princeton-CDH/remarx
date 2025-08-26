@@ -128,9 +128,3 @@ lsp = true
 [tool.hatch.metadata]
 # So python type stubs can be installed from GitHub (i.e., direct reference)
 allow-direct-references = true
-
-[tool.codespell]
-# Skip a test file that intentionally contains German words
-skip = [
-  "tests/test_sentence/test_corpus/test_tei_input.py",
-]

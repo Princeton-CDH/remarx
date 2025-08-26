@@ -131,7 +131,10 @@ class FileInput:
 
 
 class SectionType(StrEnum):
-    """String enum for section types across corpus inputs."""
+    """Section types declaration, for distinguishing different corpus content."""
 
     TEXT = "text"
+    """Body text content from the main document."""
+
     FOOTNOTE = "footnote"
+    """Footnote content extracted from the document."""
