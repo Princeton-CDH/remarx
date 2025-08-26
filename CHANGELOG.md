@@ -5,13 +5,15 @@
 ### Sentence Module
 
 - Add `segment_text` function for breaking text into sentences with character-level indices
-- Add `corpus` submodule with input classes for text and TEI/XML and factory
-  method to initialize appropriate input class based on file type
-- Processes TEI/XML documents to yield separate chunks for body text and footnotes, with each footnote yielded individually as a separate element
+- Add `corpus` submodule with:
+  - input classes for text and TEI/XML
+  - a factory method to initialize appropriate input class based on file type
+  - a method and script for creating a sentence corpus
+  - Processes TEI/XML documents to yield separate chunks for body text and footnotes, with each footnote yielded individually as a separate element
 
 ### Application
 
-- Add initial application that can build sentence corpora for text files
+- Add initial application that can build sentence corpora for supported file types
 
 ### Documentation
 
