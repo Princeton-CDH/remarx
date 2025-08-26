@@ -12,10 +12,11 @@ from dataclasses import dataclass, field
 from functools import cached_property
 from typing import ClassVar, NamedTuple, Self
 
+from lxml import etree
 from lxml.etree import XMLSyntaxError
 from neuxml import xmlmap
 
-from remarx.sentence.corpus.base_input import FileInput
+from remarx.sentence.corpus.base_input import FileInput, SectionType
 
 TEI_NAMESPACE = "http://www.tei-c.org/ns/1.0"
 
@@ -53,21 +54,71 @@ class TEIPage(BaseTEIXmlObject):
     text_nodes = xmlmap.StringListField("following::text()")
     "list of all text nodes following this tag"
 
-    def text_contents(self) -> Generator[tuple[str, str]]:
+    # fetch all footnotes after the current page break; will filter them in Python later
+    # pb is a delimiter (not a container), so "following::note" returns all later footnotes
+    all_following_footnotes = xmlmap.NodeListField(
+        "following::t:note[@type='footnote']", xmlmap.XmlObject
+    )
+    "list of all footnote elements following this page"
+
+    @staticmethod
+    def _is_footnote_content(el: etree._Element) -> bool:
         """
-        Generator of text content on this page, between the current
-        and following page begin tags. Returns up to 2 chunks per page:
-        body text separate from footnotes, with section type information.
-        MEGA specific logic: ignores page indicators for the manuscript edition
-        (<pb> tags with ed="manuscript"); assumes standard pb tags have no edition.
+        Helper function that checks if an element or any of its ancestors is footnote content.
         """
-        # Step 1: Extract and yield body text as first chunk
-        # for now, ignore partial content, hyphenation, etc
+        if (
+            el.tag in [TEI_TAG.ref, TEI_TAG.note]
+            and el.attrib.get("type") == "footnote"
+        ):
+            return True
+        return any(
+            TEIPage._is_footnote_content(ancestor) for ancestor in el.iterancestors()
+        )
+
+    def get_page_footnotes(self) -> list[xmlmap.XmlObject]:
+        """
+        Filters footnotes to keep only the footnotes that belong to this page.
+        Only includes footnotes that occur between this pb and the next standard pb[not(@ed)].
+        """
+        # Find the next standard page break after this one
+        next_page_nodes = self.node.xpath(
+            "following::t:pb[not(@ed)][1]",
+            namespaces=self.ROOT_NAMESPACES,
+        )
+        next_page_node = next_page_nodes[0] if next_page_nodes else None
+
+        # If there is a next page break, only include footnotes that occur before it
+        if next_page_node is not None:
+            page_footnotes: list[xmlmap.XmlObject] = []
+            for footnote in self.all_following_footnotes:
+                # The first standard page break after this footnote
+                fn_next_page_nodes = footnote.node.xpath(
+                    "following::t:pb[not(@ed)][1]",
+                    namespaces=self.ROOT_NAMESPACES,
+                )
+                fn_next_page_node = (
+                    fn_next_page_nodes[0] if fn_next_page_nodes else None
+                )
+                if fn_next_page_node is next_page_node:
+                    page_footnotes.append(footnote)
+                else:
+                    # Once we reach footnotes associated with a later page, stop and return
+                    break
+            return page_footnotes
+
+        # If there is no next page break, just include all following footnotes
+        return list(self.all_following_footnotes)
+
+    def get_body_text(self) -> str:
+        """
+        Extract body text content for this page, excluding footnotes and editorial content.
+        """
         body_text_parts = []
         for text in self.text_nodes:
             # text here is an lxml smart string, which preserves context
             # in the xml tree and is associated with a parent tag.
             parent = text.getparent()
+
             # stop iterating when we hit the next page break;
             if (
                 parent != self.node  # not the current pb tag
@@ -78,51 +129,45 @@ class TEIPage(BaseTEIXmlObject):
                 break
 
             # Skip this text node if it's inside a footnote tag
-            ancestor = parent
-            while ancestor is not None:
-                if ancestor.tag == TEI_TAG.note and ancestor.get("type") == "footnote":
-                    break
-                ancestor = ancestor.getparent()
-            else:
-                # omit editorial content (e.g. original page numbers)
-                if (
-                    parent.tag == TEI_TAG.add
-                    or (parent.tag == TEI_TAG.label and parent.get("type") == "mpb")
-                ) and (text.is_text or (text.is_tail and text.strip() == "")):
-                    # omit if text is inside an editorial tag (is_text)
-                    # OR if text comes immediately after (is_tail) and is whitespace only
-                    continue
+            if self._is_footnote_content(parent):
+                continue
 
-                # consolidate whitespace if it includes a newline
-                # (i.e., space between indented tags in the XML)
-                body_text_parts.append(re.sub(r"\s*\n\s*", "\n", text))
+            # omit editorial content (e.g. original page numbers)
+            if (
+                parent.tag == TEI_TAG.add
+                or (parent.tag == TEI_TAG.label and parent.get("type") == "mpb")
+            ) and (text.is_text or (text.is_tail and text.strip() == "")):
+                # omit if text is inside an editorial tag (is_text)
+                # OR if text comes immediately after (is_tail) and is whitespace only
+                continue
 
-        body_text = "".join(body_text_parts).strip()
-        if body_text:
-            yield (body_text, "text")
+            # consolidate whitespace if it includes a newline
+            # (i.e., space between indented tags in the XML)
+            body_text_parts.append(re.sub(r"\s*\n\s*", "\n", text))
 
-        # Step 2: Extract and yield individual footnotes as separate chunks
-        notes = self.node.xpath(
-            # not(@ed) ignores standard alternate edition footnotes (<pb ed="manuscript">)
-            "following::t:note[@type='footnote'][not(.//t:pb[not(@ed)])]",
-            namespaces=self.ROOT_NAMESPACES,
-        )
+        return "".join(body_text_parts).strip()
 
-        for note in notes:
+    def get_footnote_contents(self) -> Generator[str]:
+        """
+        Generator of footnote content on this page.
+        """
+        for footnote in self.get_page_footnotes():
             footnote_text = "".join(
-                note.xpath(".//text()", namespaces=self.ROOT_NAMESPACES)
+                footnote.node.xpath(".//text()", namespaces=self.ROOT_NAMESPACES)
             ).strip()
             if footnote_text:
                 # consolidate whitespace for footnotes
                 footnote_text = re.sub(r"\s*\n\s*", "\n", footnote_text)
-                yield (footnote_text, "footnote")
+                yield footnote_text
 
     def __str__(self) -> str:
         """
-        Page text contents as a string
+        Page text contents as a string, with body text and footnotes.
         """
-        # Extract just the text content from the tuples
-        return "".join(text for text, section_type in self.text_contents())
+        body_text = self.get_body_text()
+        parts: list[str] = [body_text] if body_text else []
+        parts.extend(self.get_footnote_contents())
+        return "".join(parts)
 
 
 class TEIDocument(BaseTEIXmlObject):
@@ -197,9 +242,17 @@ class TEIinput(FileInput):
         """
         # yield body text and footnotes content chunked by page with page number
         for page in self.xml_doc.pages:
-            for text_content, section_type in page.text_contents():
+            body_text = page.get_body_text()
+            if body_text:
                 yield {
-                    "text": text_content,
+                    "text": body_text,
                     "page_number": page.number,
-                    "section_type": section_type,
+                    "section_type": SectionType.TEXT.value,
+                }
+
+            for footnote_text in page.get_footnote_contents():
+                yield {
+                    "text": footnote_text,
+                    "page_number": page.number,
+                    "section_type": SectionType.FOOTNOTE.value,
                 }

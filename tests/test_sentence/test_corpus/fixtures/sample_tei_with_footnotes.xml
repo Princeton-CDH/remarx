@@ -55,15 +55,17 @@
                     <lb n="5"/>Nützlichkeit schwebt nicht in der Luft.
                 </p>
 
-                <!-- This footnote starts on page 18 but extends to page 19 - should be ignored -->
+                <!-- Footnotes for page 18 -->
                 <note type="footnote" xml:id="fn3-0">
                     <lb n="15"/>
                     <label type="footnote">
                         <hi rendition="sup">3</hi>)</label> „Die natürliche Eigenschaft einer Sache besteht darin, daß sie Bedürfnisse
                     <lb n="16"/>befriedigen, oder mit andern Worten, Nutzen gewähren kann."
-                    <pb n="19"/>
-                    <lb n="1"/>„Der Nutzen der Dinge ist ihre einzige ursprüngliche Grundlage, um sie zum Gegenstand des
-                    <lb n="2"/>Tausches zu machen." <hi rendition="i">John Locke, Some Considerations etc.</hi>
+                </note>
+                <note type="footnote" xml:id="fn4-0">
+                    <lb n="17"/>
+                    <label type="footnote">
+                        <hi rendition="sup">4</hi>)</label> Zweite Anmerkung auf Seite 18.
                 </note>
 
                 <pb n="19"/>
@@ -72,6 +74,12 @@
                     <lb n="4"/>denselben. Der Waarenkörper selbst, wie Eisen, Weizen, Diamant u. s. w. ist
                     <lb n="5"/>daher ein Gebrauchswerth oder Gut.
                 </p>
+                <!-- Footnote for page 19 -->
+                <note type="footnote" xml:id="fn5-0">
+                    <lb n="6"/>
+                    <label type="footnote">
+                        <hi rendition="sup">5</hi>)</label> Erste Anmerkung auf Seite 19.
+                </note>
             </text>
         </group>
     </text>
