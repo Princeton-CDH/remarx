@@ -131,10 +131,10 @@ class FileInput:
 
 
 class SectionType(StrEnum):
-    """Section types declaration, for distinguishing different corpus content."""
+    """Section types declaration, for distinguishing different text sections within corpus documents."""
 
     TEXT = "text"
-    """Body text content from the main document."""
+    """Body text content from the document."""
 
     FOOTNOTE = "footnote"
     """Footnote content extracted from the document."""

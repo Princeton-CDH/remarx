@@ -63,37 +63,55 @@ class TestTEIPage:
         assert ms_page.number == "IX"
         assert ms_page.edition == "manuscript"
 
-    def test_str(self):
-        """Test __str__ method for page with footnotes."""
-        tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
-        page_17 = next(p for p in tei_doc.all_pages if p.number == "17")
+    @patch.object(TEIPage, "get_body_text")
+    @patch.object(TEIPage, "get_footnote_text")
+    def test_str(self, mock_get_footnote_text, mock_get_body_text):
+        mock_get_body_text.return_value = "Mock body text"
+        mock_get_footnote_text.return_value = "Mock footnote text"
 
-        page_text = str(page_17)
-
-        # Should contain expected content
-        assert "Der Reichthum der Gesellschaften" in page_text
-        assert "Karl Marx:" in page_text
-        assert "\n\n" in page_text
-
-    def test_getters_no_footnotes(self):
         tei_doc = TEIDocument.init_from_file(TEST_TEI_FILE)
         page = tei_doc.all_pages[0]
 
-        assert "als in der ersten" in page.get_body_text()  # codespell:ignore
-        assert page.get_footnote_contents() == ""
-        assert page.get_footnote_text() == ""
+        result = str(page)
 
-    def test_getters_with_footnotes(self):
+        mock_get_body_text.assert_called_once()
+        mock_get_footnote_text.assert_called_once()
+
+        assert result == "Mock body text\n\nMock footnote text"
+
+    def test_get_body_text_no_footnotes(self):
+        tei_doc = TEIDocument.init_from_file(TEST_TEI_FILE)
+        page = tei_doc.all_pages[0]
+
+        body_text = page.get_body_text()
+        assert "als in der ersten" in body_text  # codespell:ignore
+        assert "Karl Marx:" not in body_text  # Should not contain footnote content
+
+    def test_get_body_text_with_footnotes(self):
         tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
         page_17 = next(p for p in tei_doc.all_pages if p.number == "17")
 
         body_text = page_17.get_body_text()
         assert "Der Reichthum der Gesellschaften" in body_text
-        assert "Karl Marx:" not in body_text
+        assert "Karl Marx:" not in body_text  # Footnote content should be excluded
 
-        footnotes_text = page_17.get_footnote_contents()
-        assert "Karl Marx:" in footnotes_text
-        assert "Nicholas Barbon" in footnotes_text
+    def test_get_footnote_text_no_footnotes(self):
+        tei_doc = TEIDocument.init_from_file(TEST_TEI_FILE)
+        page = tei_doc.all_pages[0]
+
+        footnote_text = page.get_footnote_text()
+        assert footnote_text == ""
+
+    def test_get_footnote_text_with_footnotes(self):
+        tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
+        page_17 = next(p for p in tei_doc.all_pages if p.number == "17")
+
+        footnote_text = page_17.get_footnote_text()
+        assert "Karl Marx:" in footnote_text
+        assert "Nicholas Barbon" in footnote_text
+        assert (
+            "Der Reichthum der Gesellschaften" not in footnote_text
+        )  # Body text should be excluded
 
     def test_is_footnote_content(self):
         from lxml.etree import Element
@@ -145,6 +163,14 @@ class TestTEIinput:
         tei_input.xml_doc = tei_document_fixture
 
         sentences = list(tei_input.get_sentences())
+
+        assert mock_segment_text.call_count >= 1  # Should be called for each text chunk
+        # Verify all calls had string arguments
+        for call_args in mock_segment_text.call_args_list:
+            assert len(call_args[0]) == 1  # One positional argument
+            assert isinstance(call_args[0][0], str)  # Should be a string
+
+        # Verify sentence structure
         assert len(sentences) > 0
         assert all(isinstance(sentence, dict) for sentence in sentences)
         assert sentences[0]["file"] == TEST_TEI_FILE.name
@@ -164,11 +190,20 @@ class TestTEIinput:
 
         sentences = list(tei_input.get_sentences())
 
+        # Verify mock was called for both text and footnote segments
+        assert (
+            mock_segment_text.call_count >= 2
+        )  # Should be called for text and footnote chunks
+        # Verify all calls had string arguments
+        for call_args in mock_segment_text.call_args_list:
+            assert len(call_args[0]) == 1  # One positional argument
+            assert isinstance(call_args[0][0], str)  # Should be a string
+
         # Check consecutive indexing
         sent_indices = [s["sent_index"] for s in sentences]
         assert sent_indices == list(range(len(sentences)))
 
-        # Should have both text and footnote seyuan a
+        # Should have both text and footnote sections
         section_types = [s["section_type"] for s in sentences]
         assert "text" in section_types
         assert "footnote" in section_types

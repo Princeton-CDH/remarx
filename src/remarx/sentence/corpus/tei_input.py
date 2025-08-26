@@ -134,9 +134,9 @@ class TEIPage(BaseTEIXmlObject):
         # (i.e., space between indented tags in the XML)
         return re.sub(r"\s*\n\s*", "\n", "".join(body_text_parts)).strip()
 
-    def _get_footnote_contents_generator(self) -> Generator[str]:
+    def get_individual_footnotes(self) -> Generator[str]:
         """
-        Internal generator of footnote content on this page.
+        Get individual footnote content as a generator.
         Yields each footnote's text content individually as a separate string element.
         Each yielded element corresponds to one complete footnote from the page.
         """
@@ -145,15 +145,6 @@ class TEIPage(BaseTEIXmlObject):
             # consolidate whitespace for footnotes
             footnote_text = re.sub(r"\s*\n\s*", "\n", footnote_text)
             yield footnote_text
-
-    def get_footnote_contents(self) -> str:
-        """
-        Get footnote content on this page as a single string.
-        Returns all footnotes joined with double newlines, similar to get_footnote_text().
-        For individual footnote access, use the internal generator.
-        """
-        footnotes = list(self._get_footnote_contents_generator())
-        return "\n\n".join(footnotes)
 
     def get_footnote_text(self) -> str:
         """
@@ -173,9 +164,7 @@ class TEIPage(BaseTEIXmlObject):
         """
         Page text contents as a string, with body text and footnotes.
         """
-        return "\n\n".join(
-            [self.get_body_text() or "", self.get_footnote_text() or ""]
-        ).strip()
+        return f"{self.get_body_text()}\n\n{self.get_footnote_text()}".strip()
 
 
 class TEIDocument(BaseTEIXmlObject):
@@ -242,10 +231,13 @@ class TEIinput(FileInput):
 
     def get_text(self) -> Generator[dict[str, str]]:
         """
-        Get document content as plain text.
-        Generator with a dictionary of text content by page section,
-        including page number and section_type ("text" or "footnote").
+        Get document content as plain text. The document's content is yielded in segments
+        with each segment corresponding to a dictionary of containing its text content,
+        page number and section type ("text" or "footnote").
         Body text is yielded once per page, while each footnote is yielded individually.
+
+        :returns: Generator that yields dictionaries corresponding to text segments
+        including text content, page number, and section_type ("text" or "footnote").
         """
         # yield body text and footnotes content chunked by page with page number
         for page in self.xml_doc.pages:
@@ -257,7 +249,7 @@ class TEIinput(FileInput):
                     "section_type": SectionType.TEXT.value,
                 }
 
-            for footnote_text in page._get_footnote_contents_generator():
+            for footnote_text in page.get_individual_footnotes():
                 yield {
                     "text": footnote_text,
                     "page_number": page.number,
