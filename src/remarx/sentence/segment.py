@@ -5,6 +5,7 @@ sentence begins and the sentence text itself.
 """
 
 import stanza
+from stanza import DownloadMethod
 
 
 def segment_text(text: str, language: str = "de") -> list[tuple[int, str]]:
@@ -17,7 +18,11 @@ def segment_text(text: str, language: str = "de") -> list[tuple[int, str]]:
     """
     # Initialize the NLP pipeline for sentence segmentation
     # Use minimal processors (tokenize) for sentence segmentation only
-    segmenter = stanza.Pipeline(lang=language, processors="tokenize")
+    segmenter = stanza.Pipeline(
+        lang=language,
+        processors="tokenize",
+        download_method=DownloadMethod.REUSE_RESOURCES,
+    )
 
     processed_doc = segmenter(text)
 
