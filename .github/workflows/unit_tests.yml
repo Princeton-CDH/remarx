@@ -1,4 +1,4 @@
-name: Unit Tests & Code Coverage
+name: Unit Tests
 on:
   push: # Run on all branches
   pull_request:
