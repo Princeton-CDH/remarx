@@ -21,6 +21,13 @@ repos:
     rev: 0.7.22
     hooks:
       - id: mdformat
+        # Add mkdocs/frontmatter plugins to fix snippet formatting issues
+        additional_dependencies:
+          - mdformat-mkdocs
+          - mdformat-frontmatter
+        args: [--wrap, keep]
+        # Temporarily exclude docs/api/index.md due because it messes up the formatting
+        exclude: ^docs/api/index\.md$
   # Codespell for spell checking
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
@@ -32,6 +39,8 @@ repos:
     rev: v4.5.0
     hooks:
       - id: check-yaml
+        # Allow unknown custom tags like !relative used by mkdocs.yml
+        args: [--unsafe]
       - id: check-toml
       - id: trailing-whitespace
       - id: end-of-file-fixer

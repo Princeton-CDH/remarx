@@ -1,25 +1,28 @@
-# Code Documentation
+---
+title: Code Documentation
+hide: [navigation]
+---
 
-::: remarx
-options:
-show_submodules: false
-show_source: false
-members: false
+# ::: remarx
 
-::: remarx.sentence
-options:
-show_submodules: false
-show_source: false
-members: false
+## ::: remarx.app
 
-::: remarx.sentence.segment
-options:
-show_submodules: false
-show_source: false
-members: false
+## ::: remarx.app_utils
 
-::: remarx.sentence.corpus
-options:
-show_submodules: false
-show_source: false
-members: false
+## ::: remarx.sentence
+
+### ::: remarx.sentence.segment
+
+### ::: remarx.sentence.corpus
+
+#### ::: remarx.sentence.corpus.base_input
+    options:
+      members: false
+
+#### ::: remarx.sentence.corpus.tei_input
+    options:
+      members: false
+
+#### ::: remarx.sentence.corpus.text_input
+    options:
+      members: false

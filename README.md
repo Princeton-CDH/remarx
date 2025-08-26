@@ -1,3 +1,5 @@
+<!-- --8<-- [start:overview] -->
+
 # remarx
 
 This repository contains in-progress research software developed for the CDH project
@@ -43,7 +45,9 @@ uv run remarx-app
 
 ## Documentation
 
-Find public documentation at: [Remarx Documentation](https://princeton-cdh.github.io/remarx/)
+Find public documentation at: [remarx Documentation](https://princeton-cdh.github.io/remarx/)
+
+<!-- --8<-- [end:overview] -->
 
 ## Development
 
