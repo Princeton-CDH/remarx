@@ -8,6 +8,8 @@ The primary purpose of this software is to identify quotes of Karl Marx's _Manif
 der Kommunistischen Partei_ and the first volume of _Das Kapital_ within articles
 published in _Die Neue Zeit_ between 1891 and 1918.
 
+[![Unit Tests](https://github.com/Princeton-CDH/remarx/actions/workflows/unit_tests.yml/badge.svg)](https://github.com/Princeton-CDH/remarx/actions/workflows/unit_tests.yml)
+
 ## Basic Usage
 
 ### Installation
