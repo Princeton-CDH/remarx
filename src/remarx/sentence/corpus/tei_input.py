@@ -53,12 +53,12 @@ class TEIPage(BaseTEIXmlObject):
     text_nodes = xmlmap.StringListField("following::text()")
     "list of all text nodes following this tag"
 
-    # fetch all footnotes after the current page break; will filter them in Python later
+    # fetch footnotes after the current page break; will filter them in Python later
     # pb is a delimiter (not a container), so "following::note" returns all later footnotes
-    all_following_footnotes = xmlmap.NodeListField(
+    following_footnotes = xmlmap.NodeListField(
         "following::t:note[@type='footnote']", xmlmap.XmlObject
     )
-    "list of all footnote elements within this page and following pages"
+    "list of footnote elements within this page and following pages"
 
     next_page = xmlmap.NodeField(
         "following::t:pb[not(@ed)][1]",
@@ -85,30 +85,15 @@ class TEIPage(BaseTEIXmlObject):
         Filters footnotes to keep only the footnotes that belong to this page.
         Only includes footnotes that occur between this pb and the next standard pb[not(@ed)].
         """
-        # Use the next_page property to find the next standard page break
-        next_page_node = self.next_page.node if self.next_page else None
+        page_footnotes: list[xmlmap.XmlObject] = []
 
-        # If there is a next page break, only include footnotes that occur before it
-        if next_page_node is not None:
-            page_footnotes: list[xmlmap.XmlObject] = []
-            for footnote in self.all_following_footnotes:
-                # The first standard page break after this footnote
-                fn_next_page_nodes = footnote.node.xpath(
-                    "following::t:pb[not(@ed)][1]",
-                    namespaces=self.ROOT_NAMESPACES,
-                )
-                fn_next_page_node = (
-                    fn_next_page_nodes[0] if fn_next_page_nodes else None
-                )
-                if fn_next_page_node is next_page_node:
-                    page_footnotes.append(footnote)
-                else:
-                    # Once we reach footnotes associated with a later page, stop and return
-                    break
-            return page_footnotes
+        for footnote in self.following_footnotes:
+            # If we have a next page and this footnote belongs to it, we're done
+            if self.next_page and footnote in self.next_page.following_footnotes:
+                break
+            page_footnotes.append(footnote)
 
-        # If there is no next page break, just include all following footnotes
-        return list(self.all_following_footnotes)
+        return page_footnotes
 
     def get_body_text(self) -> str:
         """
@@ -143,15 +128,15 @@ class TEIPage(BaseTEIXmlObject):
                 # OR if text comes immediately after (is_tail) and is whitespace only
                 continue
 
-            # consolidate whitespace if it includes a newline
-            # (i.e., space between indented tags in the XML)
-            body_text_parts.append(re.sub(r"\s*\n\s*", "\n", text))
+            body_text_parts.append(text)
 
-        return "".join(body_text_parts).strip()
+        # consolidate whitespace once after joining all parts
+        # (i.e., space between indented tags in the XML)
+        return re.sub(r"\s*\n\s*", "\n", "".join(body_text_parts)).strip()
 
-    def get_footnote_contents(self) -> Generator[str]:
+    def _get_footnote_contents_generator(self) -> Generator[str]:
         """
-        Generator of footnote content on this page.
+        Internal generator of footnote content on this page.
         Yields each footnote's text content individually as a separate string element.
         Each yielded element corresponds to one complete footnote from the page.
         """
@@ -161,6 +146,15 @@ class TEIPage(BaseTEIXmlObject):
             footnote_text = re.sub(r"\s*\n\s*", "\n", footnote_text)
             yield footnote_text
 
+    def get_footnote_contents(self) -> str:
+        """
+        Get footnote content on this page as a single string.
+        Returns all footnotes joined with double newlines, similar to get_footnote_text().
+        For individual footnote access, use the internal generator.
+        """
+        footnotes = list(self._get_footnote_contents_generator())
+        return "\n\n".join(footnotes)
+
     def get_footnote_text(self) -> str:
         """
         Get all footnote content as a single string, with footnotes separated by double newlines.
@@ -168,7 +162,12 @@ class TEIPage(BaseTEIXmlObject):
         footnotes = self.get_page_footnotes()
         if not footnotes:
             return ""
-        return "\n\n".join(str(footnote).strip() for footnote in footnotes)
+        # consolidate whitespace once after joining all footnotes
+        return re.sub(
+            r"\s*\n\s*",
+            "\n",
+            "\n\n".join(str(footnote).strip() for footnote in footnotes),
+        )
 
     def __str__(self) -> str:
         """
@@ -258,7 +257,7 @@ class TEIinput(FileInput):
                     "section_type": SectionType.TEXT.value,
                 }
 
-            for footnote_text in page.get_footnote_contents():
+            for footnote_text in page._get_footnote_contents_generator():
                 yield {
                     "text": footnote_text,
                     "page_number": page.number,
