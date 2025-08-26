@@ -71,7 +71,7 @@ plugins:
             members_order: source
             group_by_category: false
             show_category_heading: false
-            show_submodules: true
+            show_submodules: false
 markdown_extensions:
   - admonition
   - pymdownx.details
