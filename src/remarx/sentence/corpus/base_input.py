@@ -116,7 +116,7 @@ class FileInput:
 
         :raises ValueError: if input_file is not a supported type
         """
-        input_cls = cls.subclass_by_type().get(input_file.suffix)
+        input_cls = cls.subclass_by_type().get(input_file.suffix.lower())
         # for now, check based on file extension
         # NOTE: this will change when we add support for METS-ALTO
         if input_cls is None:

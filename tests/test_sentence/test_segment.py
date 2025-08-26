@@ -4,7 +4,7 @@ Unit tests for sentence segmentation functionality.
 
 from unittest.mock import Mock, patch
 
-from stanza import Pipeline
+from stanza import DownloadMethod, Pipeline
 from stanza.models.common.doc import Document, Sentence
 
 from remarx.sentence.segment import segment_text
@@ -65,11 +65,19 @@ class TestSegmentTextIntoSentences:
 
         # Test with explicit "en" language
         segment_text("Hello world.", language="en")
-        mock_pipeline_class.assert_called_with(lang="en", processors="tokenize")
+        mock_pipeline_class.assert_called_with(
+            lang="en",
+            processors="tokenize",
+            download_method=DownloadMethod.REUSE_RESOURCES,
+        )
 
         # Reset mock for second test
         mock_pipeline_class.reset_mock()
 
         # Test with default language (should be "de")
         segment_text("Hallo Welt.")
-        mock_pipeline_class.assert_called_with(lang="de", processors="tokenize")
+        mock_pipeline_class.assert_called_with(
+            lang="de",
+            processors="tokenize",
+            download_method=DownloadMethod.REUSE_RESOURCES,
+        )
