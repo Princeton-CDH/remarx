@@ -28,6 +28,7 @@ dependencies = [
   "polars",
   "ruff",
   "stanza",
+  "bs4"
 ]
 
 [project.optional-dependencies]
