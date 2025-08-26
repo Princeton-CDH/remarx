@@ -3,6 +3,8 @@ title: Code Documentation
 hide: [navigation]
 ---
 
+<!-- mdformat: off -->
+
 # ::: remarx
 
 ## ::: remarx.app
@@ -35,3 +37,5 @@ options:
 options:
   members: false
 ```
+
+<!-- mdformat: on -->
