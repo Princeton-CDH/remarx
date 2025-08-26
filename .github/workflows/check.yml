@@ -6,7 +6,7 @@ on:
   # Allow running manually
   workflow_dispatch:
 jobs:
-  check_docs:
+  docs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,7 +16,7 @@ jobs:
         run: uv sync --extra docs
       - name: Check that documentation builds with no errors or warnings
         run: uv run mkdocs build --strict
-  check_style:
+  style:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
