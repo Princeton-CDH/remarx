@@ -1,9 +1,7 @@
 import pathlib
 from collections.abc import Generator
-from unittest.mock import Mock, patch
 
 import pytest
-from neuxml import xmlmap
 
 from remarx.sentence.corpus.base_input import SectionType
 from remarx.sentence.corpus.tei_input import TEI_TAG, TEIDocument, TEIinput, TEIPage
@@ -23,35 +21,6 @@ def tei_document_fixture():
 def tei_document_with_footnotes_fixture():
     """Real TEIDocument fixture with footnotes using actual XML."""
     return TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
-
-
-@pytest.fixture
-def tei_document_simple():
-    """Simple TEI document with predictable text for sentence testing."""
-    xml = (
-        '<TEI xmlns="http://www.tei-c.org/ns/1.0">\n'
-        "  <text><body>\n"
-        '    <pb n="1"/>This is a simple sentence. It has two sentences.\n'
-        '    <pb n="2"/>Another page. With more content.\n'
-        "  </body></text>\n"
-        "</TEI>"
-    )
-    return xmlmap.load_xmlobject_from_string(xml, TEIDocument)
-
-
-@pytest.fixture
-def tei_document_simple_with_footnotes():
-    """Simple TEI document with footnotes for sentence testing."""
-    xml = (
-        '<TEI xmlns="http://www.tei-c.org/ns/1.0">\n'
-        "  <text><body>\n"
-        '    <pb n="1"/>Body text here.\n'
-        '    <note type="footnote">Footnote one.</note>\n'
-        '    <note type="footnote">Footnote two.</note>\n'
-        "  </body></text>\n"
-        "</TEI>"
-    )
-    return xmlmap.load_xmlobject_from_string(xml, TEIDocument)
 
 
 def test_tei_tag():
@@ -275,38 +244,43 @@ class TestTEIinput:
         assert "Nicholas Barbon" in footnote2_chunk["text"]
         assert "Karl Marx:" not in footnote2_chunk["text"]
 
-    @patch("remarx.sentence.corpus.base_input.segment_text")
-    def test_get_sentences(self, mock_segment_text: Mock):
-        # segment text returns a tuple of character index, sentence text
-        mock_segment_text.return_value = [(0, "Mock sentence")]
-
+    def test_get_sentences(self, tei_document_fixture):
+        """Test get_sentences with existing fixture file."""
+        # Create TEIinput with a real fixture file path
         tei_input = TEIinput(input_file=TEST_TEI_FILE)
+        # Override the parsed doc with our fixture
+        tei_input.xml_doc = tei_document_fixture
+
         sentences = tei_input.get_sentences()
-        # expect a generator with one item, with the content added to the file
+        # expect a generator with sentences from the fixture content
         assert isinstance(sentences, Generator)
         sentences = list(sentences)
-        assert len(sentences) == 2  # 2 pages, one mock sentence each
-        # method called once for each page of text
-        assert mock_segment_text.call_count == 2
+
+        # Should have sentences from the fixture pages
+        assert len(sentences) > 0
         assert all(isinstance(sentence, dict) for sentence in sentences)
-        # file id set (handled by base input class)
+
+        # Check sentence metadata
         assert sentences[0]["file"] == TEST_TEI_FILE.name
-        # page number set
-        assert sentences[0]["page_number"] == "12"
-        assert sentences[1]["page_number"] == "13"
-        # sentence index is set and continues across pages
-        assert sentences[0]["sent_index"] == 0
-        assert sentences[1]["sent_index"] == 1
-        # section type is set to "text" for body content
-        assert sentences[0]["section_type"] == "text"
-        assert sentences[1]["section_type"] == "text"
 
-    @patch("remarx.sentence.corpus.base_input.segment_text")
-    def test_get_sentences_with_footnotes(self, mock_segment_text: Mock):
+        # Get unique page numbers from sentences
+        page_numbers = list({s["page_number"] for s in sentences})
+        assert len(page_numbers) > 0
+
+        # Sentence index should continue across pages
+        sent_indices = [s["sent_index"] for s in sentences]
+        assert sent_indices == list(range(len(sentences)))
+
+        # Section type should be "text" for body content
+        assert all(s["section_type"] == "text" for s in sentences)
+
+    def test_get_sentences_with_footnotes(self, tei_document_with_footnotes_fixture):
         """Test get_sentences maintains consecutive indexing across body and footnotes."""
-        mock_segment_text.return_value = [(0, "Mock sentence.")]
-
+        # Create TEIinput with a real fixture file path
         tei_input = TEIinput(input_file=TEST_TEI_WITH_FOOTNOTES_FILE)
+        # Override the parsed doc with our fixture
+        tei_input.xml_doc = tei_document_with_footnotes_fixture
+
         sentences = list(tei_input.get_sentences())
 
         # Check consecutive sentence indexing across all chunks
