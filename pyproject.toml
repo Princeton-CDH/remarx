@@ -54,6 +54,7 @@ dev = [ "remarx[dev]" ]
 
 [project.scripts]
 remarx-app = "remarx.app_utils:launch_app"
+remarx-create-corpus = "remarx.sentence.corpus.create:main"
 
 [tool.hatch.version]
 path = "src/remarx/__init__.py"
@@ -65,7 +66,6 @@ testpaths = ["tests"]
 branch = true
 omit = [
   "src/remarx/app.py",   # marimo app notebook
-  "src/remarx/sentence/corpus/create.py"  # preliminary cli corpus creation script, untested
 ]
 
 [tool.coverage.report]
