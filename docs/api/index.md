@@ -3,7 +3,6 @@ title: Code Documentation
 hide: [navigation]
 ---
 
-<!-- mdformat: off -->
 # ::: remarx
 
 ## ::: remarx.app
@@ -27,5 +26,3 @@ hide: [navigation]
 #### ::: remarx.sentence.corpus.text_input
     options:
       members: false
-
-<!-- mdformat: on -->
