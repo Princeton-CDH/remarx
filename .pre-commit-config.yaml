@@ -7,7 +7,7 @@ repos:
     rev: v0.12.7
     hooks:
       # Run the linter
-      - id: ruff
+      - id: ruff-check
         args: [--fix] # To enable lint fixes
       # Run the formatter using configs in pyproject.toml
       - id: ruff-format
