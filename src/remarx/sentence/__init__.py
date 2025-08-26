@@ -4,4 +4,4 @@ This module contains libraries for sentence segmentation and sentence corpus con
 
 from remarx.sentence import corpus, segment
 
-__all__ = ["corpus", "segment", "segment_text"]
+__all__ = ["corpus", "segment"]
