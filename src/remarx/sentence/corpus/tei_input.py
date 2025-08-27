@@ -64,7 +64,7 @@ class TEIPage(BaseTEIXmlObject):
         "following::t:pb[not(@ed)][1]",
         "self",
     )
-    """The next standard page break after this one, or None if this is the last page."""
+    "the next standard page break after this one, or None if this is the last page"
 
     @staticmethod
     def is_footnote_content(el: _Element) -> bool:
