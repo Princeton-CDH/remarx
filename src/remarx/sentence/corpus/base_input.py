@@ -112,10 +112,13 @@ class FileInput:
         return list({subcls.file_type for subcls in cls.subclasses()})
 
     @classmethod
-    def init(cls, input_file: pathlib.Path) -> Self:
+    def init(
+        cls, input_file: pathlib.Path, filename_override: str | None = None
+    ) -> Self:
         """
         Instantiate and return the appropriate input class for the specified
-        input file.
+        input file.  Takes an optional filename override parameter,
+        which is passed through to the input class.
 
         :raises ValueError: if input_file is not a supported type
         """
@@ -129,4 +132,4 @@ class FileInput:
             raise ValueError(
                 f"{input_file.suffix} is not a supported input type (must be one of {supported_types})"
             )
-        return input_cls(input_file=input_file)
+        return input_cls(input_file=input_file, filename_override=filename_override)

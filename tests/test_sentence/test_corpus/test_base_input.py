@@ -73,6 +73,16 @@ def test_init_exts(tmp_path: pathlib.Path):
     assert isinstance(txt_input, TextInput)
 
 
+def test_init_filename_override(tmp_path: pathlib.Path):
+    from remarx.sentence.corpus.text_input import TextInput
+
+    txt_file = tmp_path / "tmp_foo_bar_input.txt"
+    real_filename = "input.txt"
+    txt_input = FileInput.init(input_file=txt_file, filename_override=real_filename)
+    assert isinstance(txt_input, TextInput)
+    assert txt_input.file_name == real_filename
+
+
 @patch("remarx.sentence.corpus.tei_input.TEIDocument")
 def test_init_tei(mock_tei_doc, tmp_path: pathlib.Path):
     from remarx.sentence.corpus.tei_input import TEIinput
