@@ -53,50 +53,50 @@ def test_get_text(tmp_path: pathlib.Path):
         base_input.get_text()
 
 
-def test_init_txt(tmp_path: pathlib.Path):
+def test_create_txt(tmp_path: pathlib.Path):
     from remarx.sentence.corpus.text_input import TextInput
 
     txt_file = tmp_path / "input.txt"
-    txt_input = FileInput.init(input_file=txt_file)
+    txt_input = FileInput.create(input_file=txt_file)
     assert isinstance(txt_input, TextInput)
 
 
-def test_init_exts(tmp_path: pathlib.Path):
+def test_create_exts(tmp_path: pathlib.Path):
     from remarx.sentence.corpus.text_input import TextInput
 
     txt_file = tmp_path / "upper.TXT"
-    txt_input = FileInput.init(input_file=txt_file)
+    txt_input = FileInput.create(input_file=txt_file)
     assert isinstance(txt_input, TextInput)
 
     txt_file = tmp_path / "mixed.TxT"
-    txt_input = FileInput.init(input_file=txt_file)
+    txt_input = FileInput.create(input_file=txt_file)
     assert isinstance(txt_input, TextInput)
 
 
-def test_init_filename_override(tmp_path: pathlib.Path):
+def test_create_filename_override(tmp_path: pathlib.Path):
     from remarx.sentence.corpus.text_input import TextInput
 
     txt_file = tmp_path / "tmp_foo_bar_input.txt"
     real_filename = "input.txt"
-    txt_input = FileInput.init(input_file=txt_file, filename_override=real_filename)
+    txt_input = FileInput.create(input_file=txt_file, filename_override=real_filename)
     assert isinstance(txt_input, TextInput)
     assert txt_input.file_name == real_filename
 
 
 @patch("remarx.sentence.corpus.tei_input.TEIDocument")
-def test_init_tei(mock_tei_doc, tmp_path: pathlib.Path):
+def test_create_tei(mock_tei_doc, tmp_path: pathlib.Path):
     from remarx.sentence.corpus.tei_input import TEIinput
 
     xml_input_file = tmp_path / "input.xml"
-    xml_input = FileInput.init(input_file=xml_input_file)
+    xml_input = FileInput.create(input_file=xml_input_file)
     assert isinstance(xml_input, TEIinput)
     mock_tei_doc.init_from_file.assert_called_with(xml_input_file)
 
 
-def test_init_unsupported(tmp_path: pathlib.Path):
+def test_create_unsupported(tmp_path: pathlib.Path):
     test_file = tmp_path / "input.test"
     with pytest.raises(
         ValueError,
         match="\\.test is not a supported input type \\(must be one of \\.txt, \\.xml\\)",
     ):
-        FileInput.init(input_file=test_file)
+        FileInput.create(input_file=test_file)

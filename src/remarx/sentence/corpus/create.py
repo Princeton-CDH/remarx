@@ -32,7 +32,7 @@ def create_corpus(
     if not input_file.is_file():
         raise ValueError(f"Input file {input_file} does not exist")
 
-    text_input = FileInput.init(input_file, filename_override=filename_override)
+    text_input = FileInput.create(input_file, filename_override=filename_override)
     field_names = text_input.field_names
 
     with output_csv.open(mode="w", newline="") as csvfile:

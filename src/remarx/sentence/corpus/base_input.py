@@ -112,7 +112,7 @@ class FileInput:
         return list({subcls.file_type for subcls in cls.subclasses()})
 
     @classmethod
-    def init(
+    def create(
         cls, input_file: pathlib.Path, filename_override: str | None = None
     ) -> Self:
         """
