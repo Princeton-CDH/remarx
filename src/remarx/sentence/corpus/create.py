@@ -17,7 +17,11 @@ import pathlib
 from remarx.sentence.corpus.base_input import FileInput
 
 
-def create_corpus(input_file: pathlib.Path, output_csv: pathlib.Path) -> None:
+def create_corpus(
+    input_file: pathlib.Path,
+    output_csv: pathlib.Path,
+    filename_override: str | None = None,
+) -> None:
     """
     Create and save a sentence corpus from the provided input file to the
     provided output path `output_csv`.
@@ -28,7 +32,7 @@ def create_corpus(input_file: pathlib.Path, output_csv: pathlib.Path) -> None:
     if not input_file.is_file():
         raise ValueError(f"Input file {input_file} does not exist")
 
-    text_input = FileInput.init(input_file)
+    text_input = FileInput.create(input_file, filename_override=filename_override)
     field_names = text_input.field_names
 
     with output_csv.open(mode="w", newline="") as csvfile:

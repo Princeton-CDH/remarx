@@ -4,7 +4,7 @@ method for initialization of known input classes based on supported
 file types.
 
 To initialize the appropriate subclass for a supported file type,
-use [FileInput.init()][remarx.sentence.corpus.base_input.FileInput.init].
+use [FileInput.create()][remarx.sentence.corpus.base_input.FileInput.create].
 
 For a list of supported file types across all registered input classes,
 use [FileInput.supported_types()][remarx.sentence.corpus.base_input.FileInput.supported_types].
@@ -32,6 +32,9 @@ class FileInput:
     input_file: pathlib.Path
     "Reference to input file. Source of content for sentences."
 
+    filename_override: str = None
+    "Optional filename override, e.g. when using temporary files as input"
+
     field_names: ClassVar[tuple[str, ...]] = ("file", "sent_index", "text")
     "List of field names for sentences from text input files."
 
@@ -43,7 +46,7 @@ class FileInput:
         """
         Input file name. Associated with sentences in generated corpus.
         """
-        return self.input_file.name
+        return self.filename_override or self.input_file.name
 
     def get_text(self) -> Generator[dict[str, str]]:
         """
@@ -109,10 +112,13 @@ class FileInput:
         return list({subcls.file_type for subcls in cls.subclasses()})
 
     @classmethod
-    def init(cls, input_file: pathlib.Path) -> Self:
+    def create(
+        cls, input_file: pathlib.Path, filename_override: str | None = None
+    ) -> Self:
         """
         Instantiate and return the appropriate input class for the specified
-        input file.
+        input file.  Takes an optional filename override parameter,
+        which is passed through to the input class.
 
         :raises ValueError: if input_file is not a supported type
         """
@@ -126,4 +132,4 @@ class FileInput:
             raise ValueError(
                 f"{input_file.suffix} is not a supported input type (must be one of {supported_types})"
             )
-        return input_cls(input_file=input_file)
+        return input_cls(input_file=input_file, filename_override=filename_override)

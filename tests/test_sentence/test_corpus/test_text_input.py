@@ -62,7 +62,6 @@ def test_get_sentences(mock_segment_text: Mock, tmp_path: pathlib.Path):
     assert isinstance(sentences, Generator)
     # consume the generator
     sentences = list(sentences)
-    print(sentences)
     assert len(sentences) == 2
 
     # expect segmentation method to be called only once
