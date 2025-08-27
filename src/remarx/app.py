@@ -89,12 +89,7 @@ def _(mo, select_input):
     input_callout_type = "success" if input_file else "warn"
 
     mo.callout(
-        mo.vstack(
-            [
-                select_input,
-                mo.md(f"**Input File:** {input_file_msg}")
-            ]
-        ),
+        mo.vstack([select_input, mo.md(f"**Input File:** {input_file_msg}")]),
         kind=input_callout_type,
     )
     return (input_file,)
@@ -213,7 +208,9 @@ def _(button, create_corpus, create_temp_input, input_file, mo, output_csv):
         spinner_msg = f"Building sentence corpus for {input_file.name}"
         with mo.status.spinner(title=spinner_msg) as _spinner:
             with create_temp_input(input_file) as temp_path:
-                create_corpus(temp_path, output_csv)
+                create_corpus(
+                    temp_path, output_csv, filename_override=input_file.name
+                )
         building_msg = f"✅ Sentence corpus saved to: {output_csv}"
 
     mo.md(building_msg).center()
