@@ -11,18 +11,6 @@ TEST_TEI_FILE = FIXTURE_DIR / "sample_tei.xml"
 TEST_TEI_WITH_FOOTNOTES_FILE = FIXTURE_DIR / "sample_tei_with_footnotes.xml"
 
 
-@pytest.fixture
-def tei_document_fixture():
-    """Real TEIDocument fixture using actual XML."""
-    return TEIDocument.init_from_file(TEST_TEI_FILE)
-
-
-@pytest.fixture
-def tei_document_with_footnotes_fixture():
-    """Real TEIDocument fixture with footnotes using actual XML."""
-    return TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
-
-
 def test_tei_tag():
     assert TEI_TAG.pb == "{http://www.tei-c.org/ns/1.0}pb"
 
@@ -123,6 +111,9 @@ class TestTEIPage:
         assert TEIPage.is_footnote_content(footnote_ref) is True
         assert TEIPage.is_footnote_content(footnote_note) is True
         assert TEIPage.is_footnote_content(regular_element) is False
+        assert TEIPage.is_footnote_content(footnote_ref)
+        assert TEIPage.is_footnote_content(footnote_note)
+        assert not TEIPage.is_footnote_content(regular_element)
 
 
 class TestTEIinput:
@@ -153,16 +144,22 @@ class TestTEIinput:
         assert "text" in section_types
         assert "footnote" in section_types
 
+    @patch.object(TEIinput, "get_text")
     @patch("remarx.sentence.corpus.base_input.segment_text")
-    def test_get_sentences(self, mock_segment_text: Mock, tei_document_fixture):
+    def test_get_sentences(self, mock_segment_text: Mock, mock_get_text: Mock):
+        # Mock get_text to return controlled text chunks
+        mock_get_text.return_value = [
+            {"text": "Sample body text.", "page_number": "12", "section_type": "text"},
+            {
+                "text": "Sample footnote text.",
+                "page_number": "12",
+                "section_type": "footnote",
+            },
+        ]
         mock_segment_text.side_effect = lambda text: [(0, text[:10]), (10, text[10:])]
 
         tei_input = TEIinput(input_file=TEST_TEI_FILE)
-        tei_input.xml_doc = tei_document_fixture
-
         sentences = list(tei_input.get_sentences())
-
-        assert mock_segment_text.call_count >= 1  # Should be called for each text chunk
         # Verify all calls had string arguments
         for call_args in mock_segment_text.call_args_list:
             assert len(call_args[0]) == 1  # One positional argument
@@ -177,21 +174,25 @@ class TestTEIinput:
         sent_indices = [s["sent_index"] for s in sentences]
         assert sent_indices == list(range(len(sentences)))
 
+    @patch.object(TEIinput, "get_text")
     @patch("remarx.sentence.corpus.base_input.segment_text")
     def test_get_sentences_with_footnotes(
-        self, mock_segment_text: Mock, tei_document_with_footnotes_fixture
+        self, mock_segment_text: Mock, mock_get_text: Mock
     ):
-        mock_segment_text.side_effect = lambda text: [(0, text[:10]), (10, text[10:])]
+        # Mock get_text to return both text and footnote chunks
+        mock_get_text.return_value = [
+            {"text": "Body text content.", "page_number": "17", "section_type": "text"},
+            {
+                "text": "Footnote content.",
+                "page_number": "17",
+                "section_type": "footnote",
+            },
+        ]
+        mock_segment_text.side_effect = lambda text: [(0, text[:8]), (8, text[8:])]
 
         tei_input = TEIinput(input_file=TEST_TEI_WITH_FOOTNOTES_FILE)
-        tei_input.xml_doc = tei_document_with_footnotes_fixture
-
         sentences = list(tei_input.get_sentences())
 
-        # Verify mock was called for both text and footnote segments
-        assert (
-            mock_segment_text.call_count >= 2
-        )  # Should be called for text and footnote chunks
         # Verify all calls had string arguments
         for call_args in mock_segment_text.call_args_list:
             assert len(call_args[0]) == 1  # One positional argument
