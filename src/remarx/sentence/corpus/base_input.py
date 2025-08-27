@@ -32,6 +32,9 @@ class FileInput:
     input_file: pathlib.Path
     "Reference to input file. Source of content for sentences."
 
+    filename_override: str = None
+    "Optional filename override, e.g. when using temporary files as input"
+
     field_names: ClassVar[tuple[str, ...]] = ("file", "offset", "text")
     "List of field names for sentences from text input files."
 
@@ -43,7 +46,7 @@ class FileInput:
         """
         Input file name. Associated with sentences in generated corpus.
         """
-        return self.input_file.name
+        return self.filename_override or self.input_file.name
 
     def get_text(self) -> Generator[dict[str, str]]:
         """

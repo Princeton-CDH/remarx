@@ -15,6 +15,30 @@ def test_subclasses():
         assert input_cls_name in subclass_names
 
 
+def test_init(tmp_path: pathlib.Path):
+    txt_file = tmp_path / "input.txt"
+    txt_input = FileInput(input_file=txt_file)
+    assert txt_input.input_file == txt_file
+
+
+def test_file_name(tmp_path: pathlib.Path):
+    txt_filename = "my_input.txt"
+    txt_file = tmp_path / txt_filename
+    txt_input = FileInput(input_file=txt_file)
+    assert txt_input.file_name == txt_filename
+
+
+def test_file_name_override(tmp_path: pathlib.Path):
+    real_txt_filename = "my_input.txt"
+    txt_file = tmp_path / "tmp_abc_input_foo.txt"
+    txt_input = FileInput(input_file=txt_file, filename_override=real_txt_filename)
+    assert txt_input.file_name == real_txt_filename
+
+
+def test_field_names(tmp_path: pathlib.Path):
+    assert FileInput.field_names == ("file", "offset", "text")
+
+
 def test_supported_types():
     # check for expected supported types
     # NOTE: checking directly to avoid importing input classes
