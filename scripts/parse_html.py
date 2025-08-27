@@ -69,7 +69,7 @@ def get_html_text(in_html: pathlib.Path) -> str:
             text += f"{tag_text}\n\n"
         elif re.fullmatch(r"h\d", tag_name):
             # Case: Headers
-            text += f"{get_tag_text(elt)}\n\n"
+            text += f"{tag_text}\n\n"
         elif tag_name == "ol":
             # Case: Ordered lists
             for i, list_elt in enumerate(elt.find_all("li", recursive=False)):
