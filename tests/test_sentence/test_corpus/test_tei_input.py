@@ -74,11 +74,21 @@ class TestTEIPage:
 
     def test_get_body_text_no_footnotes(self):
         tei_doc = TEIDocument.init_from_file(TEST_TEI_FILE)
+        # test first page
         page = tei_doc.all_pages[0]
-
+        # includes some leading whitespace from <pb> and <p> tags
+        # remove whitespace for testing for now
         body_text = page.get_body_text()
-        assert "als in der ersten" in body_text  # codespell:ignore
-        assert "Karl Marx:" not in body_text  # Should not contain footnote content
+
+        # first text content after the pb tag
+        assert body_text.startswith(
+            "als in der ersten Darstellung."  # codespell:ignore
+        )
+        # last text content after the next standard pb tag
+        assert body_text.endswith("entwickelten nur das Bild der eignen Zukunft!")
+        # should not include editorial content
+        assert "|" not in body_text
+        assert "IX" not in body_text
         assert (
             body_text == body_text.strip()
         )  # Should not contain leading or trailing whitespace
