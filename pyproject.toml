@@ -130,4 +130,4 @@ lsp = true
 allow-direct-references = true
 
 [tool.uv]
-required-version = ">=0.8.6"
+required-version = ">=0.8.4"

@@ -45,6 +45,15 @@ To launch the remarx quote finder application run the `remarx-app` command:
 uv run remarx-app
 ```
 
+### Closing quote finder app
+
+The app will not close automatically when its browser window is closed.
+To close the app:
+To close the app:
+
+1. Type control+c within the terminal where the `remarx-app` command was run
+1. Then, when prompted, type `y` followed by enter.
+
 ## Documentation
 
 Find public documentation at: [remarx Documentation](https://princeton-cdh.github.io/remarx/)
