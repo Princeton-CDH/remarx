@@ -80,14 +80,15 @@ class TestTEIPage:
         # remove whitespace for testing for now
         text = page.get_body_text()
 
+        # Should not contain leading or trailing whitespace
+        assert text == text.strip()
         # first text content after the pb tag
         assert text.startswith("als in der ersten Darstellung.")  # codespell:ignore
         # last text content after the next standard pb tag
         assert text.endswith("entwickelten nur das Bild der eignen Zukunft!")
-        # should not include edit orial content
+        # should not include editorial content
         assert "|" not in text
         assert "IX" not in text
-        assert text == text.strip()  # Should not contain leading or trailing whitespace
 
     def test_get_body_text_with_footnotes(self):
         tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
