@@ -47,8 +47,7 @@ uv run remarx-app
 
 ### Closing quote finder app
 
-The app will not close automatically when its browser window is closed.
-To close the app:
+The app will not close automatically when you close the browser window or tab.
 To close the app:
 
 1. Type control+c within the terminal where the `remarx-app` command was run
