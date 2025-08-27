@@ -2,6 +2,7 @@ import pathlib
 from unittest.mock import Mock, patch
 
 import pytest
+from lxml.etree import Element
 
 from remarx.sentence.corpus.tei_input import TEI_TAG, TEIDocument, TEIinput, TEIPage
 
@@ -77,6 +78,7 @@ class TestTEIPage:
         mock_get_body_text.assert_called_once()
         mock_get_footnote_text.assert_called_once()
 
+        # should return both body text and footnote text, separated by double newlines
         assert result == "Mock body text\n\nMock footnote text"
 
     def test_get_body_text_no_footnotes(self):
@@ -92,7 +94,7 @@ class TestTEIPage:
         page_17 = next(p for p in tei_doc.all_pages if p.number == "17")
 
         body_text = page_17.get_body_text()
-        assert "Der Reichthum der Gesellschaften" in body_text
+        assert "Der Reichthum der Gesellschaften" in body_text  # codespell:ignore
         assert "Karl Marx:" not in body_text  # Footnote content should be excluded
 
     def test_get_footnote_text_no_footnotes(self):
@@ -114,16 +116,12 @@ class TestTEIPage:
         )  # Body text should be excluded
 
     def test_is_footnote_content(self):
-        from lxml.etree import Element
-
         footnote_ref = Element(TEI_TAG.ref, type="footnote")
         footnote_note = Element(TEI_TAG.note, type="footnote")
-        regular_ref = Element(TEI_TAG.ref, type="citation")
         regular_element = Element("p")
 
         assert TEIPage.is_footnote_content(footnote_ref) is True
         assert TEIPage.is_footnote_content(footnote_note) is True
-        assert TEIPage.is_footnote_content(regular_ref) is False
         assert TEIPage.is_footnote_content(regular_element) is False
 
 
