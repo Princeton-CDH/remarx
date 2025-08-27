@@ -4,7 +4,7 @@ method for initialization of known input classes based on supported
 file types.
 
 To initialize the appropriate subclass for a supported file type,
-use [FileInput.init()][remarx.sentence.corpus.base_input.FileInput.init].
+use [FileInput.create()][remarx.sentence.corpus.base_input.FileInput.create].
 
 For a list of supported file types across all registered input classes,
 use [FileInput.supported_types()][remarx.sentence.corpus.base_input.FileInput.supported_types].
