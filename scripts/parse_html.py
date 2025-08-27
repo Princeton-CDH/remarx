@@ -26,9 +26,8 @@ def get_tag_text(tag: Tag) -> str:
         if isinstance(child_elt, NavigableString):
             out_text += child_elt
         else:
-            if child_elt.name == "a":
-                continue
-            else:
+            # Skip hyperlink tags
+            if child_elt.name != "a":
                 out_text += child_elt.get_text()
     # Combine consecutive spaces & strip leading and trailing whitespace
     return re.sub(r"  *", " ", out_text).strip()
