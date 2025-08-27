@@ -36,7 +36,7 @@ def test_file_name_override(tmp_path: pathlib.Path):
 
 
 def test_field_names(tmp_path: pathlib.Path):
-    assert FileInput.field_names == ("file", "offset", "text")
+    assert FileInput.field_names == ("file", "sent_index", "text")
 
 
 def test_supported_types():

@@ -19,7 +19,7 @@ def test_file_name(tmp_path: pathlib.Path):
 
 
 def test_field_names(tmp_path: pathlib.Path):
-    assert TextInput.field_names == ("file", "offset", "text")
+    assert TextInput.field_names == ("file", "sent_index", "text")
 
 
 def test_get_text(tmp_path: pathlib.Path):

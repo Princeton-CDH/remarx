@@ -35,7 +35,7 @@ class FileInput:
     filename_override: str = None
     "Optional filename override, e.g. when using temporary files as input"
 
-    field_names: ClassVar[tuple[str, ...]] = ("file", "offset", "text")
+    field_names: ClassVar[tuple[str, ...]] = ("file", "sent_index", "text")
     "List of field names for sentences from text input files."
 
     file_type: ClassVar[str]
