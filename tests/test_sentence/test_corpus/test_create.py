@@ -3,10 +3,11 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from remarx.sentence.corpus.base_input import FileInput
 from remarx.sentence.corpus.create import create_corpus, main
 
 
-@patch("remarx.sentence.corpus.create.FileInput")
+@patch("remarx.sentence.corpus.create.FileInput", spec=FileInput)
 def test_create_corpus(mock_file_input, tmp_path: pathlib.Path):
     # Raise error when given dir
     with pytest.raises(ValueError, match=f"Input file {tmp_path} does not exist"):
@@ -39,7 +40,7 @@ def test_create_corpus(mock_file_input, tmp_path: pathlib.Path):
     assert out_csv.read_text() == "some,field,names\na,b,c\n1,2,3\n"
 
 
-@patch("remarx.sentence.corpus.create.FileInput")
+@patch("remarx.sentence.corpus.create.FileInput", spec=FileInput)
 def test_create_corpus_filename_override(mock_file_input, tmp_path: pathlib.Path):
     # test that filename override is passed through
     input_file = tmp_path / "tmp_foo_input_bar.txt"
@@ -52,7 +53,7 @@ def test_create_corpus_filename_override(mock_file_input, tmp_path: pathlib.Path
     )
 
 
-@patch("remarx.sentence.corpus.create.create_corpus")
+@patch("remarx.sentence.corpus.create.create_corpus", spec=create_corpus)
 def test_main(mock_create_corpus):
     with patch("sys.argv", ["create_corpus.py", "input", "output"]):
         main()
