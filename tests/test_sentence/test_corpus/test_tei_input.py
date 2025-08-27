@@ -79,7 +79,7 @@ class TestTEIinput:
 
     def test_field_names(self, tmp_path: pathlib.Path):
         # includes defaults from text input and adds page number
-        assert TEIinput.field_names == ("file", "offset", "text", "page_number")
+        assert TEIinput.field_names == ("file", "sent_index", "text", "page_number")
 
     def test_get_text(self):
         tei_input = TEIinput(input_file=TEST_TEI_FILE)

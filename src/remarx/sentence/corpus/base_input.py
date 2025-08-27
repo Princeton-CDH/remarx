@@ -32,7 +32,7 @@ class FileInput:
     input_file: pathlib.Path
     "Reference to input file. Source of content for sentences."
 
-    field_names: ClassVar[tuple[str, ...]] = ("file", "offset", "text")
+    field_names: ClassVar[tuple[str, ...]] = ("file", "sent_index", "text")
     "List of field names for sentences from text input files."
 
     file_type: ClassVar[str]
