@@ -236,8 +236,7 @@ class TEIinput(FileInput):
         page number and section type ("text" or "footnote").
         Body text is yielded once per page, while each footnote is yielded individually.
 
-        :returns: Generator that yields dictionaries corresponding to text segments
-        including text content, page number, and section_type ("text" or "footnote").
+        :returns: Generator with dictionaries of text content, with page number and section_type ("text" or "footnote").
         """
         # yield body text and footnotes content chunked by page with page number
         for page in self.xml_doc.pages:

@@ -95,15 +95,15 @@ class TestTEIPage:
         page_17 = next(p for p in tei_doc.all_pages if p.number == "17")
 
         body_text = page_17.get_body_text()
-        assert "Der Reichthum der Gesellschaften" in body_text  # codespell:ignore
-        assert "Karl Marx:" not in body_text  # Footnote content should be excluded
+        assert body_text.startswith("Der Reichthum der Gesellschaften")  # codespell:ignore
+        assert "1) Karl Marx:" not in body_text  # Footnote content should be excluded
 
     def test_get_footnote_text_with_footnotes(self):
         tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
         page_17 = next(p for p in tei_doc.all_pages if p.number == "17")
 
         footnote_text = page_17.get_footnote_text()
-        assert "Karl Marx:" in footnote_text
+        assert footnote_text.startswith("1) Karl Marx:")
         assert "Nicholas Barbon" in footnote_text
         assert (
             "Der Reichthum der Gesellschaften" not in footnote_text
