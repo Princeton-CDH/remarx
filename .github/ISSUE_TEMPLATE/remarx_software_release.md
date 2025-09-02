@@ -8,10 +8,11 @@ assignees: ''
 
 ## release prep
 
-### acceptance testing prep
-
 - [ ] Pull updated copies of the develop and main branches
 - [ ] Use git flow to create a new release branch with the appropriate version (e.g., `git flow release start 0.5`)
+
+### prep release candidate for acceptance testing
+
 - [ ] Update the version number to the appropriate release candidate number (e.g., 0.5.rc1)
 - [ ] Update release version to appropriate number (for Python apps, set to final version without any `-pre` or `-dev` tags).
 - [ ] Create a draft PR (since it should not be merged)
