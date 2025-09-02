@@ -106,13 +106,7 @@ class TEIPage(BaseTEIXmlObject):
             parent = text.getparent()
 
             # stop iterating when we hit the next page break;
-            if (
-                parent != self.node  # not the current pb tag
-                and parent.tag == TEI_TAG.pb
-                # ignore alternate edition page breaks (MEGA specific)
-                and parent.get("ed") is None
-                and parent == (self.next_page.node if self.next_page else None)
-            ):
+            if self.next_page and parent == self.next_page.node:
                 break
 
             # Skip this text node if it's inside a footnote tag
@@ -150,21 +144,13 @@ class TEIPage(BaseTEIXmlObject):
         """
         Get all footnote content as a single string, with footnotes separated by double newlines.
         """
-        footnotes = self.get_page_footnotes()
-        if not footnotes:
-            return ""
-        # consolidate whitespace once after joining all footnotes
-        return re.sub(
-            r"\s*\n\s*",
-            "\n",
-            "\n\n".join(str(footnote).strip() for footnote in footnotes),
-        )
+        return "\n\n".join(self.get_individual_footnotes())
 
     def __str__(self) -> str:
         """
         Page text contents as a string, with body text and footnotes.
         """
-        return f"{self.get_body_text()}\n\n{self.get_footnote_text()}".strip()
+        return f"{self.get_body_text()}\n\n{self.get_footnote_text()}"
 
 
 class TEIDocument(BaseTEIXmlObject):
@@ -248,6 +234,9 @@ class TEIinput(FileInput):
                     "section_type": SectionType.TEXT.value,
                 }
 
+            # Yield each footnote individually to enable separate sentence segmentation
+            # and analysis of footnote content, rather than treating all footnotes
+            # on a page as a single text block
             for footnote_text in page.get_individual_footnotes():
                 yield {
                     "text": footnote_text,

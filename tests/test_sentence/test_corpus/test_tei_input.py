@@ -91,6 +91,7 @@ class TestTEIPage:
         assert "IX" not in text
 
     def test_get_body_text_with_footnotes(self):
+        # test a sample page with footnotes to confirm footnote contents are excluded
         tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
         page_17 = next(p for p in tei_doc.all_pages if p.number == "17")
 
@@ -109,7 +110,18 @@ class TestTEIPage:
             "Der Reichthum der Gesellschaften" not in footnote_text
         )  # Body text should be excluded
 
+    def test_get_footnote_text_delimiter(self):
+        # Test that footnotes are properly separated by double newlines
+        tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
+        page_17 = next(p for p in tei_doc.all_pages if p.number == "17")
+
+        footnote_text = page_17.get_footnote_text()
+        # Check that double newlines are present between footnotes
+        # The fixture should have multiple footnotes to test this properly
+        assert "\n\n" in footnote_text or len(list(page_17.get_individual_footnotes())) <= 1
+
     def test_is_footnote_content(self):
+        # Test direct footnote elements
         footnote_ref = Element(TEI_TAG.ref, type="footnote")
         footnote_note = Element(TEI_TAG.note, type="footnote")
         regular_element = Element("p")
@@ -117,6 +129,24 @@ class TestTEIPage:
         assert TEIPage.is_footnote_content(footnote_ref)
         assert TEIPage.is_footnote_content(footnote_note)
         assert not TEIPage.is_footnote_content(regular_element)
+
+        # Test nested elements within footnotes 
+        # Create sample XML tree to mimic the structure of a footnote: 
+        # <note type="footnote"><p><em>text</em></p></note>
+        footnote_container = Element(TEI_TAG.note, type="footnote") # create a footnote container element
+        paragraph = Element("p") # create a paragraph element
+        emphasis = Element("em") # create an emphasis element
+        
+        footnote_container.append(paragraph) # nest the paragraph element within the footnote container
+        paragraph.append(emphasis) # nest the emphasis element within the paragraph element
+        
+        # Test that nested elements are correctly identified as footnote content
+        assert TEIPage.is_footnote_content(paragraph)
+        assert TEIPage.is_footnote_content(emphasis)
+        
+        # Test element outside footnote structure
+        standalone_p = Element("p")
+        assert not TEIPage.is_footnote_content(standalone_p)
 
 
 class TestTEIinput:
