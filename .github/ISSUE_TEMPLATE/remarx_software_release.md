@@ -14,10 +14,9 @@ assignees: ''
 ### prep release candidate for acceptance testing
 
 - [ ] Update the version number to the appropriate release candidate number (e.g., `0.5.rc1`)
-- [ ] Update release version to appropriate number (for Python apps, set to final version without any `-pre` or `-dev` tags).
 - [ ] Create a draft PR (since it should not be merged)
 - [ ] Review the changelog to make sure that all features, changes, bugfixes, etc included in the release are documented. You may want to review the git revision history to be sure you've captured everything.
-- [ ] Review the README to ensure that its contents are up-to-date
+- [ ] Review the README to ensure that its contents are up to date
 - [ ] Check python requirements for any internal dependencies that should be released (or at least pinned to a specific git commit)
 - [ ] Confirm that all checks for the draft PR pass (e.g., unit tests, code coverage checks, etc.)
 - [ ] Review code documentation to make sure it is up to date. If the database has changed, generate and include current schema documentation images.
