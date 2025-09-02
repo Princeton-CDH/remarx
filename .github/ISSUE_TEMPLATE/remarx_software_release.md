@@ -25,16 +25,16 @@ assignees: ''
 
 ### acceptance testing fails
 
-- [ ] Increment the version number to the next release candidate (e.g., `0.5.rc1` --> `0.5.rc2`)
+- [ ] Increment the version number to the next release candidate (e.g., `0.5.rc1` → `0.5.rc2`)
 - [ ] Address the changes raised in acceptance testing and repeat the previous section.
 
 ### acceptance testing passes
 
-- [ ] Set the final release version number (i.e., remove the rc suffix)
+- [ ] Set the final release version number (e.g., `0.5.rc1` → `0.5`)
 - [ ] Use git flow to merge the release branch: `git flow release finish`
 
 ## after release
 
-- [ ] Increase the develop branch version so it is set to the next expected release (i.e., if you just released 0.5 then develop will probably be 0.6-dev unless you are working on a major update, in which case it will be 1.0-dev)
+- [ ] Increase the develop branch version so it is set to the next expected release (i.e., if you just released `0.5` then develop will probably be `0.6-dev` unless you are working on a major update, in which case it will be `1.0-dev`)
 - [ ] Push all updates to GitHub (main branch, develop branch, tags)
 - [ ] Clean up any release branches on GitHub
