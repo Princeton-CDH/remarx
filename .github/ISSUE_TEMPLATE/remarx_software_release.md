@@ -1,7 +1,7 @@
 ---
-name: `remarx` release checklist
+name: remarx release checklist
 about: Checklist for releasing new versions of remarx
-title: 'remarx release checklist'
+title: remarx release checklist
 labels: chore
 assignees: ''
 ---
