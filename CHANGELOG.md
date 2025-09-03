@@ -6,9 +6,9 @@
 
 - Add `segment_text` function for breaking text into sentences with character-level indices
 - Add `corpus` submodule with:
-  - input classes for text and TEI/XML
-  - a factory method to initialize appropriate input class based on file type
-  - a method and script for creating a sentence corpus
+    - input classes for text and TEI/XML
+    - a factory method to initialize appropriate input class based on file type
+    - a method and script for creating a sentence corpus
 
 ### Application
 

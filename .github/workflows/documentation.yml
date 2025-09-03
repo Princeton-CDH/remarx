@@ -1,21 +1,17 @@
 name: Deploy Documentation
-
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: read
   pages: write
   id-token: write
-
 concurrency:
   group: "pages"
   cancel-in-progress: false
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -33,7 +29,6 @@ jobs:
       - uses: actions/upload-pages-artifact@v4
         with:
           path: './site'
-
   deploy:
     if: github.ref == 'refs/heads/main'
     environment:
