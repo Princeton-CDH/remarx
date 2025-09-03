@@ -3,10 +3,11 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from remarx.sentence.corpus.base_input import FileInput
 from remarx.sentence.corpus.create import create_corpus, main
 
 
-@patch("remarx.sentence.corpus.create.FileInput")
+@patch("remarx.sentence.corpus.create.FileInput", spec=FileInput)
 def test_create_corpus(mock_file_input, tmp_path: pathlib.Path):
     # Raise error when given dir
     with pytest.raises(ValueError, match=f"Input file {tmp_path} does not exist"):
@@ -24,7 +25,7 @@ def test_create_corpus(mock_file_input, tmp_path: pathlib.Path):
     out_csv = tmp_path / "out.csv"
     ## Mock input text
     mock_input = Mock()
-    mock_file_input.init.return_value = mock_input
+    mock_file_input.create.return_value = mock_input
     mock_input.field_names = ["some", "field", "names"]
     mock_input.get_sentences.return_value = [
         {"some": "a", "field": "b", "names": "c"},
@@ -34,12 +35,25 @@ def test_create_corpus(mock_file_input, tmp_path: pathlib.Path):
     create_corpus(input_file, out_csv)
 
     assert out_csv.is_file()
-    mock_file_input.init.assert_called_once_with(input_file)
+    mock_file_input.create.assert_called_once_with(input_file, filename_override=None)
     mock_input.get_sentences.assert_called_once_with()
     assert out_csv.read_text() == "some,field,names\na,b,c\n1,2,3\n"
 
 
-@patch("remarx.sentence.corpus.create.create_corpus")
+@patch("remarx.sentence.corpus.create.FileInput", spec=FileInput)
+def test_create_corpus_filename_override(mock_file_input, tmp_path: pathlib.Path):
+    # test that filename override is passed through
+    input_file = tmp_path / "tmp_foo_input_bar.txt"
+    input_file.touch()
+    out_csv = tmp_path / "out.csv"
+    real_filename = "input.txt"
+    create_corpus(input_file, out_csv, filename_override=real_filename)
+    mock_file_input.create.assert_called_once_with(
+        input_file, filename_override=real_filename
+    )
+
+
+@patch("remarx.sentence.corpus.create.create_corpus", spec=create_corpus)
 def test_main(mock_create_corpus):
     with patch("sys.argv", ["create_corpus.py", "input", "output"]):
         main()

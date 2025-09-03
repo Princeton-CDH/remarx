@@ -128,3 +128,6 @@ lsp = true
 [tool.hatch.metadata]
 # So python type stubs can be installed from GitHub (i.e., direct reference)
 allow-direct-references = true
+
+[tool.uv]
+required-version = ">=0.8.6"

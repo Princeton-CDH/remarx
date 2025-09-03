@@ -19,7 +19,7 @@ def test_file_name(tmp_path: pathlib.Path):
 
 
 def test_field_names(tmp_path: pathlib.Path):
-    assert TextInput.field_names == ("file", "offset", "text")
+    assert TextInput.field_names == ("file", "sent_index", "text")
 
 
 def test_get_text(tmp_path: pathlib.Path):
@@ -62,7 +62,6 @@ def test_get_sentences(mock_segment_text: Mock, tmp_path: pathlib.Path):
     assert isinstance(sentences, Generator)
     # consume the generator
     sentences = list(sentences)
-    print(sentences)
     assert len(sentences) == 2
 
     # expect segmentation method to be called only once

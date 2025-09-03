@@ -160,7 +160,7 @@ class TestTEIinput:
         # includes defaults from text input and adds page number and section type
         assert TEIinput.field_names == (
             "file",
-            "offset",
+            "sent_index",
             "text",
             "page_number",
             "section_type",
