@@ -19,6 +19,7 @@ they are found as available input classes.
 import pathlib
 from collections.abc import Generator
 from dataclasses import dataclass
+from enum import StrEnum
 from functools import cached_property
 from typing import Any, ClassVar, Self
 
@@ -133,3 +134,13 @@ class FileInput:
                 f"{input_file.suffix} is not a supported input type (must be one of {supported_types})"
             )
         return input_cls(input_file=input_file, filename_override=filename_override)
+
+
+class SectionType(StrEnum):
+    """Section types declaration, for distinguishing different text sections within corpus documents."""
+
+    TEXT = "text"
+    """Body text content from the document."""
+
+    FOOTNOTE = "footnote"
+    """Footnote content extracted from the document."""

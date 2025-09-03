@@ -12,10 +12,10 @@ from dataclasses import dataclass, field
 from functools import cached_property
 from typing import ClassVar, NamedTuple, Self
 
-from lxml.etree import XMLSyntaxError
+from lxml.etree import XMLSyntaxError, _Element
 from neuxml import xmlmap
 
-from remarx.sentence.corpus.text_input import FileInput
+from remarx.sentence.corpus.base_input import FileInput, SectionType
 
 TEI_NAMESPACE = "http://www.tei-c.org/ns/1.0"
 
@@ -53,26 +53,65 @@ class TEIPage(BaseTEIXmlObject):
     text_nodes = xmlmap.StringListField("following::text()")
     "list of all text nodes following this tag"
 
-    def text_contents(self) -> Generator[str]:
+    # fetch footnotes after the current page break; will filter them in Python later
+    # pb is a delimiter (not a container), so "following::note" returns all later footnotes
+    following_footnotes = xmlmap.NodeListField(
+        "following::t:note[@type='footnote']", xmlmap.XmlObject
+    )
+    "list of footnote elements within this page and following pages"
+
+    next_page = xmlmap.NodeField(
+        "following::t:pb[not(@ed)][1]",
+        "self",
+    )
+    "the next standard page break after this one, or None if this is the last page"
+
+    @staticmethod
+    def is_footnote_content(el: _Element) -> bool:
         """
-        Generator of text content on this page, between the current
-        and following page begin tags.  MEGA specific logic:
-        ignores page indicators for the manuscript edition
-        (<pb> tags with ed="manuscript"); assumes standard pb tags have no edition.
+        Helper function that checks if an element or any of its ancestors is footnote content.
         """
-        # for now, ignore partial content, footnotes, hyphenation, etc
+        if (
+            el.tag in [TEI_TAG.ref, TEI_TAG.note]
+            and el.attrib.get("type") == "footnote"
+        ):
+            return True
+        return any(
+            TEIPage.is_footnote_content(ancestor) for ancestor in el.iterancestors()
+        )
+
+    def get_page_footnotes(self) -> list[xmlmap.XmlObject]:
+        """
+        Filters footnotes to keep only the footnotes that belong to this page.
+        Only includes footnotes that occur between this pb and the next standard pb[not(@ed)].
+        """
+        page_footnotes: list[xmlmap.XmlObject] = []
+
+        for footnote in self.following_footnotes:
+            # If we have a next page and this footnote belongs to it, we're done
+            if self.next_page and footnote in self.next_page.following_footnotes:
+                break
+            page_footnotes.append(footnote)
+
+        return page_footnotes
+
+    def get_body_text(self) -> str:
+        """
+        Extract body text content for this page, excluding footnotes and editorial content.
+        """
+        body_text_parts = []
         for text in self.text_nodes:
             # text here is an lxml smart string, which preserves context
             # in the xml tree and is associated with a parent tag.
             parent = text.getparent()
+
             # stop iterating when we hit the next page break;
-            if (
-                parent != self.node  # not the current pb tag
-                and parent.tag == TEI_TAG.pb
-                # ignore alternate edition page breaks (MEGA specific)
-                and parent.get("ed") is None
-            ):
+            if self.next_page and parent == self.next_page.node:
                 break
+
+            # Skip this text node if it's inside a footnote tag
+            if self.is_footnote_content(parent):
+                continue
 
             # omit editorial content (e.g. original page numbers)
             if (
@@ -83,15 +122,35 @@ class TEIPage(BaseTEIXmlObject):
                 # OR if text comes immediately after (is_tail) and is whitespace only
                 continue
 
-            # consolidate whitespace if it includes a newline
-            # (i.e., space between indented tags in the XML)
-            yield re.sub(r"\s*\n\s*", "\n", text)
+            body_text_parts.append(text)
+
+        # consolidate whitespace once after joining all parts
+        # (i.e., space between indented tags in the XML)
+        return re.sub(r"\s*\n\s*", "\n", "".join(body_text_parts)).strip()
+
+    def get_individual_footnotes(self) -> Generator[str]:
+        """
+        Get individual footnote content as a generator.
+        Yields each footnote's text content individually as a separate string element.
+        Each yielded element corresponds to one complete footnote from the page.
+        """
+        for footnote in self.get_page_footnotes():
+            footnote_text = str(footnote).strip()
+            # consolidate whitespace for footnotes
+            footnote_text = re.sub(r"\s*\n\s*", "\n", footnote_text)
+            yield footnote_text
+
+    def get_footnote_text(self) -> str:
+        """
+        Get all footnote content as a single string, with footnotes separated by double newlines.
+        """
+        return "\n\n".join(self.get_individual_footnotes())
 
     def __str__(self) -> str:
         """
-        Page text contents as a string
+        Page text contents as a string, with body text and footnotes.
         """
-        return "".join(self.text_contents())
+        return f"{self.get_body_text()}\n\n{self.get_footnote_text()}"
 
 
 class TEIDocument(BaseTEIXmlObject):
@@ -137,7 +196,11 @@ class TEIinput(FileInput):
     xml_doc: TEIDocument = field(init=False)
     "Parsed XML document; initialized from inherited input_file"
 
-    field_names: ClassVar[tuple[str, ...]] = (*FileInput.field_names, "page_number")
+    field_names: ClassVar[tuple[str, ...]] = (
+        *FileInput.field_names,
+        "page_number",
+        "section_type",
+    )
     "List of field names for sentences from TEI XML input files"
 
     file_type = ".xml"
@@ -154,12 +217,28 @@ class TEIinput(FileInput):
 
     def get_text(self) -> Generator[dict[str, str]]:
         """
-        Get document content as plain text. Chunked by page, dictionary
-        includes page number.
+        Get document content as plain text. The document's content is yielded in segments
+        with each segment corresponding to a dictionary of containing its text content,
+        page number and section type ("text" or "footnote").
+        Body text is yielded once per page, while each footnote is yielded individually.
 
-        :returns: Generator with a dictionary of text content by page,
-        with page number.
+        :returns: Generator with dictionaries of text content, with page number and section_type ("text" or "footnote").
         """
-        # yield body text content chunked by page with page number
+        # yield body text and footnotes content chunked by page with page number
         for page in self.xml_doc.pages:
-            yield {"text": str(page), "page_number": page.number}
+            body_text = page.get_body_text()
+            if body_text:
+                yield {
+                    "text": body_text,
+                    "page_number": page.number,
+                    "section_type": SectionType.TEXT.value,
+                }
+
+            # Yield each footnote individually to enforce separate sentence segmentation 
+            # so that separate footnotes cannot be combined into a single sentence by segmentation.
+            for footnote_text in page.get_individual_footnotes():
+                yield {
+                    "text": footnote_text,
+                    "page_number": page.number,
+                    "section_type": SectionType.FOOTNOTE.value,
+                }
