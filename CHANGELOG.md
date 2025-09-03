@@ -17,3 +17,4 @@
 ### Documentation
 
 - Set up Mkdocs for documentation
+- Add GitHub Pages deployment workflow for automatic documentation publishing
