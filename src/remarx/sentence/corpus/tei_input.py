@@ -234,8 +234,8 @@ class TEIinput(FileInput):
                     "section_type": SectionType.TEXT.value,
                 }
 
-            # Yield each footnote individually to enable separate sentence segmentation 
-            # of footnote content, rather than treating all footnotes on a page as a single chunk.
+            # Yield each footnote individually to enforce separate sentence segmentation 
+            # so that separate footnotes cannot be combined into a single sentence by segmentation.
             for footnote_text in page.get_individual_footnotes():
                 yield {
                     "text": footnote_text,
