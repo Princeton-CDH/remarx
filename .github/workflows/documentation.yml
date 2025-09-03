@@ -1,9 +1,9 @@
 name: Deploy Documentation
 on:
   push:
-    branches: [main]
+    branches: [main, develop, release]
   pull_request:
-    branches: [main]
+    branches: [main, develop, release]
   workflow_dispatch:
 permissions:
   contents: read
