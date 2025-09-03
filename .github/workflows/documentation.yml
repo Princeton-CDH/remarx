@@ -1,4 +1,4 @@
-name: Deploy Documentation to GitHub Pages
+name: Build and Deploy Documentation to GitHub Pages
 on:
   push:
     branches: [main, develop, "release/*"]
@@ -30,7 +30,7 @@ jobs:
         with:
           path: './site'
   deploy:
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/'))
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
