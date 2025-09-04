@@ -13,7 +13,7 @@ assignees: ''
 
 ### prep release candidate for acceptance testing
 
-- [ ] Update the version number to the appropriate release candidate number (e.g., `0.5.rc1`)
+- [ ] Update the version number to the appropriate release candidate number (e.g., `0.5rc1`)
 - [ ] Create a draft PR (since it should not be merged)
 - [ ] Review the changelog to make sure that all features, changes, bugfixes, etc included in the release are documented. You may want to review the git revision history to be sure you've captured everything.
 - [ ] Review the README to make sure that its contents are up to date
@@ -23,12 +23,12 @@ assignees: ''
 
 ### acceptance testing fails
 
-- [ ] Increment the version number to the next release candidate (e.g., `0.5.rc1` → `0.5.rc2`)
+- [ ] Increment the version number to the next release candidate (e.g., `0.5rc1` → `0.5rc2`)
 - [ ] Address the changes raised in acceptance testing and repeat the previous section.
 
 ### acceptance testing passes
 
-- [ ] Set the final release version number (e.g., `0.5.rc1` → `0.5`)
+- [ ] Set the final release version number (e.g., `0.5rc1` → `0.5`)
 - [ ] Use git flow to finish the release (merge release branch into both main and develop, create a tag, remove the release branch, etc.). (`git flow release finish 0.5`)
 
 ## after release
