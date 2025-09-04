@@ -20,7 +20,6 @@ assignees: ''
 - [ ] Check python requirements for any internal dependencies that should be released (or at least pinned to a specific git commit)
 - [ ] Confirm that all checks for the draft PR pass (e.g., unit tests, code coverage checks)
 - [ ] Review code documentation to make sure it is up to date.
-- [ ] Use git flow to finish the release (merge release branch into both main and develop, create a tag, remove the release branch, etc.). (`git flow release finish 0.5`)
 
 ### acceptance testing fails
 
@@ -30,7 +29,7 @@ assignees: ''
 ### acceptance testing passes
 
 - [ ] Set the final release version number (e.g., `0.5.rc1` → `0.5`)
-- [ ] Use git flow to merge the release branch: `git flow release finish`
+- [ ] Use git flow to finish the release (merge release branch into both main and develop, create a tag, remove the release branch, etc.). (`git flow release finish 0.5`)
 
 ## after release
 
