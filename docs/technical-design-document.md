@@ -103,9 +103,10 @@ flowchart LR
   classDef output  fill:#ffffff,stroke:#111827,stroke-width:1.5px,rx:8,ry:8;
   classDef invis   fill:transparent,stroke:transparent;
 
-  A["MEGAdigital<br/>Texts<br/>(XML)"]:::source --> E
+
   B["Communist<br/>Manifesto<br/>(HTML)"]:::source --> E
   C["DNZ<br/>Texts<br/>(XML)"]:::source --> E
+  A["MEGAdigital<br/>Texts<br/>(XML)"]:::source --> E
   D["Other<br/>Plaintext<br/>(TXT)"]:::source -.-> E
 
   E["sentence<br/>corpus<br/>builder"]:::builder
