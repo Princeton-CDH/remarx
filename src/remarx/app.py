@@ -243,13 +243,14 @@ def _(mo, original_csv_browser, reuse_csv_browser):
     reuse_msg = f"{reuse_count} file(s) selected" if reuse_count > 0 else "No files selected"
 
     original_callout_type = "success" if original_count > 0 else "warn"
-    reuse_callout_type = "success" if reuse_count > 0 else "warn"
+    reuse_callout_type = "success" if reuse_count > 0 else "info" # use a different color
 
     # Create side-by-side file browser interface
     quotation_file_selection_ui = mo.hstack([
         mo.callout(
             mo.vstack([
-                mo.md("**📄 Original Text CSV Files**").center(),
+                mo.md("# 🗂").center(),
+                mo.md("**Original Text CSV Files**").center(),
                 mo.md("*Select sentence corpus files for original texts*").center(),
                 original_csv_browser,
                 mo.md(f"**Selected:** {original_msg}")
@@ -258,7 +259,8 @@ def _(mo, original_csv_browser, reuse_csv_browser):
         ),
         mo.callout(
             mo.vstack([
-                mo.md("**♻️ Reuse Text CSV Files**").center(),
+                mo.md("# ♻️").center(),
+                mo.md("**Reuse Text CSV Files**").center(),
                 mo.md("*Select sentence corpus files for reuse texts*").center(),
                 reuse_csv_browser,
                 mo.md(f"**Selected:** {reuse_msg}")
@@ -289,10 +291,7 @@ def _(mo, original_csvs, reuse_csvs, quotation_file_selection_ui):
 
         mo.md(
             """
-            **2. Select Output Location**
-
-            **Coming Soon!**
-            This section will allow you to:
+            **More features coming soon!**
 
             - Configure detection parameters
             - Run quotation analysis
