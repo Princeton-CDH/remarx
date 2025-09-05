@@ -265,7 +265,7 @@ def _(mo, original_csv_browser, reuse_csv_browser):
             ]),
             kind=reuse_callout_type,
         )
-    ], widths="equal", gap=1.0)
+    ], widths="equal", gap=1.2)
 
     return (original_csvs, reuse_csvs, quotation_file_selection_ui)
 
@@ -281,9 +281,7 @@ def _(mo, original_csvs, reuse_csvs, quotation_file_selection_ui):
 
             **1. Select Input CSV Files**
 
-            Browse and select multiple CSV files for each category:
-            - **Original Text CSV Files**: Sentence corpus files for original texts
-            - **Reuse Text CSV Files**: Sentence corpus files for texts that potentially reuse content
+            Browse and select one or multiple CSV files for each category:
             """
         ).style(width="100%"),
 
