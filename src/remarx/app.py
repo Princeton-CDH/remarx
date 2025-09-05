@@ -258,7 +258,7 @@ def _(mo, original_csv_browser, reuse_csv_browser):
         ),
         mo.callout(
             mo.vstack([
-                mo.md("**🔎 Reuse Text CSV Files**").center(),
+                mo.md("**♻️ Reuse Text CSV Files**").center(),
                 mo.md("*Select sentence corpus files for reuse texts*").center(),
                 reuse_csv_browser,
                 mo.md(f"**Selected:** {reuse_msg}")
