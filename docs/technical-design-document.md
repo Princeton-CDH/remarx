@@ -112,8 +112,6 @@ flowchart LR
   E --> F["Original<br/>Sentences<br/>(CSV)"]:::corpus
   E --> G["Reuse<br/>Sentences<br/>(CSV)"]:::corpus
 
-
-
   F -.-> K
 
   subgraph CP["core pipeline"]
@@ -129,10 +127,7 @@ flowchart LR
   F --> I
   G --> I
 
-
   G -.-> K
-
-
 
 ```
 
@@ -176,7 +171,32 @@ The core pipeline can be broken down into two key components:
 
 ### Sentence Corpus Builder
 
-This optional component is a standalone python program that should be run locally. It is separate from the core software, and will not be included within the application interface.
+<span id="s-scb-standalone"><mark>This optional component is a standalone python program that should be run locally. It is separate from the core software, and will not be included within the application interface.</mark></span>
+<sup>↘︎ <a href="#c-scb">[read comments]</a></sup>
+
+<!-- Google Doc comments -->
+
+<details id="c-scb">
+  <summary>Comments</summary>
+  <ul>
+    <li><strong>Laure Thompson · 4:32 PM · Jul 29</strong><br>
+        @rkoeser@princeton.edu Does this seem reasonable?</li>
+    <li><strong>Laure Thompson · 4:33 PM · Jul 29</strong><br>
+        If not, it feels like a separate notebook to me.</li>
+    <li><strong>Rebecca Koeser · 4:36 PM · Jul 29</strong><br>
+        I think we need a notebook interface to this for our team.<br>
+        I would rather do one notebook - multiple seems like potential for confusion.<br>
+        Maybe we can use tabs or accordion?<br>
+        Separate notebook if needed</li>
+    <li><strong>Laure Thompson · 4:36 PM · Jul 29</strong><br>
+        my understanding was that tabs were separate notebooks within the marimo interface</li>
+    <li><strong>Laure Thompson · 4:37 PM · Jul 29</strong><br>
+        ...but I also acknowledge this is my preference for keeping things that are independent programs separate</li>
+  </ul>
+  <a href="#s-scb-standalone">↑ back to context</a>
+</details>
+
+<br>
 
 This program extracts sentences from some number of input texts and compiles them into a single sentence-level corpus CSV file. It can be broken into two core stages: text extraction and sentence segmentation.
 
@@ -242,14 +262,26 @@ We aim for data compilation to be done without custom development effort, and wi
 
 A CSV file with each row corresponding to a single sentence in either an original or reuse text. This corpus may include additional data (e.g., document metadata for citation); this will be ignored by the system but preserved and passed through in the generated corpus.
 
-| **Field Name** | **Description**                                               | **Type** | **Required / Optional** | **Reason**                                                 |
-| -------------- | ------------------------------------------------------------- | -------- | ----------------------- | ---------------------------------------------------------- |
-| id             | Unique identifier for each sentence                           | String   | Required                | For tracking, reference                                    |
-| text           | Sentence text content                                         | String   | Required                | For quote detection                                        |
-| doc            | Corresponding document filename                               | String   | Required                | For tracking, reference, metadata linking                  |
-| sent_index     | Sentence-level index within document (0-based indexing)       | Integer  | Required                | For identifying sequential sentences for quote compilation |
-| section_type   | What text section the sentence comes from (text vs. footnote) | enum     | Optional                | For reference and debugging                                |
-| multi_page     | Indicates whether the sentence spans multiple pages.          | Boolean  | Required                | For reference and debugging                                |
+| **Field Name**                                                                             | **Description**                                               | **Type** | **Required / Optional** | **Reason**                                                 |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------- | -------- | ----------------------- | ---------------------------------------------------------- |
+| id                                                                                         | Unique identifier for each sentence                           | String   | Required                | For tracking, reference                                    |
+| text                                                                                       | Sentence text content                                         | String   | Required                | For quote detection                                        |
+| <span id="f-doc"><mark>doc</mark></span> <sup>↘︎ <a href="#c-doc">[read comments]</a></sup> | Corresponding document filename                               | String   | Required                | For tracking, reference, metadata linking                  |
+| sent_index                                                                                 | Sentence-level index within document (0-based indexing)       | Integer  | Required                | For identifying sequential sentences for quote compilation |
+| section_type                                                                               | What text section the sentence comes from (text vs. footnote) | enum     | Optional                | For reference and debugging                                |
+| multi_page                                                                                 | Indicates whether the sentence spans multiple pages.          | Boolean  | Required                | For reference and debugging                                |
+
+<!-- Google Doc comments -->
+
+<details id="c-doc">
+  <summary>Comments</summary>
+  <ul>
+    <li><strong>Rebecca Koeser · 2:51 PM · Aug 20</strong><br>
+        renaming to file; there may be a meta-level document id or title that will be in the final output</li>
+  </ul>
+  <a href="#f-doc">↑ back to context</a>
+</details>
+<br>
 
 The sentence corpora produced by the Sentence Corpus Builder program must include one or more fields that link the sentence back to its location within the corresponding input document. This will vary by the input format (e.g., MEGAdigital: page and line number; plaintext: starting character index).
 
@@ -430,21 +462,47 @@ We will use Ruff’s formatter to enforce a consistent code format. The formatte
 
 We will use Ruff’s linter using the following rule sets:
 
-| **Rule(s)** | **Name**              | **Reason**                                            |
-| ----------- | --------------------- | ----------------------------------------------------- |
-| F           | pyflakes              | Ruff default                                          |
-| E4, E7, E9  | pycodestyle subset    | Ruff default; subset compatible with Ruff’s formatter |
-| I           | isort                 | Import sorting / organization                         |
-| ANN         | flake8-annotations    | Checks type annotations                               |
-| PTH         | flake8-use-pathlib    | Ensure pathlib usage instead of os.path               |
-| B           | flake8-bugbear        | Flags likely bugs and design problems                 |
-| D           | pydocstyle subset     | Checks docstrings                                     |
-| PERF        | perflint              | Checks for some performance anti-patterns             |
-| SIM         | flake8-simplify       | Looks for code simplification                         |
-| C4          | flake8-comprehensions | Checks comprehension patterns                         |
-| RUF         | ruff-specific rules   | Potentially helpful?                                  |
-| NPY         | numpy-specific rules  | For checking numpy usage                              |
-| UP          | pyupgrade             | Automatically update syntax to newer form             |
+| **Rule(s)** | **Name**                                                 | **Reason**                                                                                       |
+| ----------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| F           | pyflakes                                                 | Ruff default                                                                                     |
+| E4, E7, E9  | pycodestyle subset                                       | Ruff default; subset compatible with Ruff’s formatter                                            |
+| I           | isort                                                    | Import sorting / organization                                                                    |
+| ANN         | flake8-annotations                                       | Checks type annotations                                                                          |
+| PTH         | flake8-use-pathlib                                       | Ensure pathlib usage instead of os.path                                                          |
+| B           | flake8-bugbear                                           | Flags likely bugs and design problems                                                            |
+| D           | <span id="r-d"><mark>pydocstyle subset</mark></span>     | <span><mark>Checks docstrings</mark></span> <sup>↘︎ <a href="#c-d">[read comments]</a></sup>      |
+| PERF        | perflint                                                 | Checks for some performance anti-patterns                                                        |
+| SIM         | flake8-simplify                                          | Looks for code simplification                                                                    |
+| C4          | flake8-comprehensions                                    | Checks comprehension patterns                                                                    |
+| RUF         | <span id="r-ruf"><mark>ruff-specific rules</mark></span> | <span><mark>Potentially helpful?</mark></span> <sup>↘︎ <a href="#c-ruf">[read comments]</a></sup> |
+| NPY         | numpy-specific rules                                     | For checking numpy usage                                                                         |
+| UP          | pyupgrade                                                | Automatically update syntax to newer form                                                        |
+
+<!-- Google Doc comments -->
+
+<details id="c-d">
+  <summary>Comments</summary>
+  <ul>
+    <li><strong>Rebecca Koeser · 3:53 PM · Jul 29</strong><br>
+        sounds useful to me as long as it works with format mkdocs expects/uses</li>
+    <li><strong>Laure Thompson · 4:23 PM · Jul 29</strong><br>
+        Good point; I mostly thought we should only use a subset because it makes assumptions about what needs to be contained within a method docstring that I don't think we care about.</li>
+    <li><strong>Laure Thompson · 4:23 PM · Jul 29</strong><br>
+        e.g., <a href="https://docs.astral.sh/ruff/rules/missing-blank-line-after-summary/">https://docs.astral.sh/ruff/rules/missing-blank-line-after-summary/</a></li>
+  </ul>
+  <a href="#r-d">↑ back to context</a>
+</details>
+
+<details id="c-ruf">
+  <summary>Comments</summary>
+  <ul>
+    <li><strong>Rebecca Koeser · 3:54 PM · Jul 29</strong><br>
+        I'm game to try it. But if we find that any of these are too picky and causing us grief, let's turn them off / turn them down.</li>
+    <li><strong>Laure Thompson · 4:24 PM · Jul 29</strong><br>
+        absolutely! it's very easy to specify specific rules we'd like to skip.</li>
+  </ul>
+  <a href="#r-ruf">↑ back to context</a>
+</details>
 
 ### Notebook Development
 
