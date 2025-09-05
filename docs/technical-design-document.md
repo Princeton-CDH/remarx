@@ -263,14 +263,14 @@ We aim for data compilation to be done without custom development effort, and wi
 
 A CSV file with each row corresponding to a single sentence in either an original or reuse text. This corpus may include additional data (e.g., document metadata for citation); this will be ignored by the system but preserved and passed through in the generated corpus.
 
-| **Field Name**                                                                             | **Description**                                               | **Type** | **Required / Optional** | **Reason**                                                 |
-| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------- | -------- | ----------------------- | ---------------------------------------------------------- |
-| id                                                                                         | Unique identifier for each sentence                           | String   | Required                | For tracking, reference                                    |
-| text                                                                                       | Sentence text content                                         | String   | Required                | For quote detection                                        |
-| <span id="f-doc"><mark>doc</mark></span> <sup>↘︎ <a href="#c-doc">[read comments]</a></sup> | Corresponding document filename                               | String   | Required                | For tracking, reference, metadata linking                  |
-| sent_index                                                                                 | Sentence-level index within document (0-based indexing)       | Integer  | Required                | For identifying sequential sentences for quote compilation |
-| section_type                                                                               | What text section the sentence comes from (text vs. footnote) | enum     | Optional                | For reference and debugging                                |
-| multi_page                                                                                 | Indicates whether the sentence spans multiple pages.          | Boolean  | Required                | For reference and debugging                                |
+| **Field Name**                                                                             | **Description**                                                            | **Type**             | **Required / Optional** | **Reason**                                                 |
+| ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- | -------------------- | ----------------------- | ---------------------------------------------------------- |
+| id                                                                                         | Unique identifier for each sentence                                        | String               | Required                | For tracking, reference                                    |
+| text                                                                                       | Sentence text content                                                      | String               | Required                | For quote detection                                        |
+| <span id="f-doc"><mark>doc</mark></span> <sup>↘︎ <a href="#c-doc">[read comments]</a></sup> | Corresponding document filename                                            | String               | Required                | For tracking, reference, metadata linking                  |
+| sent_index                                                                                 | Sentence-level index within document (0-based indexing)                    | Integer              | Required                | For identifying sequential sentences for quote compilation |
+| <mark>section_type</mark>                                                                  | <mark>What text section the sentence comes from (text vs. footnote)</mark> | <mark>enum</mark>    | <mark>Optional</mark>   | <mark>For reference and debugging</mark>                   |
+| <mark>multi_page</mark>                                                                    | <mark>Indicates whether the sentence spans multiple pages.</mark>          | <mark>Boolean</mark> | <mark>Required</mark>   | <mark>For reference and debugging</mark>                   |
 
 <!-- Google Doc comments -->
 
@@ -305,18 +305,18 @@ Depending on performance and resource needs, this could be to include each sente
 
 A CSV file with each row corresponding to a text passage containing a quotation. The granularity of these passages operate at the sentence level; in other words, a passage corresponds to one or more sentences.
 
-| **Field Name**        | **Description**                                                                                           | **Type** | **Required / Optional** | **Reason**                              |
-| --------------------- | --------------------------------------------------------------------------------------------------------- | -------- | ----------------------- | --------------------------------------- |
-| id                    | Unique identifier for quote. Starting sentence id for multi-sentence passages.                            | String   | Required                | For tracking, reference                 |
-| match_score           | Some match quality score. For multi-sentence passages this will be the mean of the sentence-level scores. | Float    | Required                | For development, evaluation, reference. |
-| reuse_id              | ID of the reuse sentence                                                                                  | String   | Required                | For tracking, reference                 |
-| reuse_doc             | Filename of reuse document                                                                                | String   | Required                | For tracking, reference                 |
-| reuse_text            | Text of the quote as it appears in reuse document                                                         | String   | Required                | For reference, evaluation               |
-| original_id           | ID of the original sentence                                                                               | String   | Required                | For tracking, reference                 |
-| original_doc          | Filename of original document                                                                             | String   | Required                | For tracking, reference                 |
-| original_text         | Text of the quote as it appears in original document                                                      | String   | Required                | For reference, evaluation               |
-| original_section_type | What text section the original sentence comes from (text vs. footnote)                                    | enum     | Optional                | For reference and debugging             |
-| reuse_section_type    | What text section the reuse sentence comes from (text vs. footnote)                                       | enum     | Optional                | For reference and debugging             |
+| **Field Name**                     | **Description**                                                                                           | **Type**          | **Required / Optional** | **Reason**                               |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------- | ----------------- | ----------------------- | ---------------------------------------- |
+| id                                 | Unique identifier for quote. Starting sentence id for multi-sentence passages.                            | String            | Required                | For tracking, reference                  |
+| match_score                        | Some match quality score. For multi-sentence passages this will be the mean of the sentence-level scores. | Float             | Required                | For development, evaluation, reference.  |
+| reuse_id                           | ID of the reuse sentence                                                                                  | String            | Required                | For tracking, reference                  |
+| reuse_doc                          | Filename of reuse document                                                                                | String            | Required                | For tracking, reference                  |
+| reuse_text                         | Text of the quote as it appears in reuse document                                                         | String            | Required                | For reference, evaluation                |
+| original_id                        | ID of the original sentence                                                                               | String            | Required                | For tracking, reference                  |
+| original_doc                       | Filename of original document                                                                             | String            | Required                | For tracking, reference                  |
+| original_text                      | Text of the quote as it appears in original document                                                      | String            | Required                | For reference, evaluation                |
+| <mark>original_section_type</mark> | <mark>What text section the original sentence comes from (text vs. footnote)</mark>                       | <mark>enum</mark> | <mark>Optional</mark>   | <mark>For reference and debugging</mark> |
+| <mark>reuse_section_type</mark>    | <mark>What text section the reuse sentence comes from (text vs. footnote)</mark>                          | <mark>enum</mark> | <mark>Optional</mark>   | <mark>For reference and debugging</mark> |
 
 Any additional metadata included with the input sentences will be passed through and prefixed based on the input corpus (reuse/original).
 
@@ -324,20 +324,20 @@ Any additional metadata included with the input sentences will be passed through
 
 This CSV file is a tailored version of the Quotes Corpus produced by the core software pipeline where relevant page- and document-level metadata has been added.
 
-| **Field Name** | **Description**                            | **Type** | **Required / Optional** |
-| -------------- | ------------------------------------------ | -------- | ----------------------- |
-| quote_id       | Unique identifier for quote                | String   | Required                |
-| marx_quote     | Text of direct quote from Marx text        | String   | Required                |
-| article_quote  | Text of direct quote from the article text | String   | Required                |
-| marx_title     | Title of Marx text                         | String   | Required                |
-| marx_page      | Starting page of quote in Max text         | String   | Required                |
-| article_title  | Title of article                           | String   | Required                |
-| article_author | Name of article’s author                   | String   | Optional                |
-| journal        | Title of journal                           | String   | Required                |
-| volume         | Volume Issue                               | String   | Required                |
-| issue          | Journal Issue                              | String   | Required                |
-| year           | Year of article/journal publication        | String   | Required                |
-| certainty      | A score (0-1) of how quote certainty       | Float    | Required                |
+| **Field Name**             | **Description**                            | **Type**            | **Required / Optional** |
+| -------------------------- | ------------------------------------------ | ------------------- | ----------------------- |
+| quote_id                   | Unique identifier for quote                | String              | Required                |
+| marx_quote                 | Text of direct quote from Marx text        | String              | Required                |
+| <mark>article_quote</mark> | Text of direct quote from the article text | String              | Required                |
+| marx_title                 | Title of Marx text                         | String              | Required                |
+| marx_page                  | Starting page of quote in Max text         | String              | Required                |
+| article_title              | Title of article                           | String              | Required                |
+| article_author             | Name of article’s author                   | String              | Optional                |
+| journal                    | Title of journal                           | String              | Required                |
+| volume                     | Volume Issue                               | <mark>String</mark> | Required                |
+| issue                      | Journal Issue                              | <mark>String</mark> | Required                |
+| year                       | Year of article/journal publication        | <mark>String</mark> | Required                |
+| <mark>certainty</mark>     | A score (0-1) of how quote certainty       | <mark>Float</mark>  | Required                |
 
 Note: article and marx naming convention could be altered to something more general. Should have the research team confirm desired form and field names and check if there are any additional fields that should be added (e.g., page vs. footnote).
 
