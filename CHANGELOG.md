@@ -18,3 +18,4 @@
 ### Documentation
 
 - Set up Mkdocs for documentation
+- Add technical design document for reference under docs
