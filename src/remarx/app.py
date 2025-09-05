@@ -239,8 +239,8 @@ def _(mo, original_csv_browser, reuse_csv_browser):
     original_count = len(original_csvs)
     reuse_count = len(reuse_csvs)
 
-    original_msg = f"{original_count} file(s) selected" if original_count > 0 else "No files selected"
-    reuse_msg = f"{reuse_count} file(s) selected" if reuse_count > 0 else "No files selected"
+    original_msg = "" if original_count > 0 else "No original text files selected"
+    reuse_msg = "" if reuse_count > 0 else "No reuse text files selected"
 
     original_callout_type = "success" if original_count > 0 else "warn"
     reuse_callout_type = "success" if reuse_count > 0 else "info" # use a different color
@@ -253,7 +253,7 @@ def _(mo, original_csv_browser, reuse_csv_browser):
                 mo.md("**Original Text CSV Files**").center(),
                 mo.md("*Select sentence corpus files for original texts*").center(),
                 original_csv_browser,
-                mo.md(f"**Selected:** {original_msg}")
+                mo.md(original_msg)
             ]),
             kind=original_callout_type,
         ),
@@ -263,7 +263,7 @@ def _(mo, original_csv_browser, reuse_csv_browser):
                 mo.md("**Reuse Text CSV Files**").center(),
                 mo.md("*Select sentence corpus files for reuse texts*").center(),
                 reuse_csv_browser,
-                mo.md(f"**Selected:** {reuse_msg}")
+                mo.md(reuse_msg)
             ]),
             kind=reuse_callout_type,
         )
