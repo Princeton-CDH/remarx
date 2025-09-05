@@ -49,32 +49,8 @@ def _(mo, remarx):
 
 
 @app.cell
-def _(mo):
-    mo.md(
-        rf"""
-    ## Sentence Corpus Prep
-    Create a sentence corpus (`CSV`) from a text.
-    This process can be run multiple times for different files (currently one file at a time).
-    """
-    )
-    return
-
-
-@app.cell
 def _(FileInput, mo):
-    mo.md(
-        rf"""
-    **1. Select Input Text**
-
-    Upload and select an input file (`{"`, `".join(FileInput.supported_types())}`) for sentence corpus creation.
-    Currently, only a single file may be selected.
-    """
-    )
-    return
-
-
-@app.cell
-def _(FileInput, mo):
+    # Define the sentence corpus creation section content
     select_input = mo.ui.file(
         kind="area",
         filetypes=FileInput.supported_types(),
@@ -88,28 +64,11 @@ def _(mo, select_input):
     input_file_msg = f"`{input_file.name}`" if input_file else "None selected"
     input_callout_type = "success" if input_file else "warn"
 
-    mo.callout(
+    input_selection_ui = mo.callout(
         mo.vstack([select_input, mo.md(f"**Input File:** {input_file_msg}")]),
         kind=input_callout_type,
     )
-    return (input_file,)
-
-
-@app.cell
-def _(mo):
-    mo.md(
-        r"""
-    **2. Select Output Location**
-
-    Select the folder where the resulting sentence corpus file should be saved.
-    The output CSV file will be named based on the input file.
-
-    *To select a folder, click the file icon to the left of the folder's name.
-    A checkmark will appear when a selection is made.
-    Clicking anywhere else within the folder's row will cause the browser to navigate to this folder and subsequently display any folders *within* this folder.*
-    """
-    )
-    return
+    return (input_file, input_selection_ui)
 
 
 @app.cell
@@ -130,8 +89,7 @@ def _(mo, select_output_dir):
     output_dir_msg = f"`{output_dir.path}`" if output_dir else "None selected"
     out_callout_type = "success" if output_dir else "warn"
 
-
-    mo.callout(
+    output_selection_ui = mo.callout(
         mo.vstack(
             [
                 select_output_dir,
@@ -140,27 +98,12 @@ def _(mo, select_output_dir):
         ),
         kind=out_callout_type,
     )
-    return (output_dir,)
-
-
-@app.cell
-def _(mo):
-    mo.md(
-        r"""
-    **3. Build Sentence Corpus**
-
-    Click the "Build Corpus" to run `remarx`.
-    The sentence corpus for the input text will be saved as a CSV in the selected save location.
-    This output file will have the same filename (but different file extension) as the selected input file.
-    """
-    )
-    return
+    return (output_dir, output_selection_ui)
 
 
 @app.cell
 def _(input_file, mo, output_dir):
     # Determine inputs based on file & folder selections
-
     output_csv = (
         (output_dir.path / input_file.name).with_suffix(".csv")
         if input_file and output_dir
@@ -183,7 +126,7 @@ def _(input_file, mo, output_dir):
         tooltip="Click to build sentence corpus",
     )
 
-    mo.callout(
+    build_corpus_ui = mo.callout(
         mo.vstack(
             [
                 mo.md(
@@ -196,7 +139,7 @@ def _(input_file, mo, output_dir):
             ]
         ),
     )
-    return button, output_csv
+    return button, output_csv, build_corpus_ui
 
 
 @app.cell
@@ -213,7 +156,74 @@ def _(button, create_corpus, create_temp_input, input_file, mo, output_csv):
                 )
         building_msg = f"✅ Sentence corpus saved to: {output_csv}"
 
-    mo.md(building_msg).center()
+    corpus_status_ui = mo.md(building_msg).center()
+    return (corpus_status_ui,)
+
+
+@app.cell
+def _(FileInput, build_corpus_ui, corpus_status_ui, input_selection_ui, mo, output_selection_ui):
+    # Create the sentence corpus creation content
+    sentence_corpus_creation_content = mo.vstack([
+        mo.md(
+            f"""
+        Create a sentence corpus (`CSV`) from a text.
+        This process can be run multiple times for different files (currently one file at a time).
+
+        **1. Select Input Text**
+
+        Upload and select an input file (`{"`, `".join(FileInput.supported_types())}`) for sentence corpus creation.
+        Currently, only a single file may be selected.
+        """
+        ),
+        input_selection_ui,
+        mo.md(
+            """
+        **2. Select Output Location**
+
+        Select the folder where the resulting sentence corpus file should be saved.
+        The output CSV file will be named based on the input file.
+
+        *To select a folder, click the file icon to the left of the folder's name.
+        A checkmark will appear when a selection is made.
+        Clicking anywhere else within the folder's row will cause the browser to navigate to this folder and subsequently display any folders *within* this folder.*
+        """
+        ),
+        output_selection_ui,
+        mo.md(
+            """
+        **3. Build Sentence Corpus**
+
+        Click the "Build Corpus" to run `remarx`.
+        The sentence corpus for the input text will be saved as a CSV in the selected save location.
+        This output file will have the same filename (but different file extension) as the selected input file.
+        """
+        ),
+        build_corpus_ui,
+        corpus_status_ui,
+    ])
+
+    return (sentence_corpus_creation_content,)
+
+
+@app.cell
+def _(mo, sentence_corpus_creation_content):
+    # Create the main accordion with different sections
+    mo.accordion({
+        "## 📝 Sentence Corpus Creation": sentence_corpus_creation_content,
+        "## 🔍 Quotation Detection": mo.md(
+            """
+            **Coming Soon!**
+
+            This section will allow you to:
+            - Upload text files for quotation detection
+            - Configure detection parameters
+            - Run quotation analysis
+            - Export results
+
+            Stay tuned for this functionality.
+            """
+        ),
+    })
     return
 
 
