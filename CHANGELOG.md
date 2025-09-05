@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.2.0
+
+### Application
+
+- Add corpus CSV uploading interface for the quotation detection step
+
 ## 0.1.0
 
 ### Sentence Module
