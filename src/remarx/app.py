@@ -174,8 +174,10 @@ def _(FileInput, build_corpus_ui, corpus_status_ui, input_selection_ui, mo, outp
         Upload and select an input file (`{"`, `".join(FileInput.supported_types())}`) for sentence corpus creation.
         Currently, only a single file may be selected.
         """
-        ),
+        ).style(width="100%"),
+
         input_selection_ui,
+
         mo.md(
             """
         **2. Select Output Location**
@@ -187,8 +189,10 @@ def _(FileInput, build_corpus_ui, corpus_status_ui, input_selection_ui, mo, outp
         A checkmark will appear when a selection is made.
         Clicking anywhere else within the folder's row will cause the browser to navigate to this folder and subsequently display any folders *within* this folder.*
         """
-        ),
+        ).style(width="100%"),
+
         output_selection_ui,
+
         mo.md(
             """
         **3. Build Sentence Corpus**
@@ -197,7 +201,8 @@ def _(FileInput, build_corpus_ui, corpus_status_ui, input_selection_ui, mo, outp
         The sentence corpus for the input text will be saved as a CSV in the selected save location.
         This output file will have the same filename (but different file extension) as the selected input file.
         """
-        ),
+        ).style(width="100%"),
+
         build_corpus_ui,
         corpus_status_ui,
     ])
@@ -206,23 +211,109 @@ def _(FileInput, build_corpus_ui, corpus_status_ui, input_selection_ui, mo, outp
 
 
 @app.cell
-def _(mo, sentence_corpus_creation_content):
-    # Create the main accordion with different sections
-    mo.accordion({
-        "## 📝 Sentence Corpus Creation": sentence_corpus_creation_content,
-        "## 🔍 Quotation Detection": mo.md(
-            """
-            **Coming Soon!**
+def _(mo, pathlib):
+    # Create file browsers for quotation detection (CSV files only)
+    original_csv_browser = mo.ui.file_browser(
+        selection_mode="file",
+        multiple=True,
+        initial_path=pathlib.Path.home(),
+        filetypes=[".csv"],
+    )
 
+    reuse_csv_browser = mo.ui.file_browser(
+        selection_mode="file",
+        multiple=True,
+        initial_path=pathlib.Path.home(),
+        filetypes=[".csv"],
+    )
+
+    return (original_csv_browser, reuse_csv_browser)
+
+
+@app.cell
+def _(mo, original_csv_browser, reuse_csv_browser):
+    # Process file selections for quotation detection
+    original_csvs = original_csv_browser.value if original_csv_browser.value else []
+    reuse_csvs = reuse_csv_browser.value if reuse_csv_browser.value else []
+
+    original_count = len(original_csvs)
+    reuse_count = len(reuse_csvs)
+
+    original_msg = f"{original_count} file(s) selected" if original_count > 0 else "No files selected"
+    reuse_msg = f"{reuse_count} file(s) selected" if reuse_count > 0 else "No files selected"
+
+    original_callout_type = "success" if original_count > 0 else "warn"
+    reuse_callout_type = "success" if reuse_count > 0 else "warn"
+
+    # Create side-by-side file browser interface
+    quotation_file_selection_ui = mo.hstack([
+        mo.callout(
+            mo.vstack([
+                mo.md("**📄 Original Text CSV Files**").center(),
+                mo.md("*Select sentence corpus files for original texts*").center(),
+                original_csv_browser,
+                mo.md(f"**Selected:** {original_msg}")
+            ]),
+            kind=original_callout_type,
+        ),
+        mo.callout(
+            mo.vstack([
+                mo.md("**🔎 Reuse Text CSV Files**").center(),
+                mo.md("*Select sentence corpus files for reuse texts*").center(),
+                reuse_csv_browser,
+                mo.md(f"**Selected:** {reuse_msg}")
+            ]),
+            kind=reuse_callout_type,
+        )
+    ], widths="equal", gap=1.0)
+
+    return (original_csvs, reuse_csvs, quotation_file_selection_ui)
+
+
+@app.cell
+def _(mo, original_csvs, reuse_csvs, quotation_file_selection_ui):
+    # Create quotation detection content
+    quotation_detection_content = mo.vstack([
+        mo.md(
+            """
+            Detect quotations and text reuse between original and reuse texts.
+            This process requires sentence corpus CSV files created in the previous step.
+
+            **1. Select Input CSV Files**
+
+            Browse and select multiple CSV files for each category:
+            - **Original Text CSV Files**: Sentence corpus files for original texts
+            - **Reuse Text CSV Files**: Sentence corpus files for texts that potentially reuse content
+            """
+        ).style(width="100%"),
+
+        quotation_file_selection_ui,
+
+        mo.md(
+            """
+            **2. Select Output Location**
+
+            **Coming Soon!**
             This section will allow you to:
-            - Upload text files for quotation detection
+
             - Configure detection parameters
             - Run quotation analysis
             - Export results
 
             Stay tuned for this functionality.
             """
-        ),
+        ).style(width="100%"),
+    ])
+
+    return (quotation_detection_content,)
+
+
+@app.cell
+def _(mo, sentence_corpus_creation_content, quotation_detection_content):
+    # Create the main accordion with different sections
+    mo.accordion({
+        "## 📝 Sentence Corpus Creation": sentence_corpus_creation_content,
+        "## 🔍 Quotation Detection": quotation_detection_content,
     })
     return
 
