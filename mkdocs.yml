@@ -35,6 +35,7 @@ theme:
     - toc.follow
 nav:
   - Overview: index.md
+  - Technical Design: technical-design-document.md
   - Developer Notes: devnotes.md
   - Code Documentation: api/index.md
 plugins:
@@ -75,7 +76,11 @@ plugins:
 markdown_extensions:
   - admonition
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
@@ -92,3 +97,5 @@ watch:
 extra:
   version:
     provider: mike
+extra_javascript:
+  - https://unpkg.com/mermaid/dist/mermaid.min.js

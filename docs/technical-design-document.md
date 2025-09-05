@@ -1,3 +1,8 @@
+---
+title: Technical Design
+hide: [navigation]
+---
+
 # `remarx` Technical Design Document
 
 *The goal for this document is to surface the areas for design decisions and to document those decisions. The expectation is not a comprehensive listing of issues or tasks, but rather a recording of the key structural and process elements, as well as primary deliverables, that will guide development going forward.*
@@ -6,40 +11,19 @@
 
 ______________________________________________________________________
 
-## Table of Contents
+**Project Title:** Citing Marx: Die Neue Zeit, 1891-1918
 
-- [Overview](#remarx)
-- [Requirements](#requirements)
-    - [Functional Requirements](#functional-requirements)
-    - [Non-Functional Requirements](#non-functional-requirements)
-    - [System Architecture](#system-architecture)
-- [Component Details](#component-details)
-    - [Sentence Corpus Builder](#sentence-corpus-builder)
-    - [Sentence-Level Quote Detection](#sentence-level-quote-detection)
-    - [Quote Compilation](#quote-compilation)
-    - [Application Interface](#application-interface)
-    - [POST: Final Citation Corpus Compilation](#post-final-citation-corpus-compilation)
-- [Data](#data)
-    - [Original/Reuse Sentence Corpus](#originalreuse-sentence-corpus)
-    - [Quote Sentence Pairs](#quote-sentence-pairs)
-    - [Quotes Corpus](#quotes-corpus)
-    - [Final Citation Corpus](#final-citation-corpus)
-- [Interface Functionality](#interface-functionality)
-- [Testing Plan](#testing-plan)
-- [Development Conventions](#development-conventions)
-- [Final Acceptance Criteria](#final-acceptance-criteria)
-- [References](#references)
+**RSE Lead:** Rebecca Koeser
 
-______________________________________________________________________
+**RSE Team Members:** Laure Thompson, Hao Tan, Mary Naydan, Jeri Wieringa
 
-**Project Title:** Citing Marx: Die Neue Zeit, 1891-1918\
-**RSE Lead:** Rebecca Koeser\
-**RSE Team Members:** Laure Thompson, Hao Tan, Mary Naydan, Jeri Wieringa\
-**Faculty PI:** Edward Baring\
-**Development Start Date:** 2025-08-04\
+**Faculty PI:** Edward Baring
+
+**Development Start Date:** 2025-08-04
+
 **Target Release Date:** 2025-09-24
 
-# `remarx`
+______________________________________________________________________
 
 ## Statement of Purpose
 
@@ -62,16 +46,16 @@ The primary use case for this tool is to identify direct quotes of Karl Marx’s
 - Paraphrase / indirect quote detection
 - Attribution, citation, and named-reference detection
 
-# Requirements
+## Requirements
 
-## Functional Requirements
+### Functional Requirements
 
 *Describe what the software must do*
 
 - Reads plaintext files corresponding to original (i.e., source of quotes) and reuse (i.e., where quotations occur) texts
 - Builds a quotation corpus that operates at a sentence-level granularity
 
-## Non-Functional Requirements
+### Non-Functional Requirements
 
 *Describe how the software must behave*
 
@@ -84,7 +68,7 @@ The primary use case for this tool is to identify direct quotes of Karl Marx’s
 - Developed and tested on Python 3.12
 - If this software is run locally it should be compatible with macOS, linux, and windows based operating systems; and be compatible with both x86 and ARM architectures.
 
-## System Architecture
+### System Architecture
 
 *High-level description of the system and its components*
 
@@ -166,7 +150,7 @@ The core pipeline can be broken down into two key components:
 - Della access
 - OnDemand developer access
 
-## Component Details
+### Component Details
 
 *Description of each component and its functionality*
 
@@ -253,9 +237,9 @@ This component is outside of the core software pipeline. This will link the iden
 
 We aim for data compilation to be done without custom development effort, and will look for a sufficient solution for this phase of the project, which will empower research team members to review and work with the data prior to export for publication. We have requested a no-code database interface from PUL ([#princeton_ansible/6373](https://github.com/pulibrary/princeton_ansible/issues/6373)); other alternatives are Google Sheets, Excel template, or AirTable.
 
-# Data
+## Data
 
-## Data Design
+### Data Design
 
 *Description of the data structures used by the software, with expected or required fields*
 
@@ -341,9 +325,9 @@ This CSV file is a tailored version of the Quotes Corpus produced by the core so
 
 Note: article and marx naming convention could be altered to something more general. Should have the research team confirm desired form and field names and check if there are any additional fields that should be added (e.g., page vs. footnote).
 
-## Work Plan for Additional Data Work (if needed)
+### Work Plan for Additional Data Work (if needed)
 
-*Describe the data work that needs to be done and include proposed deadlines.*
+*Describe the data work that needs to be done and <mark>include proposed deadlines.</mark>*
 
 ### Kapital Texts
 
@@ -357,13 +341,13 @@ The text of the Communist Manifesto may need to be transformed into plaintext fi
 
 The text of DNZ articles must be extracted from the ALTO-XML transcription files. For simplicity, each article should be separated into separate text files. If the article has footnotes, footnotes will be split into a separate text file.
 
-### Evaluation Dataset(s)
+### <mark>Evaluation Dataset(s)</mark>
 
 A dataset of identified direct quote annotations from Kapital and/or the Communist Manifesto must be constructed. This will be used as the evaluation reference during development to measure the performance of the software pipeline, and to provide an estimate for the expected scale of the dataset.
 
-Derivative versions of the text reuse data will be created as needed to compare passages identified as text reuse with sentence level matches.
+<mark>Derivative versions of the text reuse data will be created as needed to compare passages identified as text reuse with sentence level matches.</mark>
 
-## Data Management Plan
+### Data Management Plan
 
 ### Datasets
 
@@ -395,15 +379,15 @@ Directories should be named meaningfully and include a brief readme documenting 
 
 **GoogleDrive.** The initial text inputs will be stored in the project’s GoogleDrive folder. Any intermediate files that should be reviewed by the research team will also be uploaded to this folder.
 
-### Archiving and Publication
+### <mark>Archiving and Publication</mark>
 
 *What is the plan for publication or archiving of the data? What license will be applied?*
 
 The final dataset will be published on Zenodo and/or the Princeton Data Commons depending on the terms of use / copyright status of the data. If possible, an additional copy will be published on GitHub.
 
-Q: What license will be applied for the data?
+Q: <mark>What license will be applied for the data?</mark>
 
-# Interface Functionality
+## Interface Functionality
 
 *Description of user-facing functionality directly accessible through the user interface and its components*
 
@@ -417,35 +401,35 @@ The primary user interface is a marimo notebook. This interface will provide a g
 
 Technical users and the development team will have an alternative interface where the software can be run directly from the terminal.
 
-# Testing Plan
+## Testing Plan
 
-## Unit Testing
+### Unit Testing
 
 Unit testing will be used throughout the development process. There must be unit tests for all python source code excluding marimo notebooks. The target code coverage for python source code is 95%; the target coverage for python test code is 100%.
 
-## Staging
+### <mark>Staging</mark>
 
 During development, della will be used for a staging environment, as needed. This ensures a consistent shared environment as opposed to each developer’s local environment.
 
-## Ongoing Acceptance Testing
+### <mark>Ongoing Acceptance Testing</mark>
 
 Acceptance testing will be conducted throughout development. Each user-facing feature must have a user story and must undergo acceptance testing before an issue is considered complete. Acceptance testing should normally be done on features that have been implemented, unit tested, gone through code review, and merged to the develop branch. Acceptance testing is expected to occur every iteration where possible and otherwise as soon as possible so that software updates can be released each iteration.
 
 Application (i.e., notebook) testing will ideally run on the target environment. We will use [molab](https://molab.marimo.io/notebooks) initially if helpful while getting started with development. Then, depending on resource requirements, testing will shift either to the tester’s local machine or on della via Open OnDemand.
 
-# Development Conventions
+## Development Conventions
 
-## Software Releases
+### Software Releases
 
 The goal is to complete a software release each iteration by either the project team meeting or by retro. This high frequency of releases will make the changelog more meaningful. The RSEs responsible for creating and reviewing each release will be assigned evenly across the team. Ideally, no RSE will be responsible for two consecutive releases.
 
 The tool [Repo Review](https://learn.scientific-python.org/development/guides/repo-review/) should be checked before making a release.
 
-## Software Publishing
+### Software Publishing
 
 The software’s python source code should be packaged and published on PyPI iteratively. Ideally, with each release. We will add a GitHub workflow to automate publishing, so it will be triggered with each software release.
 
-## Python Development
+### Python Development
 
 ### Package Management
 
@@ -463,21 +447,21 @@ We will use Ruff’s formatter to enforce a consistent code format. The formatte
 
 We will use Ruff’s linter using the following rule sets:
 
-| **Rule(s)** | **Name**                                                 | **Reason**                                                                                       |
-| ----------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| F           | pyflakes                                                 | Ruff default                                                                                     |
-| E4, E7, E9  | pycodestyle subset                                       | Ruff default; subset compatible with Ruff’s formatter                                            |
-| I           | isort                                                    | Import sorting / organization                                                                    |
-| ANN         | flake8-annotations                                       | Checks type annotations                                                                          |
-| PTH         | flake8-use-pathlib                                       | Ensure pathlib usage instead of os.path                                                          |
-| B           | flake8-bugbear                                           | Flags likely bugs and design problems                                                            |
-| D           | <span id="r-d"><mark>pydocstyle subset</mark></span>     | <span><mark>Checks docstrings</mark></span> <sup>↘︎ <a href="#c-d">[read comments]</a></sup>      |
-| PERF        | perflint                                                 | Checks for some performance anti-patterns                                                        |
-| SIM         | flake8-simplify                                          | Looks for code simplification                                                                    |
-| C4          | flake8-comprehensions                                    | Checks comprehension patterns                                                                    |
-| RUF         | <span id="r-ruf"><mark>ruff-specific rules</mark></span> | <span><mark>Potentially helpful?</mark></span> <sup>↘︎ <a href="#c-ruf">[read comments]</a></sup> |
-| NPY         | numpy-specific rules                                     | For checking numpy usage                                                                         |
-| UP          | pyupgrade                                                | Automatically update syntax to newer form                                                        |
+| **Rule(s)**      | **Name**                                                 | **Reason**                                                                                       |
+| ---------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| F                | pyflakes                                                 | Ruff default                                                                                     |
+| E4, E7, E9       | pycodestyle subset                                       | Ruff default; subset compatible with Ruff’s formatter                                            |
+| I                | isort                                                    | Import sorting / organization                                                                    |
+| ANN              | flake8-annotations                                       | Checks type annotations                                                                          |
+| PTH              | flake8-use-pathlib                                       | Ensure pathlib usage instead of os.path                                                          |
+| B                | flake8-bugbear                                           | Flags likely bugs and design problems                                                            |
+| <mark>D</mark>   | <span id="r-d"><mark>pydocstyle subset</mark></span>     | <span><mark>Checks docstrings</mark></span> <sup>↘︎ <a href="#c-d">[read comments]</a></sup>      |
+| PERF             | perflint                                                 | Checks for some performance anti-patterns                                                        |
+| SIM              | flake8-simplify                                          | Looks for code simplification                                                                    |
+| C4               | flake8-comprehensions                                    | Checks comprehension patterns                                                                    |
+| <mark>RUF</mark> | <span id="r-ruf"><mark>ruff-specific rules</mark></span> | <span><mark>Potentially helpful?</mark></span> <sup>↘︎ <a href="#c-ruf">[read comments]</a></sup> |
+| NPY              | numpy-specific rules                                     | For checking numpy usage                                                                         |
+| UP               | pyupgrade                                                | Automatically update syntax to newer form                                                        |
 
 <!-- Google Doc comments -->
 
@@ -513,13 +497,13 @@ Notebooks will be used both as the application interface and as needed for data 
 
 The Marimo app interface notebook will be tested if possible; data analysis notebooks will be excluded from code coverage.
 
-## Documentation
+### Documentation
 
 Documentation must be updated before a pull request is merged to the development branch. Documentations will be generated using mkdocs. The linter [prettier](https://github.com/prettier/prettier) will be used for linting all documentation markdown files.
 
 We will implement automated documentation checks on pull requests to develop and main branches (documentation coverage, if supported by mkdocs; otherwise, confirm documentation has been updated)
 
-## Precommit Hooks
+### Precommit Hooks
 
 We will include precommit hooks for the following actions:
 
@@ -527,7 +511,7 @@ We will include precommit hooks for the following actions:
 - Run [prettier](https://github.com/prettier/prettier) linter on markdown files
 - Run [codespell](https://github.com/codespell-project/codespell) to check for typos within any text
 
-## GitHubActions
+### GitHubActions
 
 Our repository will include the following GitHubActions:
 
@@ -539,22 +523,22 @@ Our repository will include the following GitHubActions:
 - Check change log has been updated
 - Python package publication on PyPI (triggered by new release on GitHub)
 
-# Final Acceptance Criteria
+## Final Acceptance Criteria
 
 *Define the requirements the deliverable must meet to be considered complete and accepted. These criteria should be testable.*
 
-## Functionality
+### Functionality
 
 - Using evaluation dataset as a reference. The software must identify at least 90% of the expected quotations (i.e., 90% recall).
     - Tolerance for false positives will be determined in conversation with the research team after reviewing preliminary results. If necessary, we will decrease the recall threshold to avoid too many false positives in the final dataset.
 - Faculty collaborator can successfully run software without assistance.
 
-# Sign Offs
+## Sign Offs
 
 Reviewed by: Jeri Wieringa
 
 Signatures / Date
 
-# References
+## References
 
 https://zenodo.org/records/14861082
