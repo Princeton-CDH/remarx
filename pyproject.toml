@@ -28,7 +28,6 @@ dependencies = [
   "polars",
   "ruff",
   "stanza",
-  "bs4"
 ]
 
 [project.optional-dependencies]
@@ -37,6 +36,7 @@ dev = [
   "ruff",
   "remarx[test]",
   "remarx[docs]",
+  "remarx[html]",
 ]
 test = [
   "pytest",
@@ -48,6 +48,7 @@ docs = [
   "mkdocs-material",
   "mkdocstrings[python]",
 ]
+html = [ "bs4" ]
 
 [dependency-groups]
 dev = [ "remarx[dev]" ]

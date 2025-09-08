@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.2.0
+
+### Scripts
+
+- Add `parse_html` script for converting the manifesto html files to plain text for sentence corpus input (one-time use)
+
 ## 0.1.0
 
 ### Sentence Module
@@ -13,10 +19,6 @@
 ### Application
 
 - Add initial application that can build sentence corpora for supported file types
-
-### Scripts
-
-- Add one-off script for parsing html pages
 
 ### Documentation
 

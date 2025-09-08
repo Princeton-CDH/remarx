@@ -5,12 +5,13 @@ NOTE: This script is tailored specifically for the Communist Manifesto webpages.
 
 Example Usage:
 
-    `parse_html.py in_html out_txt`
+    `uv run python parse_html.py in_html out_txt`
 """
 
 import argparse
 import pathlib
 import re
+import sys
 
 from bs4 import BeautifulSoup, NavigableString, Tag
 
@@ -115,7 +116,11 @@ def main() -> None:
     )
 
     args = parser.parse_args()
-    write_html_text(args.in_file, args.out_txt)
+    try:
+        write_html_text(args.in_file, args.out_txt)
+    except ValueError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
