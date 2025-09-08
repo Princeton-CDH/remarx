@@ -251,7 +251,7 @@ def _(mo, original_csv_browser, reuse_csv_browser):
             mo.vstack([
                 mo.md("# 🗂").center(),
                 mo.md("**Original Text CSV Files**").center(),
-                mo.md("*Select sentence corpus files for original texts*").center(),
+                mo.md("*Original text are the source text files where quotations originate.*").center(),
                 original_csv_browser,
                 mo.md(original_msg)
             ]),
@@ -261,7 +261,7 @@ def _(mo, original_csv_browser, reuse_csv_browser):
             mo.vstack([
                 mo.md("# ♻️").center(),
                 mo.md("**Reuse Text CSV Files**").center(),
-                mo.md("*Select sentence corpus files for reuse texts*").center(),
+                mo.md("*Reuse text are text that may reuse content from the original text that will be detected.*").center(),
                 reuse_csv_browser,
                 mo.md(reuse_msg)
             ]),
