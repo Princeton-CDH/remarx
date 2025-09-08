@@ -1,7 +1,7 @@
 """
 Script for transforming an html page into a plaintext file.
 
-NOTE: This script is tailored speciically for the Communist Manifesto webpages.
+NOTE: This script is tailored specifically for the Communist Manifesto webpages.
 
 Example Usage:
 
