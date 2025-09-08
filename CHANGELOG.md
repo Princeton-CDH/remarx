@@ -24,4 +24,9 @@ _Initial release._
 - Set up MkDocs for code documentation
 - Add GitHub Actions workflow to build and deploy documentation to GitHub Pages for released versions (`main` branch)
 
+### Misc
+
+- Add GitHub Actions workflow to build and publish python package on PyPI when a new GitHub release
+ created
+
 [0.1.0]: https://github.com/Princeton-CDH/remarx/tree/0.1
