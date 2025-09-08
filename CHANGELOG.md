@@ -22,5 +22,6 @@ _Initial release._
 
 - Document package installation (README)
 - Set up MkDocs for code documentation
+- Add GitHub Actions workflow to build and deploy documentation to GitHub Pages for released versions (`main` branch)
 
 [0.1.0]: https://github.com/Princeton-CDH/remarx/tree/0.1
