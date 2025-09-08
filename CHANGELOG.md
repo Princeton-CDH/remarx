@@ -12,9 +12,6 @@ _Initial release._
 - Add factory method to initialize appropriate input class for supported file types
 - Add `create_corpus()` function to generate a sentence corpus CSV from a single supported input file
 - Add command line script `remarx-create-corpus` to input a supported file and generate a sentence corpus
-    - input classes for text and TEI/XML
-    - a factory method to initialize appropriate input class based on file type
-    - a method and script for creating a sentence corpus
 
 ### Application
 
