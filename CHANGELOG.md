@@ -1,20 +1,27 @@
 # CHANGELOG
 
-## 0.1.0
+## [0.1.0] - 2025-09-08
 
-### Sentence Module
+_Initial release._
 
-- Add `segment_text` function for breaking text into sentences with character-level indices
-- Add `corpus` submodule with:
-    - input classes for text and TEI/XML
-    - a factory method to initialize appropriate input class based on file type
-    - a method and script for creating a sentence corpus
+
+### Sentence corpus creation
+
+- Add `segment_text()` function for splitting plain text into sentences with character-level indices
+- Add support for plain text files as input
+- Add preliminary support for TEI XML files as corpus input; includes page numbers, assumes MEGA TEI
+- Add factory method to initialize appropriate input class for supported file types
+- Add `create_corpus()` function to generate a sentence corpus CSV from a single supported input file
+- Add command line script `remarx-create-corpus` to input a supported file and generate a sentence corpus
 
 ### Application
 
-- Add initial application that can build sentence corpora for supported file types
+- Add preliminary application with access to sentence corpus creation for supported file types
+- Add command line script to launch application
 
 ### Documentation
 
-- Set up Mkdocs for documentation
-- Add GitHub Pages deployment workflow for automatic documentation publishing
+- Document package installation (README)
+- Set up MkDocs for code documentation
+
+[0.1.0]: https://github.com/Princeton-CDH/remarx/tree/0.1
