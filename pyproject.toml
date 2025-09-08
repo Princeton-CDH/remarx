@@ -1,0 +1,133 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "remarx"
+description = "Code for identifying Marx quotes associated with the CDH project Citing Marx"
+authors = [
+  {name = "Center for Digital Humanities at Princeton", email = "cdh@princeton.edu"},
+]
+requires-python = ">=3.12"
+readme = "README.md"
+license = {text = "Apache-2"}
+dynamic = ["version"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering :: Information Analysis",
+  "Topic :: Text Processing",
+]
+dependencies = [
+  "marimo>=0.13.11",
+  "marimo[lsp]",     # marimo language server protocol
+  "neuxml>=1",
+  "polars",
+  "ruff",
+  "stanza",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pre-commit",
+  "ruff",
+  "remarx[test]",
+  "remarx[docs]",
+]
+test = [
+  "pytest",
+  "pytest-cov",
+  "coverage[toml]", # Enables coverage to read config from pyproject.toml
+]
+docs = [
+  "mkdocs",
+  "mkdocs-material",
+  "mkdocstrings[python]",
+]
+
+[dependency-groups]
+dev = [ "remarx[dev]" ]
+
+[project.scripts]
+remarx-app = "remarx.app_utils:launch_app"
+remarx-create-corpus = "remarx.sentence.corpus.create:main"
+
+[tool.hatch.version]
+path = "src/remarx/__init__.py"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+omit = [
+  "src/remarx/app.py",   # marimo app notebook
+]
+
+[tool.coverage.report]
+show_missing = true   # Helpful for debugging
+
+[tool.coverage.html]
+directory = "coverage_html_report"
+
+[tool.ruff]
+# Always generate Python 3.12-compatible code
+target-version = "py312"
+# Configure src path so ruff import fixes can identify local imports
+src = [ "src" ]
+# Also ignore the app notebook
+extend-exclude = [ "src/remarx/app.py" ]
+
+[tool.ruff.lint]
+# Include these rules in addition to ruff's defaults
+extend-select = [
+  "ANN",  # flake8-annotations
+  "B",    # flake8-bugbear
+  "C4",   # flake8-comprehensions
+  "D1",   # pydocstyle: undocumented
+  "D201", # pydocstyle: blank-line-before-function
+  "D209", # pydocstyle: new-line-after-last-paragraph
+  "D213", # pydocstyle: multi-line-summary-second-line
+  "D403", # pydocstyle: first-word-uncapitalized
+  "D419", # pydocstyle: empty-docstring
+  "I",    #isort
+  "NPY",  # numpy-specific rules
+  "PERF", # perflint
+  "PTH",  # flake8-use-pathlib
+  "RUF",  # ruff-specific rules
+  "SIM",  # flake8-simplify
+  "UP",   # pyupgrade
+]
+# Can use to ignore specific rules within above selection
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+# for test files, don't require docstrings or return type annotations
+"tests/**.py" = ["D", "ANN"]
+
+[tool.marimo.display]
+cell_output = "below"
+theme = "system"      # honor user preference, including in static html exports
+
+[tool.marimo.runtime]
+# Add project source directory to python path
+pythonpath = [ "src" ]
+
+[tool.marimo.save]
+format_on_save = true
+
+[tool.marimo.diagnostics]
+enabled = true
+
+[tool.marimo.experimental]
+lsp = true
+
+[tool.hatch.metadata]
+# So python type stubs can be installed from GitHub (i.e., direct reference)
+allow-direct-references = true
+
+[tool.uv]
+required-version = ">=0.8.6"
