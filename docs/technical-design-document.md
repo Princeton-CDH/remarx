@@ -412,21 +412,21 @@ We will use Ruff’s formatter to enforce a consistent code format. The formatte
 
 We will use Ruff’s linter using the following rule sets:
 
-| **Rule(s)** | **Name**                                    | **Reason**                                                                          |
-| :---------- | :------------------------------------------ | :---------------------------------------------------------------------------------- |
-| F           | pyflakes                                    | Ruff default                                                                        |
-| E4, E7, E9  | pycodestyle subset                          | Ruff default; subset compatible with Ruff’s formatter                               |
-| I           | isort                                       | Import sorting / organization                                                       |
-| ANN         | flake8-annotations                          | Checks type annotations                                                             |
-| PTH         | flake8-use-pathlib                          | Ensure pathlib usage instead of os.path                                             |
-| B           | flake8-bugbear                              | Flags likely bugs and design problems                                               |
-| D           | <span id="r-d">pydocstyle subset</span>     | <span>Checks docstrings</span> <sup>↘︎ <a href="#c-d">[read comments]</a></sup>      |
-| PERF        | perflint                                    | Checks for some performance anti-patterns                                           |
-| SIM         | flake8-simplify                             | Looks for code simplification                                                       |
-| C4          | flake8-comprehensions                       | Checks comprehension patterns                                                       |
-| RUF         | <span id="r-ruf">ruff-specific rules</span> | <span>Potentially helpful?</span> <sup>↘︎ <a href="#c-ruf">[read comments]</a></sup> |
-| NPY         | numpy-specific rules                        | For checking numpy usage                                                            |
-| UP          | pyupgrade                                   | Automatically update syntax to newer form                                           |
+| **Rule(s)** | **Name**              | **Reason**                                            |
+| :---------- | :-------------------- | :---------------------------------------------------- |
+| F           | pyflakes              | Ruff default                                          |
+| E4, E7, E9  | pycodestyle subset    | Ruff default; subset compatible with Ruff’s formatter |
+| I           | isort                 | Import sorting / organization                         |
+| ANN         | flake8-annotations    | Checks type annotations                               |
+| PTH         | flake8-use-pathlib    | Ensure pathlib usage instead of os.path               |
+| B           | flake8-bugbear        | Flags likely bugs and design problems                 |
+| D           | pydocstyle subset     | Checks docstrings                                     |
+| PERF        | perflint              | Checks for some performance anti-patterns             |
+| SIM         | flake8-simplify       | Looks for code simplification                         |
+| C4          | flake8-comprehensions | Checks comprehension patterns                         |
+| RUF         | ruff-specific rules   | Potentially helpful?                                  |
+| NPY         | numpy-specific rules  | For checking numpy usage                              |
+| UP          | pyupgrade             | Automatically update syntax to newer form             |
 
 ### Notebook Development
 
