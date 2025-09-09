@@ -34,7 +34,7 @@ repos:
     hooks:
       - id: codespell
         exclude_types: ["xml"] # ignore sample xml file
-        args: [--ignore-words-list=archiv] # ignore German "archiv" in URLs
+        args: [--uri-ignore-words-list=archiv] # ignore German "archiv" in URLs
   # Common file checks (no dependencies)
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
