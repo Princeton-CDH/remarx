@@ -84,8 +84,8 @@ The core pipeline has two key inputs: reuse and original sentence corpora. Each 
 
 The core pipeline can be broken down into two key components:
 
-- Sentence-Level Quote Detection
-- Quote Compilation
+1. Sentence-Level Quote Detection
+1. Quote Compilation
 
 **Sentence-Level Quote Detection.** This component takes an original and reuse sentence corpus as input and outputs a corpus of sentence-pairs corresponding to quotes.
 
