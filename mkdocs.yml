@@ -95,7 +95,7 @@ watch:
   - mkdocs.yml
   - src
 not_in_nav: | # for now ignore the mermaid diagram
-  /system-architecture-diagram.md
+  /images/system-architecture-diagram.md
 extra:
   version:
     provider: mike
