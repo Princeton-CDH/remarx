@@ -35,6 +35,7 @@ theme:
     - toc.follow
 nav:
   - Overview: index.md
+  - Technical Design: technical-design-document.md
   - Developer Notes: devnotes.md
   - Code Documentation: api/index.md
 plugins:
@@ -89,6 +90,8 @@ watch:
   - docs
   - mkdocs.yml
   - src
+not_in_nav: | # for now ignore the mermaid diagram
+  /images/system-architecture-diagram.md
 extra:
   version:
     provider: mike
