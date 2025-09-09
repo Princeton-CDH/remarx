@@ -2,6 +2,10 @@
 
 ## 0.2.0
 
+### Documentation
+
+- Add technical design document to Mkdocs code documentation
+
 ### Sentence corpus creation
 
 - Processes TEI/XML documents to yield separate chunks for body text and footnotes, with each footnote yielded individually as a separate element
