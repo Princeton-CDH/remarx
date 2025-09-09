@@ -11,6 +11,8 @@ hide: [navigation]
 
 ______________________________________________________________________
 
+# `remarx`
+
 **Project Title:** Citing Marx: Die Neue Zeit, 1891-1918
 
 **RSE Lead:** Rebecca Koeser
@@ -27,16 +29,16 @@ ______________________________________________________________________
 
 ## Statement of Purpose
 
-*What are the primary goals for the software*
+*Primary goals for the software*
 
 The primary goal of this software tool is to provide a simple user interface to enable researchers to upload files for two sets of German language content to be compared, and download a dataset of similar passages between the two sets of content.
 
-The primary use case for this tool is to identify direct quotes of Karl Marx’s *Manifest der Kommunistischen Partei* (Communist Manifesto) and the first volume of *Das Kapital* (Kapital) within a subset of *Die Neue Zeit* (DNZ) articles.
+The primary use case for this tool is to identify direct quotes of Karl Marx's *Manifest der Kommunistischen Partei* (Communist Manifesto) and the first volume of *Das Kapital* (Kapital) within a subset of *Die Neue Zeit* (DNZ) articles.
 
 ## Task Identification and Definition
 
 | **Task**                 | **Definition**                                                                                 |
-| ------------------------ | ---------------------------------------------------------------------------------------------- |
+| :----------------------- | :--------------------------------------------------------------------------------------------- |
 | Quotation Identification | Determine which passages of text quote a source text and identify the passages that are quoted |
 
 ## Out of Scope
@@ -46,18 +48,18 @@ The primary use case for this tool is to identify direct quotes of Karl Marx’s
 - Paraphrase / indirect quote detection
 - Attribution, citation, and named-reference detection
 
-## Requirements
+# Requirements
 
-### Functional Requirements
+## Functional Requirements
 
-*Describe what the software must do*
+*What the software must do*
 
 - Reads plaintext files corresponding to original (i.e., source of quotes) and reuse (i.e., where quotations occur) texts
 - Builds a quotation corpus that operates at a sentence-level granularity
 
-### Non-Functional Requirements
+## Non-Functional Requirements
 
-*Describe how the software must behave*
+*How the software must behave*
 
 - Assumes input content is written in German (will be built with an eye towards supporting other languages in future, but not in this version)
 - Is optimized for the DNZ-Marx use case
@@ -68,7 +70,7 @@ The primary use case for this tool is to identify direct quotes of Karl Marx’s
 - Developed and tested on Python 3.12
 - If this software is run locally it should be compatible with macOS, linux, and windows based operating systems; and be compatible with both x86 and ARM architectures.
 
-### System Architecture
+## System Architecture
 
 *High-level description of the system and its components*
 
@@ -124,8 +126,8 @@ The core pipeline has two key inputs: reuse and original sentence corpora. Each 
 
 The core pipeline can be broken down into two key components:
 
-1. Sentence-Level Quote Detection
-1. Quote Compilation
+- Sentence-Level Quote Detection
+- Quote Compilation
 
 **Sentence-Level Quote Detection.** This component takes an original and reuse sentence corpus as input and outputs a corpus of sentence-pairs corresponding to quotes.
 
@@ -135,7 +137,7 @@ The core pipeline can be broken down into two key components:
 
 ### Infrastructure and Deployment
 
-*Describe where the software will run; include all different environments expected for development, staging/testing, and production, and any additional resources needed or expected (e.g., new VMs, OnDemand developer access, HPC, TigerData, etc).*
+*Where the software will run; includes all different environments expected for development, staging/testing, and production, and any additional resources needed or expected (e.g., new VMs, OnDemand developer access, HPC, TigerData, etc).*
 
 **Environments:**
 
@@ -150,38 +152,13 @@ The core pipeline can be broken down into two key components:
 - Della access
 - OnDemand developer access
 
-### Component Details
+## Component Details
 
 *Description of each component and its functionality*
 
 ### Sentence Corpus Builder
 
-<span id="s-scb-standalone"><mark>This optional component is a standalone python program that should be run locally. It is separate from the core software, and will not be included within the application interface.</mark></span>
-<sup>↘︎ <a href="#c-scb">[read comments]</a></sup>
-
-<!-- Google Doc comments -->
-
-<details id="c-scb">
-  <summary>Comments</summary>
-  <ul>
-    <li><strong>Laure Thompson · 4:32 PM · Jul 29</strong><br>
-        @rkoeser@princeton.edu Does this seem reasonable?</li>
-    <li><strong>Laure Thompson · 4:33 PM · Jul 29</strong><br>
-        If not, it feels like a separate notebook to me.</li>
-    <li><strong>Rebecca Koeser · 4:36 PM · Jul 29</strong><br>
-        I think we need a notebook interface to this for our team.<br>
-        I would rather do one notebook - multiple seems like potential for confusion.<br>
-        Maybe we can use tabs or accordion?<br>
-        Separate notebook if needed</li>
-    <li><strong>Laure Thompson · 4:36 PM · Jul 29</strong><br>
-        my understanding was that tabs were separate notebooks within the marimo interface</li>
-    <li><strong>Laure Thompson · 4:37 PM · Jul 29</strong><br>
-        ...but I also acknowledge this is my preference for keeping things that are independent programs separate</li>
-  </ul>
-  <a href="#s-scb-standalone">↑ back to context</a>
-</details>
-
-<br>
+This optional component is a standalone python program that should be run locally. It is separate from the core software, and will not be included within the application interface.
 
 This program extracts sentences from some number of input texts and compiles them into a single sentence-level corpus CSV file. It can be broken into two core stages: text extraction and sentence segmentation.
 
@@ -237,9 +214,9 @@ This component is outside of the core software pipeline. This will link the iden
 
 We aim for data compilation to be done without custom development effort, and will look for a sufficient solution for this phase of the project, which will empower research team members to review and work with the data prior to export for publication. We have requested a no-code database interface from PUL ([#princeton_ansible/6373](https://github.com/pulibrary/princeton_ansible/issues/6373)); other alternatives are Google Sheets, Excel template, or AirTable.
 
-## Data
+# Data
 
-### Data Design
+## Data Design
 
 *Description of the data structures used by the software, with expected or required fields*
 
@@ -247,26 +224,14 @@ We aim for data compilation to be done without custom development effort, and wi
 
 A CSV file with each row corresponding to a single sentence in either an original or reuse text. This corpus may include additional data (e.g., document metadata for citation); this will be ignored by the system but preserved and passed through in the generated corpus.
 
-| **Field Name**                                                                             | **Description**                                                            | **Type**             | **Required / Optional** | **Reason**                                                 |
-| ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- | -------------------- | ----------------------- | ---------------------------------------------------------- |
-| id                                                                                         | Unique identifier for each sentence                                        | String               | Required                | For tracking, reference                                    |
-| text                                                                                       | Sentence text content                                                      | String               | Required                | For quote detection                                        |
-| <span id="f-doc"><mark>doc</mark></span> <sup>↘︎ <a href="#c-doc">[read comments]</a></sup> | Corresponding document filename                                            | String               | Required                | For tracking, reference, metadata linking                  |
-| sent_index                                                                                 | Sentence-level index within document (0-based indexing)                    | Integer              | Required                | For identifying sequential sentences for quote compilation |
-| <mark>section_type</mark>                                                                  | <mark>What text section the sentence comes from (text vs. footnote)</mark> | <mark>enum</mark>    | <mark>Optional</mark>   | <mark>For reference and debugging</mark>                   |
-| <mark>multi_page</mark>                                                                    | <mark>Indicates whether the sentence spans multiple pages.</mark>          | <mark>Boolean</mark> | <mark>Required</mark>   | <mark>For reference and debugging</mark>                   |
-
-<!-- Google Doc comments -->
-
-<details id="c-doc">
-  <summary>Comments</summary>
-  <ul>
-    <li><strong>Rebecca Koeser · 2:51 PM · Aug 20</strong><br>
-        renaming to file; there may be a meta-level document id or title that will be in the final output</li>
-  </ul>
-  <a href="#f-doc">↑ back to context</a>
-</details>
-<br>
+| **Field Name** | **Description**                                               | **Type** | **Required / Optional** | **Reason**                                                 |
+| :------------- | :------------------------------------------------------------ | :------- | :---------------------- | :--------------------------------------------------------- |
+| id             | Unique identifier for each sentence                           | String   | Required                | For tracking, reference                                    |
+| text           | Sentence text content                                         | String   | Required                | For quote detection                                        |
+| doc            | Corresponding document filename                               | String   | Required                | For tracking, reference, metadata linking                  |
+| sent_index     | Sentence-level index within document (0-based indexing)       | Integer  | Required                | For identifying sequential sentences for quote compilation |
+| section_type   | What text section the sentence comes from (text vs. footnote) | enum     | Optional                | For reference and debugging                                |
+| multi_page     | Indicates whether the sentence spans multiple pages.          | Boolean  | Required                | For reference and debugging                                |
 
 The sentence corpora produced by the Sentence Corpus Builder program must include one or more fields that link the sentence back to its location within the corresponding input document. This will vary by the input format (e.g., MEGAdigital: page and line number; plaintext: starting character index).
 
@@ -275,7 +240,7 @@ The sentence corpora produced by the Sentence Corpus Builder program must includ
 A CSV file with each row corresponding to a original-reuse sentence pair that has been identified as a quote.
 
 | **Field Name** | **Description**               | **Type** | **Required / Optional** | **Reason**                  |
-| -------------- | ----------------------------- | -------- | ----------------------- | --------------------------- |
+| :------------- | :---------------------------- | :------- | :---------------------- | :-------------------------- |
 | reuse_id       | ID of the reuse text sentence | String   | Required                | For tracking, reference     |
 | original_id    | ID of the original sentence   | String   | Required                | For tracking, reference     |
 | match_score    | Some match quality score      | Float    | Required                | For development, evaluation |
@@ -289,18 +254,18 @@ Depending on performance and resource needs, this could be to include each sente
 
 A CSV file with each row corresponding to a text passage containing a quotation. The granularity of these passages operate at the sentence level; in other words, a passage corresponds to one or more sentences.
 
-| **Field Name**                     | **Description**                                                                                           | **Type**          | **Required / Optional** | **Reason**                               |
-| ---------------------------------- | --------------------------------------------------------------------------------------------------------- | ----------------- | ----------------------- | ---------------------------------------- |
-| id                                 | Unique identifier for quote. Starting sentence id for multi-sentence passages.                            | String            | Required                | For tracking, reference                  |
-| match_score                        | Some match quality score. For multi-sentence passages this will be the mean of the sentence-level scores. | Float             | Required                | For development, evaluation, reference.  |
-| reuse_id                           | ID of the reuse sentence                                                                                  | String            | Required                | For tracking, reference                  |
-| reuse_doc                          | Filename of reuse document                                                                                | String            | Required                | For tracking, reference                  |
-| reuse_text                         | Text of the quote as it appears in reuse document                                                         | String            | Required                | For reference, evaluation                |
-| original_id                        | ID of the original sentence                                                                               | String            | Required                | For tracking, reference                  |
-| original_doc                       | Filename of original document                                                                             | String            | Required                | For tracking, reference                  |
-| original_text                      | Text of the quote as it appears in original document                                                      | String            | Required                | For reference, evaluation                |
-| <mark>original_section_type</mark> | <mark>What text section the original sentence comes from (text vs. footnote)</mark>                       | <mark>enum</mark> | <mark>Optional</mark>   | <mark>For reference and debugging</mark> |
-| <mark>reuse_section_type</mark>    | <mark>What text section the reuse sentence comes from (text vs. footnote)</mark>                          | <mark>enum</mark> | <mark>Optional</mark>   | <mark>For reference and debugging</mark> |
+| **Field Name**        | **Description**                                                                                           | **Type** | **Required / Optional** | **Reason**                              |
+| :-------------------- | :-------------------------------------------------------------------------------------------------------- | :------- | :---------------------- | :-------------------------------------- |
+| id                    | Unique identifier for quote. Starting sentence id for multi-sentence passages.                            | String   | Required                | For tracking, reference                 |
+| match_score           | Some match quality score. For multi-sentence passages this will be the mean of the sentence-level scores. | Float    | Required                | For development, evaluation, reference. |
+| reuse_id              | ID of the reuse sentence                                                                                  | String   | Required                | For tracking, reference                 |
+| reuse_doc             | Filename of reuse document                                                                                | String   | Required                | For tracking, reference                 |
+| reuse_text            | Text of the quote as it appears in reuse document                                                         | String   | Required                | For reference, evaluation               |
+| original_id           | ID of the original sentence                                                                               | String   | Required                | For tracking, reference                 |
+| original_doc          | Filename of original document                                                                             | String   | Required                | For tracking, reference                 |
+| original_text         | Text of the quote as it appears in original document                                                      | String   | Required                | For reference, evaluation               |
+| original_section_type | What text section the original sentence comes from (text vs. footnote)                                    | enum     | Optional                | For reference and debugging             |
+| reuse_section_type    | What text section the reuse sentence comes from (text vs. footnote)                                       | enum     | Optional                | For reference and debugging             |
 
 Any additional metadata included with the input sentences will be passed through and prefixed based on the input corpus (reuse/original).
 
@@ -308,26 +273,26 @@ Any additional metadata included with the input sentences will be passed through
 
 This CSV file is a tailored version of the Quotes Corpus produced by the core software pipeline where relevant page- and document-level metadata has been added.
 
-| **Field Name**             | **Description**                            | **Type**            | **Required / Optional** |
-| -------------------------- | ------------------------------------------ | ------------------- | ----------------------- |
-| quote_id                   | Unique identifier for quote                | String              | Required                |
-| marx_quote                 | Text of direct quote from Marx text        | String              | Required                |
-| <mark>article_quote</mark> | Text of direct quote from the article text | String              | Required                |
-| marx_title                 | Title of Marx text                         | String              | Required                |
-| marx_page                  | Starting page of quote in Max text         | String              | Required                |
-| article_title              | Title of article                           | String              | Required                |
-| article_author             | Name of article’s author                   | String              | Optional                |
-| journal                    | Title of journal                           | String              | Required                |
-| volume                     | Volume Issue                               | <mark>String</mark> | Required                |
-| issue                      | Journal Issue                              | <mark>String</mark> | Required                |
-| year                       | Year of article/journal publication        | <mark>String</mark> | Required                |
-| <mark>certainty</mark>     | A score (0-1) of how quote certainty       | <mark>Float</mark>  | Required                |
+| **Field Name** | **Description**                            | **Type** | **Required / Optional** |
+| :------------- | :----------------------------------------- | :------- | :---------------------- |
+| quote_id       | Unique identifier for quote                | String   | Required                |
+| marx_quote     | Text of direct quote from Marx text        | String   | Required                |
+| article_quote  | Text of direct quote from the article text | String   | Required                |
+| marx_title     | Title of Marx text                         | String   | Required                |
+| marx_page      | Starting page of quote in Max text         | String   | Required                |
+| article_title  | Title of article                           | String   | Required                |
+| article_author | Name of article’s author                   | String   | Optional                |
+| journal        | Title of journal                           | String   | Required                |
+| volume         | Volume Issue                               | String   | Required                |
+| issue          | Journal Issue                              | String   | Required                |
+| year           | Year of article/journal publication        | String   | Required                |
+| certainty      | A score (0-1) of how quote certainty       | Float    | Required                |
 
 Note: article and marx naming convention could be altered to something more general. Should have the research team confirm desired form and field names and check if there are any additional fields that should be added (e.g., page vs. footnote).
 
-### Work Plan for Additional Data Work (if needed)
+## Work Plan for Additional Data Work (if needed)
 
-*Describe the data work that needs to be done and <mark>include proposed deadlines.</mark>*
+*Describe the data work that needs to be done and include proposed deadlines.*
 
 ### Kapital Texts
 
@@ -341,13 +306,13 @@ The text of the Communist Manifesto may need to be transformed into plaintext fi
 
 The text of DNZ articles must be extracted from the ALTO-XML transcription files. For simplicity, each article should be separated into separate text files. If the article has footnotes, footnotes will be split into a separate text file.
 
-### <mark>Evaluation Dataset(s)</mark>
+### Evaluation Dataset(s)
 
 A dataset of identified direct quote annotations from Kapital and/or the Communist Manifesto must be constructed. This will be used as the evaluation reference during development to measure the performance of the software pipeline, and to provide an estimate for the expected scale of the dataset.
 
-<mark>Derivative versions of the text reuse data will be created as needed to compare passages identified as text reuse with sentence level matches.</mark>
+Derivative versions of the text reuse data will be created as needed to compare passages identified as text reuse with sentence level matches.
 
-### Data Management Plan
+## Data Management Plan
 
 ### Datasets
 
@@ -356,7 +321,7 @@ A dataset of identified direct quote annotations from Kapital and/or the Communi
 | **Name**                       | **Description of how generated**                                                                                                                  | **Data type** | **Format** | **Stability** |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ---------- | ------------- |
 | Kapital XML                    | MEGAdigital’s MEGA II/5 digital copy. This text corresponds to the first edition of the first volume of *Das Kapital* (Berlin: Dietz-Verlag 1983) | Input         | TEI XML    |               |
-| Communist Manifesto text       | For this phase, we will use content from this online edition: https://www.marxists.org/deutsch/archive/marx-engels/1848/manifest/index.htm        | Input         | HTML       |               |
+| Communist Manifesto text       | For this phase, we will use content from this [online edition](https://www.marxists.org/deutsch/archiv/marx-engels/1848/manifest/index.htm)       | Input         | HTML       |               |
 | DNZ transcriptions             | Transcriptions of DNZ volumes with specialized text segment labels. These were created using eScriptorium and YALTAI.                             | Input         | ALTO XML   |               |
 | Kapital sentences              | Corpora of sentences from Kapital. At least two: main text, footnotes.                                                                            | Input         | CSV        |               |
 | Communist Manifesto sentences  | Corpora of sentences from the Communist Manifesto.                                                                                                | Input         | CSV        |               |
@@ -379,57 +344,57 @@ Directories should be named meaningfully and include a brief readme documenting 
 
 **GoogleDrive.** The initial text inputs will be stored in the project’s GoogleDrive folder. Any intermediate files that should be reviewed by the research team will also be uploaded to this folder.
 
-### <mark>Archiving and Publication</mark>
+### Archiving and Publication
 
 *What is the plan for publication or archiving of the data? What license will be applied?*
 
 The final dataset will be published on Zenodo and/or the Princeton Data Commons depending on the terms of use / copyright status of the data. If possible, an additional copy will be published on GitHub.
 
-Q: <mark>What license will be applied for the data?</mark>
+Q: What license will be applied for the data?
 
-## Interface Functionality
+# Interface Functionality
 
 *Description of user-facing functionality directly accessible through the user interface and its components*
 
 As possible, there will be two types of interfaces for two different types of users.
 
-### Notebook Application
+## Notebook Application
 
 The primary user interface is a marimo notebook. This interface will provide a graphical interface for selecting and uploading input text files and downloading the system’s output corpus file.
 
-### Command Line
+## Command Line
 
 Technical users and the development team will have an alternative interface where the software can be run directly from the terminal.
 
-## Testing Plan
+# Testing Plan
 
-### Unit Testing
+## Unit Testing
 
 Unit testing will be used throughout the development process. There must be unit tests for all python source code excluding marimo notebooks. The target code coverage for python source code is 95%; the target coverage for python test code is 100%.
 
-### <mark>Staging</mark>
+## Staging
 
 During development, della will be used for a staging environment, as needed. This ensures a consistent shared environment as opposed to each developer’s local environment.
 
-### <mark>Ongoing Acceptance Testing</mark>
+## Ongoing Acceptance Testing
 
 Acceptance testing will be conducted throughout development. Each user-facing feature must have a user story and must undergo acceptance testing before an issue is considered complete. Acceptance testing should normally be done on features that have been implemented, unit tested, gone through code review, and merged to the develop branch. Acceptance testing is expected to occur every iteration where possible and otherwise as soon as possible so that software updates can be released each iteration.
 
 Application (i.e., notebook) testing will ideally run on the target environment. We will use [molab](https://molab.marimo.io/notebooks) initially if helpful while getting started with development. Then, depending on resource requirements, testing will shift either to the tester’s local machine or on della via Open OnDemand.
 
-## Development Conventions
+# Development Conventions
 
-### Software Releases
+## Software Releases
 
 The goal is to complete a software release each iteration by either the project team meeting or by retro. This high frequency of releases will make the changelog more meaningful. The RSEs responsible for creating and reviewing each release will be assigned evenly across the team. Ideally, no RSE will be responsible for two consecutive releases.
 
 The tool [Repo Review](https://learn.scientific-python.org/development/guides/repo-review/) should be checked before making a release.
 
-### Software Publishing
+## Software Publishing
 
 The software’s python source code should be packaged and published on PyPI iteratively. Ideally, with each release. We will add a GitHub workflow to automate publishing, so it will be triggered with each software release.
 
-### Python Development
+## Python Development
 
 ### Package Management
 
@@ -447,47 +412,21 @@ We will use Ruff’s formatter to enforce a consistent code format. The formatte
 
 We will use Ruff’s linter using the following rule sets:
 
-| **Rule(s)**      | **Name**                                                 | **Reason**                                                                                       |
-| ---------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| F                | pyflakes                                                 | Ruff default                                                                                     |
-| E4, E7, E9       | pycodestyle subset                                       | Ruff default; subset compatible with Ruff’s formatter                                            |
-| I                | isort                                                    | Import sorting / organization                                                                    |
-| ANN              | flake8-annotations                                       | Checks type annotations                                                                          |
-| PTH              | flake8-use-pathlib                                       | Ensure pathlib usage instead of os.path                                                          |
-| B                | flake8-bugbear                                           | Flags likely bugs and design problems                                                            |
-| <mark>D</mark>   | <span id="r-d"><mark>pydocstyle subset</mark></span>     | <span><mark>Checks docstrings</mark></span> <sup>↘︎ <a href="#c-d">[read comments]</a></sup>      |
-| PERF             | perflint                                                 | Checks for some performance anti-patterns                                                        |
-| SIM              | flake8-simplify                                          | Looks for code simplification                                                                    |
-| C4               | flake8-comprehensions                                    | Checks comprehension patterns                                                                    |
-| <mark>RUF</mark> | <span id="r-ruf"><mark>ruff-specific rules</mark></span> | <span><mark>Potentially helpful?</mark></span> <sup>↘︎ <a href="#c-ruf">[read comments]</a></sup> |
-| NPY              | numpy-specific rules                                     | For checking numpy usage                                                                         |
-| UP               | pyupgrade                                                | Automatically update syntax to newer form                                                        |
-
-<!-- Google Doc comments -->
-
-<details id="c-d">
-  <summary>Comments</summary>
-  <ul>
-    <li><strong>Rebecca Koeser · 3:53 PM · Jul 29</strong><br>
-        sounds useful to me as long as it works with format mkdocs expects/uses</li>
-    <li><strong>Laure Thompson · 4:23 PM · Jul 29</strong><br>
-        Good point; I mostly thought we should only use a subset because it makes assumptions about what needs to be contained within a method docstring that I don't think we care about.</li>
-    <li><strong>Laure Thompson · 4:23 PM · Jul 29</strong><br>
-        e.g., <a href="https://docs.astral.sh/ruff/rules/missing-blank-line-after-summary/">https://docs.astral.sh/ruff/rules/missing-blank-line-after-summary/</a></li>
-  </ul>
-  <a href="#r-d">↑ back to context</a>
-</details>
-
-<details id="c-ruf">
-  <summary>Comments</summary>
-  <ul>
-    <li><strong>Rebecca Koeser · 3:54 PM · Jul 29</strong><br>
-        I'm game to try it. But if we find that any of these are too picky and causing us grief, let's turn them off / turn them down.</li>
-    <li><strong>Laure Thompson · 4:24 PM · Jul 29</strong><br>
-        absolutely! it's very easy to specify specific rules we'd like to skip.</li>
-  </ul>
-  <a href="#r-ruf">↑ back to context</a>
-</details>
+| **Rule(s)** | **Name**                                    | **Reason**                                                                          |
+| :---------- | :------------------------------------------ | :---------------------------------------------------------------------------------- |
+| F           | pyflakes                                    | Ruff default                                                                        |
+| E4, E7, E9  | pycodestyle subset                          | Ruff default; subset compatible with Ruff’s formatter                               |
+| I           | isort                                       | Import sorting / organization                                                       |
+| ANN         | flake8-annotations                          | Checks type annotations                                                             |
+| PTH         | flake8-use-pathlib                          | Ensure pathlib usage instead of os.path                                             |
+| B           | flake8-bugbear                              | Flags likely bugs and design problems                                               |
+| D           | <span id="r-d">pydocstyle subset</span>     | <span>Checks docstrings</span> <sup>↘︎ <a href="#c-d">[read comments]</a></sup>      |
+| PERF        | perflint                                    | Checks for some performance anti-patterns                                           |
+| SIM         | flake8-simplify                             | Looks for code simplification                                                       |
+| C4          | flake8-comprehensions                       | Checks comprehension patterns                                                       |
+| RUF         | <span id="r-ruf">ruff-specific rules</span> | <span>Potentially helpful?</span> <sup>↘︎ <a href="#c-ruf">[read comments]</a></sup> |
+| NPY         | numpy-specific rules                        | For checking numpy usage                                                            |
+| UP          | pyupgrade                                   | Automatically update syntax to newer form                                           |
 
 ### Notebook Development
 
@@ -497,13 +436,13 @@ Notebooks will be used both as the application interface and as needed for data 
 
 The Marimo app interface notebook will be tested if possible; data analysis notebooks will be excluded from code coverage.
 
-### Documentation
+## Documentation
 
 Documentation must be updated before a pull request is merged to the development branch. Documentations will be generated using mkdocs. The linter [prettier](https://github.com/prettier/prettier) will be used for linting all documentation markdown files.
 
 We will implement automated documentation checks on pull requests to develop and main branches (documentation coverage, if supported by mkdocs; otherwise, confirm documentation has been updated)
 
-### Precommit Hooks
+## Precommit Hooks
 
 We will include precommit hooks for the following actions:
 
@@ -511,7 +450,7 @@ We will include precommit hooks for the following actions:
 - Run [prettier](https://github.com/prettier/prettier) linter on markdown files
 - Run [codespell](https://github.com/codespell-project/codespell) to check for typos within any text
 
-### GitHubActions
+## GitHub Actions
 
 Our repository will include the following GitHubActions:
 
@@ -523,22 +462,22 @@ Our repository will include the following GitHubActions:
 - Check change log has been updated
 - Python package publication on PyPI (triggered by new release on GitHub)
 
-## Final Acceptance Criteria
+# Final Acceptance Criteria
 
 *Define the requirements the deliverable must meet to be considered complete and accepted. These criteria should be testable.*
 
-### Functionality
+## Functionality
 
 - Using evaluation dataset as a reference. The software must identify at least 90% of the expected quotations (i.e., 90% recall).
     - Tolerance for false positives will be determined in conversation with the research team after reviewing preliminary results. If necessary, we will decrease the recall threshold to avoid too many false positives in the final dataset.
 - Faculty collaborator can successfully run software without assistance.
 
-## Sign Offs
+# Sign Offs
 
 Reviewed by: Jeri Wieringa
 
 Signatures / Date
 
-## References
+# References
 
 https://zenodo.org/records/14861082
