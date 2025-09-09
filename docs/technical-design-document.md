@@ -3,7 +3,7 @@ title: Technical Design
 hide: [navigation]
 ---
 
-# `remarx` Technical Design Document
+# Technical Design Document
 
 *The goal for this document is to surface the areas for design decisions and to document those decisions. The expectation is not a comprehensive listing of issues or tasks, but rather a recording of the key structural and process elements, as well as primary deliverables, that will guide development going forward.*
 
