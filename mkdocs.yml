@@ -76,11 +76,7 @@ plugins:
 markdown_extensions:
   - admonition
   - pymdownx.details
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.superfences
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
@@ -99,5 +95,3 @@ not_in_nav: | # for now ignore the mermaid diagram
 extra:
   version:
     provider: mike
-extra_javascript:
-  - https://unpkg.com/mermaid/dist/mermaid.min.js
