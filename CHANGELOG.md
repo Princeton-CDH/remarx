@@ -4,7 +4,7 @@
 
 ### Documentation
 
-- Add technical design document to Mkdocs code documentation
+- Add technical design document to MkDocs documentation
 
 ### Sentence corpus creation
 
