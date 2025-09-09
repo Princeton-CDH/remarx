@@ -319,7 +319,7 @@ Derivative versions of the text reuse data will be created as needed to compare 
 *Describe input and output data formats*
 
 | **Name**                       | **Description of how generated**                                                                                                                  | **Data type** | **Format** | **Stability** |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ---------- | ------------- |
+| :----------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------ | :------------ | :--------- | :------------ |
 | Kapital XML                    | MEGAdigital’s MEGA II/5 digital copy. This text corresponds to the first edition of the first volume of *Das Kapital* (Berlin: Dietz-Verlag 1983) | Input         | TEI XML    |               |
 | Communist Manifesto text       | For this phase, we will use content from this [online edition](https://www.marxists.org/deutsch/archiv/marx-engels/1848/manifest/index.htm)       | Input         | HTML       |               |
 | DNZ transcriptions             | Transcriptions of DNZ volumes with specialized text segment labels. These were created using eScriptorium and YALTAI.                             | Input         | ALTO XML   |               |
