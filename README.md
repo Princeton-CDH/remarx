@@ -25,7 +25,7 @@ This only step only needs to be done once.
 Create a new virtual environment using `uv`.
 
 ```
-uv venv
+uv venv --python 3.12
 ```
 
 #### Install `remarx`
