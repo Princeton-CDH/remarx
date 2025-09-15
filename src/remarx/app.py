@@ -239,7 +239,7 @@ def _(mo, original_csv_browser, reuse_csv_browser):
     original_count = len(original_csvs)
     reuse_count = len(reuse_csvs)
 
-    original_msg = "" if original_count > 0 else "No original text files selected"
+    original_msg = "Files selected Successfully" if original_count > 0 else "No original text files selected"
     reuse_msg = "" if reuse_count > 0 else "No reuse text files selected"
 
     original_callout_type = "success" if original_count > 0 else "warn"
@@ -250,7 +250,7 @@ def _(mo, original_csv_browser, reuse_csv_browser):
         mo.callout(
             mo.vstack([
                 mo.md("# 🗂").center(),
-                mo.md("**Original Text CSV Files**").center(),
+                mo.md("**Select Original Sentence Corpora (CSVs)**").center(),
                 mo.md("*Original text are the source text files where quotations originate.*").center(),
                 original_csv_browser,
                 mo.md(original_msg)
@@ -260,7 +260,7 @@ def _(mo, original_csv_browser, reuse_csv_browser):
         mo.callout(
             mo.vstack([
                 mo.md("# ♻️").center(),
-                mo.md("**Reuse Text CSV Files**").center(),
+                mo.md("**Select Reuse Sentence Corpora (CSVs)**").center(),
                 mo.md("*Reuse text are text that may reuse content from the original text that will be detected.*").center(),
                 reuse_csv_browser,
                 mo.md(reuse_msg)
@@ -278,28 +278,17 @@ def _(mo, original_csvs, reuse_csvs, quotation_file_selection_ui):
     quotation_detection_content = mo.vstack([
         mo.md(
             """
-            Detect quotations and text reuse between original and reuse texts.
-            This process requires sentence corpus CSV files created in the previous step.
+            Determine and identify the passages of a text corpus (**reuse**) that quote passages from texts in a source text corpus (**original**).
+            This process requires sentence corpora (**CSVs**) created in the previous section.
 
             **1. Select Input CSV Files**
 
-            Browse and select one or multiple CSV files for each category:
+            Browse and select one or more CSV files for each category:
             """
         ).style(width="100%"),
 
         quotation_file_selection_ui,
 
-        mo.md(
-            """
-            **More features coming soon!**
-
-            - Configure detection parameters
-            - Run quotation analysis
-            - Export results
-
-            Stay tuned for this functionality.
-            """
-        ).style(width="100%"),
     ])
 
     return (quotation_detection_content,)
