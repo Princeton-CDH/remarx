@@ -66,8 +66,9 @@ class FileInput:
 
         :returns: Generator of one dictionary per sentence; dictionary
         always includes: `text` (text content), `file` (filename),
-        `sent_index` (sentence index within the document). It may include
-        other metadata, depending on the input file type.
+        `sent_index` (sentence index within the document), and `sent_id`
+        (sentence id). It may include other metadata, depending
+        on the input file type.
         """
         # zero-based sentence index for this file, across all chunks
         sentence_index = 0
