@@ -271,7 +271,7 @@ def _(mo, original_csvs, reuse_csvs, quotation_file_selection_ui):
     quotation_detection_content = mo.vstack([
         mo.md(
             """
-            Determine and identify the passages of a text corpus (**reuse**) that quote passages from texts in a source text corpus (**original**).
+            Determine and identify the passages of a text corpus (**reuse**) that quote passages from texts in another corpus (**original**).
             This process requires sentence corpora (**CSVs**) created in the previous section.
 
             **1. Select Input CSV Files**
