@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 import pytest
 from lxml.etree import Element
 
+from remarx.sentence.corpus.base_input import FileInput
 from remarx.sentence.corpus.tei_input import TEI_TAG, TEIDocument, TEIinput, TEIPage
 
 FIXTURE_DIR = pathlib.Path(__file__).parent / "fixtures"
@@ -170,9 +171,7 @@ class TestTEIinput:
     def test_field_names(self):
         # includes defaults from text input and adds page number and section type
         assert TEIinput.field_names == (
-            "file",
-            "sent_index",
-            "text",
+            *FileInput.field_names,
             "page_number",
             "section_type",
         )
