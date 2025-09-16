@@ -2,6 +2,10 @@
 
 ## 0.2.0
 
+### Application
+
+- Add a sentence corpus selection interface for the quotation detection step
+
 ### Documentation
 
 - Add technical design document to MkDocs documentation
