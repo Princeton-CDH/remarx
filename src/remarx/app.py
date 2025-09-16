@@ -246,9 +246,7 @@ def _(mo, original_csv_browser, reuse_csv_browser):
     quotation_file_selection_ui = mo.hstack([
         mo.callout(
             mo.vstack([
-                # mo.md("# 🗂").center(),
                 mo.md("**🗂 Select Original Sentence Corpora (CSVs)**").center(),
-                mo.md("*Sentence-level text corpora of the texts that we are searching for quotations of.*").center(),
                 original_csv_browser,
                 mo.md(original_msg)
             ]),
@@ -256,9 +254,7 @@ def _(mo, original_csv_browser, reuse_csv_browser):
         ),
         mo.callout(
             mo.vstack([
-                # mo.md("# ♻️").center(),
                 mo.md("**♻️ Select Reuse Sentence Corpora (CSVs)**").center(),
-                mo.md("*Text that may contain quotations from the original text that will be detected.*").center(),
                 reuse_csv_browser,
                 mo.md(reuse_msg)
             ]),
@@ -281,6 +277,10 @@ def _(mo, original_csvs, reuse_csvs, quotation_file_selection_ui):
             **1. Select Input CSV Files**
 
             Browse and select one or more CSV files for each category:
+
+            - Original Sentence Corpora: Sentence-level text corpora of the texts that we are searching for quotations of.
+
+            - Reuse Sentence Corpora: Text that may contain quotations from the original text that will be detected.
             """
         ).style(width="100%"),
 
