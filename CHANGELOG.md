@@ -4,7 +4,7 @@
 
 ### Application
 
-- Add corpus CSV uploading interface for the quotation detection step
+- Add a sentence corpus selection interface for the quotation detection step
 
 ### Documentation
 

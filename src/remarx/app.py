@@ -233,25 +233,22 @@ def _(mo, pathlib):
 @app.cell
 def _(mo, original_csv_browser, reuse_csv_browser):
     # Process file selections for quotation detection
-    original_csvs = original_csv_browser.value if original_csv_browser.value else []
-    reuse_csvs = reuse_csv_browser.value if reuse_csv_browser.value else []
+    original_csvs = original_csv_browser.value or []
+    reuse_csvs = reuse_csv_browser.value or []
 
-    original_count = len(original_csvs)
-    reuse_count = len(reuse_csvs)
+    original_msg = "Files selected Successfully" if original_csvs else "No original text files selected"
+    reuse_msg = "Files selected Successfully" if reuse_csvs else "No reuse text files selected"
 
-    original_msg = "Files selected Successfully" if original_count > 0 else "No original text files selected"
-    reuse_msg = "" if reuse_count > 0 else "No reuse text files selected"
-
-    original_callout_type = "success" if original_count > 0 else "warn"
-    reuse_callout_type = "success" if reuse_count > 0 else "info" # use a different color
+    original_callout_type = "success" if original_csvs else "warn"
+    reuse_callout_type = "success" if reuse_csvs else "warn"
 
     # Create side-by-side file browser interface
     quotation_file_selection_ui = mo.hstack([
         mo.callout(
             mo.vstack([
-                mo.md("# 🗂").center(),
-                mo.md("**Select Original Sentence Corpora (CSVs)**").center(),
-                mo.md("*Original text are the source text files where quotations originate.*").center(),
+                # mo.md("# 🗂").center(),
+                mo.md("**🗂 Select Original Sentence Corpora (CSVs)**").center(),
+                mo.md("*Sentence-level text corpora of the texts that we are searching for quotations of..*").center(),
                 original_csv_browser,
                 mo.md(original_msg)
             ]),
@@ -259,9 +256,9 @@ def _(mo, original_csv_browser, reuse_csv_browser):
         ),
         mo.callout(
             mo.vstack([
-                mo.md("# ♻️").center(),
-                mo.md("**Select Reuse Sentence Corpora (CSVs)**").center(),
-                mo.md("*Reuse text are text that may reuse content from the original text that will be detected.*").center(),
+                # mo.md("# ♻️").center(),
+                mo.md("**♻️ Select Reuse Sentence Corpora (CSVs)**").center(),
+                mo.md("*Text that may contain quotations from the original text that will be detected.*").center(),
                 reuse_csv_browser,
                 mo.md(reuse_msg)
             ]),
