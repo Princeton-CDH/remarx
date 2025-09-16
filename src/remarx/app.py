@@ -248,7 +248,7 @@ def _(mo, original_csv_browser, reuse_csv_browser):
             mo.vstack([
                 # mo.md("# 🗂").center(),
                 mo.md("**🗂 Select Original Sentence Corpora (CSVs)**").center(),
-                mo.md("*Sentence-level text corpora of the texts that we are searching for quotations of..*").center(),
+                mo.md("*Sentence-level text corpora of the texts that we are searching for quotations of.*").center(),
                 original_csv_browser,
                 mo.md(original_msg)
             ]),
