@@ -6,7 +6,6 @@ using pretrained models from the sentence-transformers library.
 import argparse
 import csv
 import pathlib
-import sys
 
 import numpy.typing as npt
 
@@ -17,7 +16,7 @@ try:
 except ImportError as e:
     raise ImportError(
         "The sentence-transformers library is required for embedding functionality. "
-        "Install it with: pip install remarx[embeddings] or uv add --optional embeddings"
+        "Install it by running: uv sync"
     ) from e
 
 
@@ -76,19 +75,14 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    try:
-        embeddings = get_sentence_embeddings(args.input_csv, model_name=args.model)
+    embeddings = get_sentence_embeddings(args.input_csv, model_name=args.model)
 
-        import numpy as np
+    import numpy as np
 
-        np.save(args.output_npy, embeddings)
+    np.save(args.output_npy, embeddings)
 
-        print(f"Saved embeddings to {args.output_npy}")
-        print(f"Shape: {embeddings.shape}")
-
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
+    print(f"Saved embeddings to {args.output_npy}")
+    print(f"Shape: {embeddings.shape}")
 
 
 def validate_sentence_corpus(corpus_file: pathlib.Path) -> None:
