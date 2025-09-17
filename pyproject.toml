@@ -64,6 +64,7 @@ dev = [ "remarx[dev]" ]
 [project.scripts]
 remarx-app = "remarx.app_utils:launch_app"
 remarx-create-corpus = "remarx.sentence.corpus.create:main"
+remarx-generate-embeddings = "remarx.sentence.embeddings:main"
 
 [tool.hatch.version]
 path = "src/remarx/__init__.py"

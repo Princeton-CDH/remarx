@@ -3,8 +3,10 @@ Provides functionality to generate sentence embeddings from sentence corpora
 using pretrained models from the sentence-transformers library.
 """
 
+import argparse
 import csv
 import pathlib
+import sys
 
 import numpy.typing as npt
 
@@ -51,6 +53,42 @@ def get_sentence_embeddings(
     )
 
     return embeddings
+
+
+def main() -> None:
+    """
+    Command-line access to sentence embedding generation from CSV corpus files.
+    """
+    parser = argparse.ArgumentParser(
+        description="Generate sentence embeddings from a CSV sentence corpus file"
+    )
+    parser.add_argument(
+        "input_csv", type=pathlib.Path, help="Input sentence corpus (CSV)"
+    )
+    parser.add_argument(
+        "output_npy", type=pathlib.Path, help="Output embeddings file (.npy)"
+    )
+    parser.add_argument(
+        "--model",
+        default="paraphrase-multilingual-mpnet-base-v2",
+        help="Pretrained model name",
+    )
+
+    args = parser.parse_args()
+
+    try:
+        embeddings = get_sentence_embeddings(args.input_csv, model_name=args.model)
+
+        import numpy as np
+
+        np.save(args.output_npy, embeddings)
+
+        print(f"Saved embeddings to {args.output_npy}")
+        print(f"Shape: {embeddings.shape}")
+
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 def validate_sentence_corpus(corpus_file: pathlib.Path) -> None:
