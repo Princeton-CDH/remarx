@@ -2,6 +2,7 @@ import pathlib
 from collections.abc import Generator
 from unittest.mock import Mock, patch
 
+from remarx.sentence.corpus.base_input import FileInput
 from remarx.sentence.corpus.text_input import TextInput
 
 
@@ -19,7 +20,7 @@ def test_file_name(tmp_path: pathlib.Path):
 
 
 def test_field_names(tmp_path: pathlib.Path):
-    assert TextInput.field_names == ("file", "sent_index", "text")
+    assert TextInput.field_names == FileInput.field_names
 
 
 def test_get_text(tmp_path: pathlib.Path):
