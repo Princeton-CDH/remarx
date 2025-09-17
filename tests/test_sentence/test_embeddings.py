@@ -155,3 +155,25 @@ class TestGetSentenceEmbeddings:
             mock_transformer_class.assert_called_once_with(custom_model)
 
             np.testing.assert_array_equal(result, mock_embeddings)
+
+
+@patch("remarx.sentence.embeddings.get_sentence_embeddings")
+@patch("numpy.save")
+def test_main(mock_np_save, mock_get_embeddings):
+    """Test the main command-line interface."""
+    import numpy as np
+
+    from remarx.sentence.embeddings import main
+
+    mock_embeddings = np.array([[0.1, 0.2, 0.3]])
+    mock_get_embeddings.return_value = mock_embeddings
+
+    with patch("sys.argv", ["remarx-generate-embeddings", "input.csv", "output.npy"]):
+        main()
+        mock_get_embeddings.assert_called_once_with(
+            pathlib.Path("input.csv"),
+            model_name="paraphrase-multilingual-mpnet-base-v2",
+        )
+        mock_np_save.assert_called_once_with(
+            pathlib.Path("output.npy"), mock_embeddings
+        )
