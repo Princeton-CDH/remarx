@@ -54,7 +54,7 @@ html = [ "bs4" ]
 dev = [ "remarx[dev]" ]
 
 [project.scripts]
-remarx-app = "remarx.app_utils:launch_app"
+remarx-app = "remarx.app.utils:launch_app"
 remarx-create-corpus = "remarx.sentence.corpus.create:main"
 
 [tool.hatch.version]
@@ -66,7 +66,7 @@ testpaths = ["tests"]
 [tool.coverage.run]
 branch = true
 omit = [
-  "src/remarx/app.py",   # marimo app notebook
+  "src/remarx/app/ui.py",   # marimo app notebook
 ]
 
 [tool.coverage.report]
@@ -81,7 +81,7 @@ target-version = "py312"
 # Configure src path so ruff import fixes can identify local imports
 src = [ "src" ]
 # Also ignore the app notebook
-extend-exclude = [ "src/remarx/app.py" ]
+extend-exclude = [ "src/remarx/app/ui.py" ]
 
 [tool.ruff.lint]
 # Include these rules in addition to ruff's defaults

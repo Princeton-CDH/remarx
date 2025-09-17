@@ -1,4 +1,4 @@
-from remarx.app import app
+from remarx.app.ui import app
 
 
 def test_app():
