@@ -13,6 +13,7 @@
 ### Sentence corpus creation
 
 - Processes TEI/XML documents to yield separate chunks for body text and footnotes, with each footnote yielded individually as a separate element
+- Add a method for generating sentence embeddings from sentence corpus
 
 ### Scripts
 
