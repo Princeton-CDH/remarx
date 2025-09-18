@@ -1,6 +1,7 @@
 """
-The marimo notebook corresponding to the `remarx` application. The application
-can be launched by running the command `remarx-app` or via marimo.
+The marimo notebook corresponding to the `remarx` app.
+
+The app can be launched by running the `remarx-app` command or via marimo.
 
 Example Usage:
 
