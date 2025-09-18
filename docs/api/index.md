@@ -26,3 +26,7 @@ hide: [navigation]
 #### ::: remarx.sentence.corpus.text_input
     options:
       members: false
+
+## ::: remarx.quotation
+
+### ::: remarx.quotation.embeddings
