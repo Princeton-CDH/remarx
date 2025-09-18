@@ -22,7 +22,7 @@ classifiers = [
   "Topic :: Text Processing",
 ]
 dependencies = [
-
+  "ipython",         # Required by transformers for trainer functionality
   "marimo>=0.13.11",
   "marimo[lsp]",     # marimo language server protocol
   "neuxml>=1",
