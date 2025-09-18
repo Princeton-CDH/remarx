@@ -9,6 +9,7 @@ from sentence_transformers import SentenceTransformer
 def get_sentence_embeddings(
     sentences: list[str],
     model_name: str = "paraphrase-multilingual-mpnet-base-v2",
+    show_progress_bar: bool = False,
 ) -> npt.NDArray:
     """
     Extract embeddings for each sentence using the specified pretrained Sentence
@@ -24,6 +25,6 @@ def get_sentence_embeddings(
     embeddings = model.encode(
         sentences,
         normalize_embeddings=True,
-        show_progress_bar=False,  # default to False to disable progress bar output in unit tests
+        show_progress_bar=show_progress_bar,
     )
     return embeddings

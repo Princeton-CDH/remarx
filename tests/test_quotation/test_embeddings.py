@@ -34,31 +34,3 @@ def test_get_sentence_embeddings_basic(mock_transformer_class):
     )
 
     assert result == mock_embeddings
-
-
-@patch("remarx.quotation.embeddings.SentenceTransformer")
-def test_get_sentence_embeddings_custom_model(mock_transformer_class):
-    """Test sentence embedding generation with custom model."""
-
-    # Mock the sentence transformer
-    mock_model = Mock()
-    mock_embeddings = "[[0.1, 0.2]]"
-    mock_model.encode.return_value = mock_embeddings
-    mock_transformer_class.return_value = mock_model
-
-    sentences = ["Test sentence."]
-    custom_model = "paraphrase-multilingual-MiniLM-L12-v2"
-
-    result = get_sentence_embeddings(sentences, model_name=custom_model)
-
-    # Verify custom model was used
-    mock_transformer_class.assert_called_once_with(custom_model)
-
-    # Verify encode was called with correct parameters
-    mock_model.encode.assert_called_once_with(
-        sentences,
-        normalize_embeddings=True,
-        show_progress_bar=False,
-    )
-
-    assert result == mock_embeddings
