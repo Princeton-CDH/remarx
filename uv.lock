@@ -3,6 +3,24 @@ revision = 3
 requires-python = ">=3.12"
 
 [[package]]
+name = "accelerate"
+version = "1.10.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "huggingface-hub" },
+    { name = "numpy" },
+    { name = "packaging" },
+    { name = "psutil" },
+    { name = "pyyaml" },
+    { name = "safetensors" },
+    { name = "torch" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b1/72/ff3961c19ee395c3d30ac630ee77bfb0e1b46b87edc504d4f83bb4a89705/accelerate-1.10.1.tar.gz", hash = "sha256:3dea89e433420e4bfac0369cae7e36dcd6a56adfcfd38cdda145c6225eab5df8", size = 392446, upload-time = "2025-08-25T13:57:06.21Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5f/a0/d9ef19f780f319c21ee90ecfef4431cbeeca95bec7f14071785c17b6029b/accelerate-1.10.1-py3-none-any.whl", hash = "sha256:3621cff60b9a27ce798857ece05e2b9f56fcc71631cfb31ccf71f0359c311f11", size = 374909, upload-time = "2025-08-25T13:57:04.55Z" },
+]
+
+[[package]]
 name = "anyio"
 version = "4.10.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1587,8 +1605,7 @@ dev = [
     { name = "pytest-cov" },
     { name = "ruff" },
     { name = "sentence-transformers" },
-    { name = "torch" },
-    { name = "transformers" },
+    { name = "transformers", extra = ["torch"] },
 ]
 docs = [
     { name = "mkdocs" },
@@ -1598,16 +1615,18 @@ docs = [
 embeddings = [
     { name = "ipython" },
     { name = "sentence-transformers" },
-    { name = "torch" },
-    { name = "transformers" },
+    { name = "transformers", extra = ["torch"] },
 ]
 html = [
     { name = "bs4" },
 ]
 test = [
     { name = "coverage" },
+    { name = "ipython" },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "sentence-transformers" },
+    { name = "transformers", extra = ["torch"] },
 ]
 
 [package.dev-dependencies]
@@ -1623,6 +1642,7 @@ requires-dist = [
     { name = "coverage", extras = ["toml"], marker = "extra == 'test'" },
     { name = "ipython", marker = "extra == 'dev'" },
     { name = "ipython", marker = "extra == 'embeddings'" },
+    { name = "ipython", marker = "extra == 'test'" },
     { name = "marimo", specifier = ">=0.13.11" },
     { name = "marimo", extras = ["lsp"] },
     { name = "mkdocs", marker = "extra == 'dev'" },
@@ -1643,11 +1663,11 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "sentence-transformers", marker = "extra == 'dev'" },
     { name = "sentence-transformers", marker = "extra == 'embeddings'" },
+    { name = "sentence-transformers", marker = "extra == 'test'" },
     { name = "stanza" },
-    { name = "torch", marker = "extra == 'dev'" },
-    { name = "torch", marker = "extra == 'embeddings'" },
-    { name = "transformers", marker = "extra == 'dev'" },
-    { name = "transformers", marker = "extra == 'embeddings'" },
+    { name = "transformers", extras = ["torch"], marker = "extra == 'dev'" },
+    { name = "transformers", extras = ["torch"], marker = "extra == 'embeddings'" },
+    { name = "transformers", extras = ["torch"], marker = "extra == 'test'" },
 ]
 provides-extras = ["dev", "docs", "embeddings", "html", "test"]
 
@@ -2050,6 +2070,12 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/89/21/dc88ef3da1e49af07ed69386a11047a31dcf1aaf4ded3bc4b173fbf94116/transformers-4.56.1.tar.gz", hash = "sha256:0d88b1089a563996fc5f2c34502f10516cad3ea1aa89f179f522b54c8311fe74", size = 9855473, upload-time = "2025-09-04T20:47:13.14Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/71/7c/283c3dd35e00e22a7803a0b2a65251347b745474a82399be058bde1c9f15/transformers-4.56.1-py3-none-any.whl", hash = "sha256:1697af6addfb6ddbce9618b763f4b52d5a756f6da4899ffd1b4febf58b779248", size = 11608197, upload-time = "2025-09-04T20:47:04.895Z" },
+]
+
+[package.optional-dependencies]
+torch = [
+    { name = "accelerate" },
+    { name = "torch" },
 ]
 
 [[package]]

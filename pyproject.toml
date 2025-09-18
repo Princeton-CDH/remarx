@@ -44,6 +44,7 @@ test = [
   "pytest",
   "pytest-cov",
   "coverage[toml]", # Enables coverage to read config from pyproject.toml
+  "remarx[embeddings]",
 ]
 docs = [
   "mkdocs",
@@ -53,8 +54,7 @@ docs = [
 html = [ "bs4" ]
 embeddings = [
   "sentence-transformers",
-  "torch",
-  "transformers",
+  "transformers[torch]",
   "ipython",  # Required by transformers for trainer functionality
 ]
 
@@ -64,7 +64,6 @@ dev = [ "remarx[dev]" ]
 [project.scripts]
 remarx-app = "remarx.app_utils:launch_app"
 remarx-create-corpus = "remarx.sentence.corpus.create:main"
-remarx-generate-embeddings = "remarx.sentence.embeddings:main"
 
 [tool.hatch.version]
 path = "src/remarx/__init__.py"
