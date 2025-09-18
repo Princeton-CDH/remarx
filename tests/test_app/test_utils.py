@@ -1,16 +1,16 @@
 from unittest.mock import patch
 
-import remarx.app
-from remarx.app_utils import create_temp_input, launch_app
+from remarx.app import ui
+from remarx.app.utils import create_temp_input, launch_app
 
 
-@patch("remarx.app_utils.cli")
+@patch("remarx.app.utils.cli")
 def test_launch_app(mock_cli):
     launch_app()
-    mock_cli.main.assert_called_once_with(["run", remarx.app.__file__])
+    mock_cli.main.assert_called_once_with(["run", ui.__file__])
 
 
-@patch("remarx.app_utils.FileUploadResults")
+@patch("remarx.app.utils.FileUploadResults")
 def test_create_temp_input(mock_upload):
     # Create mock file upload
     mock_upload.name = "file.txt"

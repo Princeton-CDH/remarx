@@ -1,6 +1,7 @@
 """
-The marimo notebook corresponding to the `remarx` application. The application
-can be launched by running the command `remarx-app` or via marimo.
+The marimo notebook corresponding to the `remarx` app.
+
+The app can be launched by running the `remarx-app` command or via marimo.
 
 Example Usage:
 
@@ -23,7 +24,7 @@ def _():
     import tempfile
 
     import remarx
-    from remarx.app_utils import create_temp_input
+    from remarx.app.utils import create_temp_input
     from remarx.sentence.corpus.create import create_corpus
     from remarx.sentence.corpus import FileInput
     return FileInput, create_corpus, create_temp_input, mo, pathlib, remarx

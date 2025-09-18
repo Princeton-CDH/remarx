@@ -36,7 +36,7 @@ class FileInput:
     filename_override: str = None
     "Optional filename override, e.g. when using temporary files as input"
 
-    field_names: ClassVar[tuple[str, ...]] = ("file", "sent_index", "text")
+    field_names: ClassVar[tuple[str, ...]] = ("sent_id", "file", "sent_index", "text")
     "List of field names for sentences from text input files."
 
     file_type: ClassVar[str]
@@ -66,8 +66,9 @@ class FileInput:
 
         :returns: Generator of one dictionary per sentence; dictionary
         always includes: `text` (text content), `file` (filename),
-        `sent_index` (sentence index within the document). It may include
-        other metadata, depending on the input file type.
+        `sent_index` (sentence index within the document), and `sent_id`
+        (sentence id). It may include other metadata, depending
+        on the input file type.
         """
         # zero-based sentence index for this file, across all chunks
         sentence_index = 0
@@ -85,6 +86,7 @@ class FileInput:
                     "text": sentence,
                     "file": self.file_name,
                     "sent_index": sentence_index,
+                    "sent_id": f"{self.file_name}:{sentence_index}",
                 }
 
                 # increment sentence index

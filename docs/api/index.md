@@ -7,7 +7,7 @@ hide: [navigation]
 
 ## ::: remarx.app
 
-## ::: remarx.app_utils
+## ::: remarx.app.utils
 
 ## ::: remarx.sentence
 

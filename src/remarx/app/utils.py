@@ -12,14 +12,14 @@ from marimo._cli import cli
 # Does this class have a public facing type definition?
 from marimo._plugins.ui._impl.input import FileUploadResults
 
-from remarx import app
+from remarx.app import ui
 
 
 def launch_app() -> None:
     """Launch the remarx app into web browser."""
     with contextlib.suppress(SystemExit):
         # Prevent program from closing when marimo closes
-        cli.main(["run", app.__file__])
+        cli.main(["run", ui.__file__])
 
 
 @contextlib.contextmanager
