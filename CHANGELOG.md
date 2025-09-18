@@ -5,6 +5,7 @@
 ### Application
 
 - Add a sentence corpus selection interface for the quotation detection step
+- Configure logging to capture logs when running Marimo
 
 ### Documentation
 
