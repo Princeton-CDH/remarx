@@ -1,8 +1,7 @@
 """
-This module contains libraries for sentence segmentation, sentence corpus construction,
-and sentence embedding generation.
+This module contains libraries for sentence segmentation and sentence corpus construction.
 """
 
 from remarx.sentence import corpus, segment
 
-__all__ = ["corpus", "embeddings", "segment"]
+__all__ = ["corpus", "segment"]
