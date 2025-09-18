@@ -1,6 +1,5 @@
 """
-Provides functionality to generate sentence embeddings from sentence corpora
-using pretrained models from the sentence-transformers library.
+Library for generating sentence embeddings from pretrained Sentence Transformer models.
 """
 
 import numpy.typing as npt
