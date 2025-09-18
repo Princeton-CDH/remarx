@@ -45,7 +45,25 @@ def _(mo):
 
 @app.cell
 def _(mo, remarx):
-    mo.md(rf"""Running `remarx` version: {remarx.__version__}""")
+    import os
+    import logging
+
+    # Get log file path
+    log_file = os.environ.get('REMARX_LOG_FILE')
+
+    if log_file:
+        # Log that UI started
+        logger = logging.getLogger(__name__)
+        logger.info("Remarx UI notebook started")
+        # set logging info's text small to make it less prominent
+        log_text = f"<small>Logs are being written to: <code>{log_file}</code></small>"
+    else:
+        log_text = ""
+
+    mo.vstack([
+        mo.md(rf"""Running `remarx` version: {remarx.__version__}"""),
+        mo.md(log_text) if log_text else mo.md("")
+    ])
     return
 
 
