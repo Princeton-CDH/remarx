@@ -51,7 +51,7 @@ class TestGetSentenceEmbeddings:
         # Mock the sentence transformer
         mock_model = Mock()
         mock_embeddings = np.array([[0.1, 0.2]])
-        mock_model.encode.return_value = mock_embeddings
+        mock_model.encode.return_value = "embeddings"
         mock_transformer_class.return_value = mock_model
 
         sentences = ["Test sentence."]
