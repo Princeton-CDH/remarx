@@ -32,7 +32,7 @@ def test_build_annoy_index(mock_index_class):
 
 @patch("remarx.quotation.pairs.get_sentence_embeddings")
 @patch("remarx.quotation.pairs.build_annoy_index")
-def test_get_sentence_pairs(mock_build_index, mock_embeddings):
+def test_get_sentence_pairs(mock_build_index, mock_embeddings, capsys):
     # setup mock index
     mock_index = Mock(spec=AnnoyIndex)
     # will return a tuple of two lists corresponding to indices and distances
@@ -74,6 +74,28 @@ def test_get_sentence_pairs(mock_build_index, mock_embeddings):
     assert mock_index.get_nns_by_vector.call_count == 3
     mock_index.get_nns_by_vector.assert_has_calls(
         [call(x, 1, search_k=4, include_distances=True) for x in reuse_vecs]
+    )
+
+    # Case: show progress
+    mock_index.get_nns_by_vector.side_effect = test_ann_results
+    mock_embeddings.reset_mock()
+    mock_embeddings.side_effect = ["original_vecs", reuse_vecs]
+
+    results = get_sentence_pairs(
+        "original_sents", "reuse_sents", 0.8, show_progress=True
+    )
+    # check progress output
+    captured = capsys.readouterr()
+    assert captured.out.startswith("Generated sentence embeddings in")
+    assert "\nBuilt Annoy in" in captured.out
+    assert "Finding sentence pairs" in captured.err
+    # check mocks
+    assert mock_embeddings.call_count == 2
+    mock_embeddings.assert_has_calls(
+        [
+            call("original_sents", show_progress_bar=True),
+            call("reuse_sents", show_progress_bar=True),
+        ]
     )
 
 
@@ -151,7 +173,9 @@ def test_compile_quote_pairs():
 @patch("remarx.quotation.pairs.compile_quote_pairs")
 @patch("remarx.quotation.pairs.get_sentence_pairs")
 @patch("remarx.quotation.pairs.load_sent_df")
-def test_find_quote_pairs(mock_load_df, mock_sent_pairs, mock_compile_pairs, tmp_path):
+def test_find_quote_pairs(
+    mock_load_df, mock_sent_pairs, mock_compile_pairs, capsys, tmp_path
+):
     # setup mocks
     orig_texts = ["some", "text"]
     reuse_texts = ["some", "other", "texts"]
@@ -179,6 +203,20 @@ def test_find_quote_pairs(mock_load_df, mock_sent_pairs, mock_compile_pairs, tmp
     find_quote_pairs("original", "reuse", out_csv, score_cutoff=0.4)
     mock_sent_pairs.assert_called_once_with(
         orig_texts, reuse_texts, 0.4, show_progress=False
+    )
+
+    # Case: show progress
+    mock_load_df.side_effect = [orig_df, reuse_df]
+    mock_sent_pairs.reset_mock()
+    out_csv = tmp_path / "progress.csv"
+    find_quote_pairs("original", "reuse", out_csv, show_progress=True)
+    # check progress output
+    captured = capsys.readouterr()
+    assert captured.out.startswith("Identifying sentence pairs...\n...completed in")
+    assert captured.out.endswith(f"\nQuote pairs CSV saved to {out_csv}\n")
+    # check mocks
+    mock_sent_pairs.assert_called_once_with(
+        orig_texts, reuse_texts, 0.8, show_progress=True
     )
 
 
