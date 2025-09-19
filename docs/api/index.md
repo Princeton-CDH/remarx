@@ -30,3 +30,5 @@ hide: [navigation]
 ## ::: remarx.quotation
 
 ### ::: remarx.quotation.embeddings
+
+### ::: remarx.quotation.pairs
