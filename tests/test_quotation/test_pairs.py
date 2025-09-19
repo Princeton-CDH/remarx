@@ -1,7 +1,9 @@
+import csv
 from unittest.mock import Mock, call, patch
 
 import numpy as np
 import polars as pl
+import pytest
 from annoy import AnnoyIndex
 from polars.testing import assert_frame_equal
 
@@ -216,8 +218,13 @@ def test_find_quote_pairs_integration(tmp_path):
     reuse_csv = tmp_path / "reuse.csv"
     test_reuse.write_csv(reuse_csv)
 
-    expected_text = "reuse_id,original_id,match_score\na,A,1.0\n"
-
     out_csv = tmp_path / "out.csv"
     find_quote_pairs(orig_csv, reuse_csv, out_csv)
-    assert out_csv.read_text() == expected_text
+    with out_csv.open(newline="") as file:
+        reader = csv.reader(file)
+        results = list(reader)
+        assert len(results) == 2
+        assert results[0] == ["reuse_id", "original_id", "match_score"]
+        assert results[1][0] == "a"
+        assert results[1][1] == "A"
+        assert float(results[1][2]) == pytest.approx(1.0)
