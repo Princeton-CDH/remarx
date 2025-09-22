@@ -22,7 +22,6 @@ def test_configure_logging_default_creates_timestamped_file(tmp_path, monkeypatc
     """Test that the default configuration creates a timestamped log file."""
     # Run in a temporary CWD so logs land under tmp_path/logs/
     monkeypatch.chdir(tmp_path)
-
     created_path = configure_logging()
 
     assert isinstance(created_path, Path)
@@ -38,9 +37,12 @@ def test_configure_logging_default_creates_timestamped_file(tmp_path, monkeypatc
 
     # Write a line and ensure it's recorded
     logging.getLogger().info("Configuring logging with default file works")
+
+    # Flush the log file (required by ruff check)
     for handler in logging.getLogger().handlers:
         with contextlib.suppress(Exception):
             handler.flush()
+
     assert "Configuring logging with default file works" in created_path.read_text(
         encoding="utf-8"
     )
@@ -55,18 +57,19 @@ def test_configure_logging_stdout_stream(capsys):
 
     # Capture the output and check that it contains the log message
     captured = capsys.readouterr()
+
     assert "Configuring logging with stdout works" in captured.out
 
 
 def test_configure_logging_specific_file(tmp_path):
     target = tmp_path / "nested" / "custom.log"
-
     created_path = configure_logging(target, log_level=logging.DEBUG)
 
     assert created_path == target
     assert target.exists()
 
     logging.getLogger().debug("Configuring logging with specific file works")
+
     for handler in logging.getLogger().handlers:
         with contextlib.suppress(Exception):
             handler.flush()
@@ -79,10 +82,13 @@ def test_configure_logging_specific_file(tmp_path):
 def test_configure_logging_with_stanza_log_level():
     created_path = configure_logging(stanza_log_level=logging.DEBUG)
     assert logging.getLogger("stanza").getEffectiveLevel() == logging.DEBUG
+
     logging.getLogger().debug("Configuring logging with stanza log level works")
+
     for handler in logging.getLogger().handlers:
         with contextlib.suppress(Exception):
             handler.flush()
+
     assert "Configuring logging with stanza log level works" in created_path.read_text(
         encoding="utf-8"
     )
