@@ -144,19 +144,10 @@ def _(input_file, mo, output_dir):
 
 
 @app.cell
-def _(button, create_corpus, create_temp_input, input_file, mo, output_csv):
-    # Build Sentence Corpus
+def _(mo):
+    # Placeholder for corpus status - main logic moved to spinner cell outside the accordion and below the accordion
+    # to temperarially resolve the progress bar show at the top of the accordion problem
     building_msg = f'Click "Build Corpus" button to start'
-
-    if button.value:
-        spinner_msg = f"Building sentence corpus for {input_file.name}"
-        with mo.status.spinner(title=spinner_msg) as _spinner:
-            with create_temp_input(input_file) as temp_path:
-                create_corpus(
-                    temp_path, output_csv, filename_override=input_file.name
-                )
-        building_msg = f"✅ Sentence corpus saved to: {output_csv}"
-
     corpus_status_ui = mo.md(building_msg).center()
     return (corpus_status_ui,)
 
@@ -300,6 +291,25 @@ def _(mo, sentence_corpus_creation_content, quotation_detection_content):
         "## 🔍 Quotation Detection": quotation_detection_content,
     })
     return
+
+
+@app.cell
+def _(button, create_corpus, create_temp_input, input_file, mo, output_csv):
+    # Spinner and success message for corpus building - displayed below accordion
+    if button.value:
+        spinner_msg = f"Building sentence corpus for {input_file.name}"
+        with mo.status.spinner(title=spinner_msg) as _spinner:
+            with create_temp_input(input_file) as temp_path:
+                create_corpus(
+                    temp_path, output_csv, filename_override=input_file.name
+                )
+        # Show success message after completion
+        success_msg = f"✅ Sentence corpus saved to: {output_csv}"
+        spinner_ui = mo.md(success_msg).center()
+    else:
+        spinner_ui = mo.md("")  # Empty element when not building
+
+    return (spinner_ui,)
 
 
 if __name__ == "__main__":
