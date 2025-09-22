@@ -35,7 +35,7 @@ theme:
     - toc.follow
 nav:
   - Overview: index.md
-  - Technical Design: technical-design-document.md
+  - Technical Design: technical-design.md
   - Developer Notes: devnotes.md
   - Code Documentation: api/index.md
 plugins:
