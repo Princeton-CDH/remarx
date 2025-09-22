@@ -156,8 +156,8 @@ The initial implementation will be based on sequential sentences in both corpora
 
 This component is a Marimo notebook designed to run in application mode, which will provide a graphical user interface to the `remarx` software.
 This interface will allow users to run both the sentence corpus builder and the core pipeline.
-This notebook will allow users to select and upload input original and reuse texts and sentence corpora.
-The notebook will internally call the core software programs.
+This notebook will allow users to select and upload original and reuse texts and sentence corpora.
+The notebook will contain minimal code and primarily call methods within the `remarx` package.
 Users will have an option to save or download the output to a file location of their choice.
 
 Depending on whether this notebook is run locally or on della via an Open OnDemand app, the pipeline’s intermediate files will be stored on either the user’s local machine or in a scratch folder on della. The software will provide a simple way to configure paths for downloaded and generated models, with sensible defaults for common scenarios.
