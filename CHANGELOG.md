@@ -5,7 +5,6 @@
 ### Application
 
 - Add a sentence corpus selection interface for the quotation detection step
-- Configure logging to capture logs when running Marimo
 
 ### Documentation
 
@@ -20,6 +19,10 @@
 ### Scripts
 
 - Add `parse_html` script for converting the manifesto html files to plain text for sentence corpus input (one-time use)
+
+### Miscs
+
+- Configure logging to capture logs when running Marimo
 
 ## [0.1.0] - 2025-09-08
 

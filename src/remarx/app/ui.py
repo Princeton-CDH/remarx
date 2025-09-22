@@ -45,27 +45,22 @@ def _(mo):
 
 @app.cell
 def _(mo, remarx):
-    import os
-    import logging
-
-    # Get log file path
-    log_file = os.environ.get('REMARX_LOG_FILE')
-
-    if log_file:
-        # Log that UI started
-        logger = logging.getLogger(__name__)
-        logger.info("Remarx UI notebook started")
-        # set logging info's text small to make it less prominent
-        log_text = f"<small>Logs are being written to: <code>{log_file}</code></small>"
-    else:
-        log_text = ""
-
-    mo.vstack([
-        mo.md(rf"""Running `remarx` version: {remarx.__version__}"""),
-        mo.md(log_text) if log_text else mo.md("")
-    ])
+    mo.md(rf"""Running `remarx` version: {remarx.__version__}""")
     return
 
+@app.cell
+def _(mo):
+    import logging
+    from remarx.utils import configure_logging
+
+    # Set up logging and get log file path
+    log_file_path = configure_logging()
+
+    # Log that UI started
+    logger = logging.getLogger("remarx-app")
+    logger.info("Remarx UI notebook started")
+
+    return (log_file_path,)
 
 @app.cell
 def _(FileInput, mo):
@@ -310,6 +305,8 @@ def _(mo, original_csvs, reuse_csvs, quotation_file_selection_ui):
     return (quotation_detection_content,)
 
 
+
+
 @app.cell
 def _(mo, sentence_corpus_creation_content, quotation_detection_content):
     # Create the main accordion with different sections
@@ -319,6 +316,12 @@ def _(mo, sentence_corpus_creation_content, quotation_detection_content):
     })
     return
 
+
+
+@app.cell
+def _(mo, log_file_path):
+    mo.md(f"Logs are being written to: {log_file_path}")
+    return
 
 if __name__ == "__main__":
     app.run()
