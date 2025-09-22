@@ -9,7 +9,7 @@ hide: [navigation]
 
 *The primary audience for this document is internal to the development team.*
 
-*Note: This document was originally written for planning, while this will be updated during development it may be out of date.*
+*Note: This document was originally written for planning. It will be updated during development, but it may be out of date.*
 
 ______________________________________________________________________
 
