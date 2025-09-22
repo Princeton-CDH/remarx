@@ -297,6 +297,7 @@ def _(mo, sentence_corpus_creation_content, quotation_detection_content):
 def _(button, create_corpus, create_temp_input, input_file, mo, output_csv):
     # Spinner and success message for corpus building - displayed below accordion
     if button.value:
+        # Show spinner
         spinner_msg = f"Building sentence corpus for {input_file.name}"
         with mo.status.spinner(title=spinner_msg) as _spinner:
             with create_temp_input(input_file) as temp_path:
