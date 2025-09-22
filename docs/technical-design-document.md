@@ -155,7 +155,7 @@ The initial implementation will be based on sequential sentences in both corpora
 #### Application Interface
 
 This component is a Marimo notebook designed to run in application mode, which will provide a graphical user interface to the `remarx` software.
-This interface will allow uses to run both the sentence corpus builder and the core pipeline.
+This interface will allow users to run both the sentence corpus builder and the core pipeline.
 This notebook will allow users to select and upload input original and reuse texts and sentence corpora.
 The notebook will internally call the core software programs.
 Users will have an option to save or download the output to a file location of their choice.
