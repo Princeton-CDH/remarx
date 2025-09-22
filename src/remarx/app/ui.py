@@ -7,13 +7,13 @@ Example Usage:
 
     `remarx-app`
 
-    `marimo run app.py`
+    `marimo run src/remarx/app/ui.py`
 """
 
 import marimo
 
-__generated_with = "0.14.17"
-app = marimo.App(width="medium")
+__generated_with = "0.15.2"
+app = marimo.App(width="medium", app_title="remarx")
 
 
 @app.cell
@@ -69,7 +69,7 @@ def _(mo, select_input):
         mo.vstack([select_input, mo.md(f"**Input File:** {input_file_msg}")]),
         kind=input_callout_type,
     )
-    return (input_file, input_selection_ui)
+    return input_file, input_selection_ui
 
 
 @app.cell
@@ -99,7 +99,7 @@ def _(mo, select_output_dir):
         ),
         kind=out_callout_type,
     )
-    return (output_dir, output_selection_ui)
+    return output_dir, output_selection_ui
 
 
 @app.cell
@@ -140,7 +140,7 @@ def _(input_file, mo, output_dir):
             ]
         ),
     )
-    return button, output_csv, build_corpus_ui
+    return build_corpus_ui, button, output_csv
 
 
 @app.cell
@@ -162,11 +162,19 @@ def _(button, create_corpus, create_temp_input, input_file, mo, output_csv):
 
 
 @app.cell
-def _(FileInput, build_corpus_ui, corpus_status_ui, input_selection_ui, mo, output_selection_ui):
+def _(
+    FileInput,
+    build_corpus_ui,
+    corpus_status_ui,
+    input_selection_ui,
+    mo,
+    output_selection_ui,
+):
     # Create the sentence corpus creation content
-    sentence_corpus_creation_content = mo.vstack([
-        mo.md(
-            f"""
+    sentence_corpus_creation_content = mo.vstack(
+        [
+            mo.md(
+                f"""
         Create a sentence corpus (`CSV`) from a text.
         This process can be run multiple times for different files (currently one file at a time).
 
@@ -175,12 +183,10 @@ def _(FileInput, build_corpus_ui, corpus_status_ui, input_selection_ui, mo, outp
         Upload and select an input file (`{"`, `".join(FileInput.supported_types())}`) for sentence corpus creation.
         Currently, only a single file may be selected.
         """
-        ).style(width="100%"),
-
-        input_selection_ui,
-
-        mo.md(
-            """
+            ).style(width="100%"),
+            input_selection_ui,
+            mo.md(
+                """
         **2. Select Output Location**
 
         Select the folder where the resulting sentence corpus file should be saved.
@@ -190,24 +196,21 @@ def _(FileInput, build_corpus_ui, corpus_status_ui, input_selection_ui, mo, outp
         A checkmark will appear when a selection is made.
         Clicking anywhere else within the folder's row will cause the browser to navigate to this folder and subsequently display any folders *within* this folder.*
         """
-        ).style(width="100%"),
-
-        output_selection_ui,
-
-        mo.md(
-            """
+            ).style(width="100%"),
+            output_selection_ui,
+            mo.md(
+                """
         **3. Build Sentence Corpus**
 
         Click the "Build Corpus" to run `remarx`.
         The sentence corpus for the input text will be saved as a CSV in the selected save location.
         This output file will have the same filename (but different file extension) as the selected input file.
         """
-        ).style(width="100%"),
-
-        build_corpus_ui,
-        corpus_status_ui,
-    ])
-
+            ).style(width="100%"),
+            build_corpus_ui,
+            corpus_status_ui,
+        ]
+    )
     return (sentence_corpus_creation_content,)
 
 
@@ -227,8 +230,7 @@ def _(mo, pathlib):
         initial_path=pathlib.Path.home(),
         filetypes=[".csv"],
     )
-
-    return (original_csv_browser, reuse_csv_browser)
+    return original_csv_browser, reuse_csv_browser
 
 
 @app.cell
@@ -237,41 +239,61 @@ def _(mo, original_csv_browser, reuse_csv_browser):
     original_csvs = original_csv_browser.value or []
     reuse_csvs = reuse_csv_browser.value or []
 
-    original_msg = "Files selected Successfully" if original_csvs else "No original text files selected"
-    reuse_msg = "Files selected Successfully" if reuse_csvs else "No reuse text files selected"
+    original_msg = (
+        "Files selected Successfully"
+        if original_csvs
+        else "No original text files selected"
+    )
+    reuse_msg = (
+        "Files selected Successfully"
+        if reuse_csvs
+        else "No reuse text files selected"
+    )
 
     original_callout_type = "success" if original_csvs else "warn"
     reuse_callout_type = "success" if reuse_csvs else "warn"
 
     # Create side-by-side file browser interface
-    quotation_file_selection_ui = mo.hstack([
-        mo.callout(
-            mo.vstack([
-                mo.md("**🗂 Select Original Sentence Corpora (CSVs)**").center(),
-                original_csv_browser,
-                mo.md(original_msg)
-            ]),
-            kind=original_callout_type,
-        ),
-        mo.callout(
-            mo.vstack([
-                mo.md("**♻️ Select Reuse Sentence Corpora (CSVs)**").center(),
-                reuse_csv_browser,
-                mo.md(reuse_msg)
-            ]),
-            kind=reuse_callout_type,
-        )
-    ], widths="equal", gap=1.2)
-
-    return (original_csvs, reuse_csvs, quotation_file_selection_ui)
+    quotation_file_selection_ui = mo.hstack(
+        [
+            mo.callout(
+                mo.vstack(
+                    [
+                        mo.md(
+                            "**🗂 Select Original Sentence Corpora (CSVs)**"
+                        ).center(),
+                        original_csv_browser,
+                        mo.md(original_msg),
+                    ]
+                ),
+                kind=original_callout_type,
+            ),
+            mo.callout(
+                mo.vstack(
+                    [
+                        mo.md(
+                            "**♻️ Select Reuse Sentence Corpora (CSVs)**"
+                        ).center(),
+                        reuse_csv_browser,
+                        mo.md(reuse_msg),
+                    ]
+                ),
+                kind=reuse_callout_type,
+            ),
+        ],
+        widths="equal",
+        gap=1.2,
+    )
+    return (quotation_file_selection_ui,)
 
 
 @app.cell
-def _(mo, original_csvs, reuse_csvs, quotation_file_selection_ui):
+def _(mo, quotation_file_selection_ui):
     # Create quotation detection content
-    quotation_detection_content = mo.vstack([
-        mo.md(
-            """
+    quotation_detection_content = mo.vstack(
+        [
+            mo.md(
+                """
             Determine and identify the passages of a text corpus (**reuse**) that quote passages from texts in another corpus (**original**).
             This process requires sentence corpora (**CSVs**) created in the previous section.
 
@@ -283,22 +305,22 @@ def _(mo, original_csvs, reuse_csvs, quotation_file_selection_ui):
 
             - Reuse Sentence Corpora: Text that may contain quotations from the original text that will be detected.
             """
-        ).style(width="100%"),
-
-        quotation_file_selection_ui,
-
-    ])
-
+            ).style(width="100%"),
+            quotation_file_selection_ui,
+        ]
+    )
     return (quotation_detection_content,)
 
 
 @app.cell
-def _(mo, sentence_corpus_creation_content, quotation_detection_content):
+def _(mo, quotation_detection_content, sentence_corpus_creation_content):
     # Create the main accordion with different sections
-    mo.accordion({
-        "## 📝 Sentence Corpus Creation": sentence_corpus_creation_content,
-        "## 🔍 Quotation Detection": quotation_detection_content,
-    })
+    mo.accordion(
+        {
+            "## 📝 Sentence Corpus Creation": sentence_corpus_creation_content,
+            "## 🔍 Quotation Detection": quotation_detection_content,
+        }
+    )
     return
 
 
