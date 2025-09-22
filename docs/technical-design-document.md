@@ -5,9 +5,11 @@ hide: [navigation]
 
 # Technical Design Document
 
-*The goal for this document is to surface the areas for design decisions and to document those decisions. The expectation is not a comprehensive listing of issues or tasks, but rather a recording of the key structural and process elements, as well as primary deliverables, that will guide development going forward.*
+*This serves as a living document to record the current design decisions for this project. The expectation is not a comprehensive listing of issues or tasks, but rather a recording of the key structural and process elements, as well as primary deliverables, that will guide development.*
 
 *The primary audience for this document is internal to the development team.*
+
+*Note: This document was originally written for planning, while this will be updated during development it may be out of date.*
 
 ______________________________________________________________________
 
@@ -23,7 +25,7 @@ ______________________________________________________________________
 
 **Development Start Date:** 2025-08-04
 
-**Target Release Date:** 2025-09-24
+**Target Release Date:** Fall 2025
 
 ______________________________________________________________________
 
