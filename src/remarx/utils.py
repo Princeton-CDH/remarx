@@ -27,47 +27,41 @@ def configure_logging(
     :return: Path to the created log file if file logging is used, None if stream logging
     """
     # Determine logging configuration based on log_destination parameter
+    log_file_path: pathlib.Path | None = None
+    config_output_opts: dict
     if log_destination is None:
-        # Default: create timestamped log file
+        # Default: create timestamped log file under cwd / logs/
         log_dir = pathlib.Path.cwd() / "logs"
         log_dir.mkdir(exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         log_file_path = log_dir / f"remarx_{timestamp}.log"
-
-        logging.basicConfig(
-            filename=log_file_path,
-            level=log_level,
-            format="[%(asctime)s] %(levelname)s:%(name)s::%(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-            encoding="utf-8",
-        )
-        created_log_file = log_file_path
-
+        config_output_opts = {"filename": log_file_path, "encoding": "utf-8"}
     elif log_destination is sys.stdout:
         # Stream logging to stdout
-        logging.basicConfig(
-            stream=log_destination,
-            level=log_level,
-            format="[%(asctime)s] %(levelname)s:%(name)s::%(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-        )
-        created_log_file = None
-
+        config_output_opts = {"stream": log_destination}
     else:
         # File logging to specified path
         log_file_path = log_destination
         log_file_path.parent.mkdir(parents=True, exist_ok=True)
+        config_output_opts = {"filename": log_file_path, "encoding": "utf-8"}
 
-        logging.basicConfig(
-            filename=log_file_path,
-            level=log_level,
-            format="[%(asctime)s] %(levelname)s:%(name)s::%(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-            encoding="utf-8",
-        )
-        created_log_file = log_file_path
+    # Use the lowest of the requested levels so debug logs are captured when any
+    # component (e.g., stanza) is set to DEBUG
+    effective_level = min(log_level, stanza_log_level)
+
+    logging.basicConfig(
+        level=effective_level,
+        format="[%(asctime)s] %(levelname)s:%(name)s::%(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        force=True,
+        **config_output_opts,
+    )
+
+    # pytest will fail if the log file does not exist immediately
+    if log_file_path is not None and not log_file_path.exists():
+        log_file_path.touch(exist_ok=True)
 
     # Configure stanza logging level
     logging.getLogger("stanza").setLevel(stanza_log_level)
 
-    return created_log_file
+    return log_file_path
