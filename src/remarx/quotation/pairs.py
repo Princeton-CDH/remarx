@@ -74,7 +74,7 @@ def get_sentence_pairs(
         n_vecs = len(original_vecs) + len(reuse_vecs)
         elapsed_time = time() - start
         logger.info(
-            f"Generated {n_vecs} sentence embeddings in {elapsed_time: .1f} seconds"
+            f"Generated {n_vecs} sentence embeddings in {elapsed_time:.1f} seconds"
         )
 
     # Build Annoy index
@@ -85,7 +85,7 @@ def get_sentence_pairs(
     index = build_annoy_index(original_vecs, n_trees)
     if logger.isEnabledFor(logging.INFO):
         elapsed_time = time() - start
-        logger.info(f"Built Annoy index in {elapsed_time: .1f} seconds")
+        logger.info(f"Built Annoy index in {elapsed_time:.1f} seconds")
 
     # Get sentence matches
     matches = []
@@ -194,7 +194,7 @@ def find_quote_pairs(
     if logger.isEnabledFor(logging.INFO):
         elapsed_time = time() - start
         logger.info(
-            f"Identified {len(sent_pairs)} sentence pairs in {elapsed_time: .1f} seconds"
+            f"Identified {len(sent_pairs)} sentence pairs in {elapsed_time:.1f} seconds"
         )
 
     # Build and save quote pairs

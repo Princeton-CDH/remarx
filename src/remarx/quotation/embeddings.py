@@ -37,5 +37,5 @@ def get_sentence_embeddings(
     if logger.isEnabledFor(logging.INFO):
         n_vecs = len(embeddings)
         elapsed_time = time() - start
-        logger.info(f"Generated {n_vecs} embeddings in {elapsed_time: .1f} seconds")
+        logger.info(f"Generated {n_vecs} embeddings in {elapsed_time:.1f} seconds")
     return embeddings
