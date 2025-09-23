@@ -305,8 +305,6 @@ def _(mo, original_csvs, reuse_csvs, quotation_file_selection_ui):
     return (quotation_detection_content,)
 
 
-
-
 @app.cell
 def _(mo, sentence_corpus_creation_content, quotation_detection_content):
     # Create the main accordion with different sections
@@ -315,7 +313,6 @@ def _(mo, sentence_corpus_creation_content, quotation_detection_content):
         "## 🔍 Quotation Detection": quotation_detection_content,
     })
     return
-
 
 
 @app.cell
