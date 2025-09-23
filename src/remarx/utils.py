@@ -57,10 +57,6 @@ def configure_logging(
         **config_output_opts,
     )
 
-    # pytest will fail if the log file does not exist immediately
-    if log_file_path is not None and not log_file_path.exists():
-        log_file_path.touch(exist_ok=True)
-
     # Configure stanza logging level
     logging.getLogger("stanza").setLevel(stanza_log_level)
 
