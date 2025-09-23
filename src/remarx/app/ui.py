@@ -23,11 +23,13 @@ def _():
     import pathlib
     import tempfile
 
+    import logging
     import remarx
+    from remarx.utils import configure_logging
     from remarx.app.utils import create_temp_input
     from remarx.sentence.corpus.create import create_corpus
     from remarx.sentence.corpus import FileInput
-    return FileInput, create_corpus, create_temp_input, mo, pathlib, remarx
+    return FileInput, create_corpus, create_temp_input, mo, pathlib, remarx, logging, configure_logging
 
 
 @app.cell
@@ -49,10 +51,7 @@ def _(mo, remarx):
     return
 
 @app.cell
-def _(mo):
-    import logging
-    from remarx.utils import configure_logging
-
+def _(configure_logging, logging):
     # Set up logging and get log file path
     log_file_path = configure_logging()
 
