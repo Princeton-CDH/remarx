@@ -43,8 +43,11 @@ def get_html_text(in_html: pathlib.Path) -> str:
     soup = BeautifulSoup(in_html.read_text(), "html.parser")
     body_soup = soup.body
 
-    # Start at initial section header (h3 tag)
-    start_elt = body_soup.find("h3")
+    # Find starting paragraph text
+    start_p = body_soup.find("p", class_="fst")
+
+    # Start at previous section (h3) or title (h1) header
+    start_elt = start_p.find_previous(re.compile(r"^h[1,3]"))
     text = get_tag_text(start_elt) + "\n\n"
 
     # Add each following element's text until the notes section is reached
@@ -55,16 +58,16 @@ def get_html_text(in_html: pathlib.Path) -> str:
             continue
 
         tag_name = elt.name
-        tag_text = get_tag_text(elt)
+        tag_text = get_tag_text(elt).strip()
 
-        # Check if stopping condition reached
-        if tag_name == "h3" and tag_text == "Anmerkungen":
+        # Stop when the notes section is reached
+        if tag_name == "h3" and tag_text.startswith("Anmerkung"):
             break
 
         if tag_name == "p":
             # Case: Paragraphs
-            if "class" in elt and elt["class"] == "list":
-                # Skip link tags
+            if not tag_text or ("class" in elt and elt["class"] == "link"):
+                # Skip tags without non-whitespace text or with links
                 continue
             text += f"{tag_text}\n\n"
         elif re.fullmatch(r"h\d", tag_name):
