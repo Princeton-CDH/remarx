@@ -71,7 +71,7 @@ def get_sentence_pairs(
         reuse_sents, show_progress_bar=show_progress_bar
     )
     if logger.isEnabledFor(logging.INFO):
-        n_vecs = original_vecs.shape[0] + reuse_vecs.shape[0]
+        n_vecs = len(original_vecs) + len(reuse_vecs)
         elapsed_time = time() - start
         logger.info(
             f"Generated {n_vecs} sentence embeddings in {elapsed_time: .1f} seconds"

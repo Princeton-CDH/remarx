@@ -35,7 +35,7 @@ def get_sentence_embeddings(
         show_progress_bar=show_progress_bar,
     )
     if logger.isEnabledFor(logging.INFO):
-        n_vecs = embeddings.shape[0]
+        n_vecs = len(embeddings)
         elapsed_time = time() - start
         logger.info(f"Generated {n_vecs} embeddings in {elapsed_time: .1f} seconds")
     return embeddings
