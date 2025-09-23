@@ -1651,7 +1651,7 @@ requires-dist = [
     { name = "mkdocstrings", extras = ["python"], marker = "extra == 'docs'" },
     { name = "neuxml", specifier = ">=1" },
     { name = "numpy" },
-    { name = "polars" },
+    { name = "polars", specifier = ">=0.20.4" },
     { name = "pre-commit", marker = "extra == 'dev'" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "pytest", marker = "extra == 'test'" },

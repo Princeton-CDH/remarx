@@ -76,7 +76,7 @@ def test_get_sentence_pairs(mock_build_index, mock_embeddings, capsys):
         [call(x, 1, search_k=4, include_distances=True) for x in reuse_vecs]
     )
 
-    # Case: show progress
+    # Case: show progress bar
     mock_index.get_nns_by_vector.side_effect = test_ann_results
     mock_embeddings.reset_mock()
     mock_embeddings.side_effect = ["original_vecs", reuse_vecs]
@@ -97,40 +97,36 @@ def test_get_sentence_pairs(mock_build_index, mock_embeddings, capsys):
 def test_load_sent_df(tmp_path):
     # Setup test sentence corpus
     test_csv = tmp_path / "sent_corpus.csv"
-    test_df = pl.DataFrame(
-        {
-            "sent_id": ["a", "b", "c"],
-            "text": ["foo", "bar", "baz"],
-            "other": ["x", "y", "z"],
-        }
-    )
+    test_data = {
+        "sent_id": ["a", "b", "c"],
+        "text": ["foo", "bar", "baz"],
+        "other": ["x", "y", "z"],
+    }
+
+    test_df = pl.DataFrame(test_data)
     test_df.write_csv(test_csv)
 
     # Case: No prefix
-    expected = pl.DataFrame(
-        {
-            "index": [0, 1, 2],
-            "id": ["a", "b", "c"],
-            "text": ["foo", "bar", "baz"],
-        }
-    )
+    expected_data = {
+        "index": [0, 1, 2],
+        "id": test_data["sent_id"],
+        "text": test_data["text"],
+    }
+    expected = pl.DataFrame(expected_data)
     result = load_sent_df(test_csv)
     assert_frame_equal(result, expected, check_dtypes=False)
 
     # Case: With prefix
-    expected = pl.DataFrame(
-        {
-            "test_index": [0, 1, 2],
-            "test_id": ["a", "b", "c"],
-            "test_text": ["foo", "bar", "baz"],
-        }
-    )
+    expected = pl.DataFrame({f"test_{k}": v for k, v in expected_data.items()})
     result = load_sent_df(test_csv, col_pfx="test_")
     assert_frame_equal(result, expected, check_dtypes=False)
 
 
 def test_compile_quote_pairs():
+    # Both corpora include unmatched sentences to ensure that the output
+    # does not include unmatched sentences
     reuse_df = pl.DataFrame(
+        # a, c are unmatched
         {
             "reuse_index": [0, 1, 2, 3, 4],
             "reuse_id": ["a", "b", "c", "d", "e"],
@@ -138,6 +134,7 @@ def test_compile_quote_pairs():
         }
     )
     orig_df = pl.DataFrame(
+        # B is unmatched
         {
             "original_index": [0, 1, 2],
             "original_id": ["A", "B", "C"],
@@ -145,6 +142,7 @@ def test_compile_quote_pairs():
         }
     )
 
+    # Includes two pairs with the same original sentence (A)
     detected_pairs = pl.DataFrame(
         {
             "reuse_index": [1, 3, 4],
@@ -153,6 +151,7 @@ def test_compile_quote_pairs():
         }
     )
 
+    # Expecting 3 quote pairs: b-C, d-A, e-A
     expected = pl.DataFrame(
         {
             "reuse_id": ["b", "d", "e"],
@@ -200,7 +199,7 @@ def test_find_quote_pairs(
         orig_texts, reuse_texts, 0.4, show_progress_bar=False
     )
 
-    # Case: show progress
+    # Case: show progress bar
     mock_load_df.side_effect = [orig_df, reuse_df]
     mock_sent_pairs.reset_mock()
     out_csv = tmp_path / "progress.csv"
@@ -212,6 +211,11 @@ def test_find_quote_pairs(
 
 
 def test_find_quote_pairs_integration(tmp_path):
+    """
+    Tests the full quote detection pipeline. Checks that all functions within this
+    library work as expected in combination. This tests behavior that is otherwise
+    masked by mocking.
+    """
     test_orig = pl.DataFrame(
         [
             {

@@ -129,8 +129,9 @@ def load_sent_df(sentence_corpus: pathlib.Path, col_pfx: str = "") -> pl.DataFra
         - text : sentence text
 
     """
+    # NOTE: Since all required fields are strings, there's no need to infer schema
     return (
-        pl.read_csv(sentence_corpus, row_index_name="index")
+        pl.read_csv(sentence_corpus, row_index_name="index", infer_schema=False)
         .select(["index", "sent_id", "text"])
         .rename(lambda x: "id" if x == "sent_id" else x)
         .rename(lambda x: f"{col_pfx}{x}")
@@ -145,7 +146,8 @@ def compile_quote_pairs(
 ) -> pl.DataFrame:
     """
     Link sentence metadata to the detected sentence pairs from the given original
-    and reuse sentence corpus dataframes to form quote pairs.
+    and reuse sentence corpus dataframes to form quote pairs. The input dataframes
+    must have the following two fields: sent_id and text.
 
     Returns a dataframe with the following fields:
         - reuse_id: ID of the reuse sentence
