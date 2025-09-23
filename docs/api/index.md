@@ -5,6 +5,8 @@ hide: [navigation]
 
 # ::: remarx
 
+## ::: remarx.utils
+
 ## ::: remarx.app
 
 ## ::: remarx.app.utils

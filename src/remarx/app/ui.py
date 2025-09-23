@@ -23,11 +23,13 @@ def _():
     import pathlib
     import tempfile
 
+    import logging
     import remarx
+    from remarx.utils import configure_logging
     from remarx.app.utils import create_temp_input
     from remarx.sentence.corpus.create import create_corpus
     from remarx.sentence.corpus import FileInput
-    return FileInput, create_corpus, create_temp_input, mo, pathlib, remarx
+    return FileInput, create_corpus, create_temp_input, mo, pathlib, remarx, logging, configure_logging
 
 
 @app.cell
@@ -48,6 +50,16 @@ def _(mo, remarx):
     mo.md(rf"""Running `remarx` version: {remarx.__version__}""")
     return
 
+@app.cell
+def _(configure_logging, logging):
+    # Set up logging and get log file path
+    log_file_path = configure_logging()
+
+    # Log that UI started
+    logger = logging.getLogger("remarx-app")
+    logger.info("Remarx UI notebook started")
+
+    return (log_file_path,)
 
 @app.cell
 def _(FileInput, mo):
@@ -301,6 +313,11 @@ def _(mo, sentence_corpus_creation_content, quotation_detection_content):
     })
     return
 
+
+@app.cell
+def _(mo, log_file_path):
+    mo.md(f"Logs are being written to: {log_file_path}")
+    return
 
 if __name__ == "__main__":
     app.run()

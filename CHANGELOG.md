@@ -5,6 +5,7 @@
 ### Application
 
 - Add a sentence corpus selection interface for the quotation detection step
+- Logging is now automatically configured by the application, and the log file location is reported to the user.
 
 ### Documentation
 
@@ -19,6 +20,10 @@
 ### Scripts
 
 - Add `parse_html` script for converting the manifesto html files to plain text for sentence corpus input (one-time use)
+
+### Misc
+
+- Add a utility method (`configure_logging`) to configure logging, supporting logging to a file or to stdout.
 
 ## [0.1.0] - 2025-09-08
 
