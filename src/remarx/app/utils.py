@@ -7,19 +7,55 @@ import pathlib
 import tempfile
 from collections.abc import Generator
 
-from marimo._cli import cli
+import marimo as mo
+import uvicorn
+from fastapi import FastAPI
 
 # Does this class have a public facing type definition?
 from marimo._plugins.ui._impl.input import FileUploadResults
 
-from remarx.app import ui
+import remarx
 
 
 def launch_app() -> None:
-    """Launch the remarx app into web browser."""
-    with contextlib.suppress(SystemExit):
-        # Prevent program from closing when marimo closes
-        cli.main(["run", ui.__file__])
+    """Launch the remarx app in the default web browser"""
+    # Create marimo asgi app
+    server = mo.create_asgi_app()
+
+    # Add notebooks
+    ## For now set corpus builder as landing page
+    server = server.with_app(path="", root=remarx.app.corpus_builder.__file__)
+    server = server.with_app(
+        path="/corpus-builder", root=remarx.app.corpus_builder.__file__
+    )
+    server = server.with_app(
+        path="/quote-finder", root=remarx.app.quote_finder.__file__
+    )
+
+    # Create a FastAPI app
+    app = FastAPI()
+    app.mount("/", server.build())
+
+    # Run server
+    uvicorn.run(app, host="localhost", port=8000)
+
+
+def create_header() -> None:
+    """Create the header for the remarx notebooks"""
+    return mo.vstack(
+        [
+            mo.md("# `remarx`").center(),
+            mo.md(f"Running version: {remarx.__version__}").center(),
+            mo.md("---"),
+            mo.nav_menu(
+                {
+                    "/corpus-builder": "## Sentence Corpus Builder",
+                    "/quote-finder": "## Quote Finder",
+                }
+            ).center(),
+            mo.md("---"),
+        ]
+    )
 
 
 @contextlib.contextmanager
@@ -28,7 +64,7 @@ def create_temp_input(
 ) -> Generator[pathlib.Path, None, None]:
     """
     Context manager to create a temporary file with the file contents and name of a file uploaded
-    to a web browser as returned by  marimo.ui.file. This should be used in with statements.
+    to a web browser as returned by marimo.ui.file. This should be used in with statements.
 
     :returns: Yields the path to the temporary file
     """
