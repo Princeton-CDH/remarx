@@ -55,7 +55,7 @@ def test_configure_logging_default_creates_timestamped_filename(tmp_path, monkey
 def test_configure_logging_stream(tmp_path, monkeypatch, stream):
     # Run in a temporary CWD and ensure no logs/ directory is created when streaming to a text stream
     monkeypatch.chdir(tmp_path)
-    created_path = configure_logging(stream, log_level=logging.INFO)
+    created_path = configure_logging(log_destination=stream, log_level=logging.INFO)
 
     assert created_path is None
 
