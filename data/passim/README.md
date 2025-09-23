@@ -33,3 +33,9 @@ passim data/passim/input.jsonl data/passim/output/default/
 ```
 
 
+### Notes
+
+- Output NDJSON lives under `data/passim/output/default/out.json/` (Spark-style part files).
+- Local run artifacts (e.g., `local-*/`, `run-*/`, `retry-*/`, `**/.crc`, `**/_SUCCESS`, `**/*.parquet`) are ignored via `data/passim/output/.gitignore` and should not be committed.
+- Work tracked in issue [#221](https://github.com/Princeton-CDH/remarx/issues/221).
+
