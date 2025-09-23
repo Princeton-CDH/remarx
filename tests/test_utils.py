@@ -1,4 +1,5 @@
 import contextlib
+import io
 import logging
 import sys
 from pathlib import Path
@@ -49,19 +50,21 @@ def test_configure_logging_default_creates_timestamped_filename(tmp_path, monkey
     assert logging.getLogger("stanza").getEffectiveLevel() == logging.ERROR
 
 
-def test_configure_logging_stdout_stream(tmp_path, monkeypatch):
-    # Run in a temporary CWD and ensure no logs/ directory is created when streaming to stdout
+# use parametrize to test with different streams
+@pytest.mark.parametrize("stream", [sys.stdout, sys.stderr, io.StringIO()])
+def test_configure_logging_stream(tmp_path, monkeypatch, stream):
+    # Run in a temporary CWD and ensure no logs/ directory is created when streaming to a text stream
     monkeypatch.chdir(tmp_path)
-    created_path = configure_logging(sys.stdout, log_level=logging.INFO)
+    created_path = configure_logging(stream, log_level=logging.INFO)
 
     assert created_path is None
 
     root_logger = logging.getLogger()
     handler = root_logger.handlers[-1]
     assert isinstance(handler, logging.StreamHandler)
-    assert getattr(handler, "stream", None) is sys.stdout
+    assert getattr(handler, "stream", None) is stream
 
-    # Confirm that no log directory or file was created as we logged to stdout
+    # Confirm that no log directory or file was created as we logged to a stream
     assert not (tmp_path / "logs").exists()
 
 

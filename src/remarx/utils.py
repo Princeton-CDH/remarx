@@ -4,7 +4,6 @@ Utility functions for the remarx package
 
 import logging
 import pathlib
-import sys
 from datetime import datetime
 from typing import TextIO
 
@@ -16,12 +15,12 @@ def configure_logging(
 ) -> pathlib.Path | None:
     """
     Configure logging for the remarx application.
-    Supports logging to stdout, a specified file, or auto-generated timestamped file.
+    Supports logging to any text stream, a specified file, or auto-generated timestamped file.
 
     :param log_destination: Where to write logs. Can be:
         - None (default): Creates a timestamped log file in ./logs/ directory
         - pathlib.Path: Write to the specified file path
-        - sys.stdout: Write to console output
+        - Any text stream (e.g., sys.stdout, sys.stderr, or any io.TextIOBase): Write to the given stream
     :param log_level: Logging level for remarx logger (default to logging.INFO)
     :param stanza_log_level: Logging level for stanza logger (default to logging.ERROR)
     :return: Path to the created log file if file logging is used, None if stream logging
@@ -36,8 +35,8 @@ def configure_logging(
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         log_file_path = log_dir / f"remarx_{timestamp}.log"
         config_output_opts = {"filename": log_file_path, "encoding": "utf-8"}
-    elif log_destination is sys.stdout:
-        # Stream logging to stdout
+    elif hasattr(log_destination, "write"):
+        # Stream logging to any text stream (e.g., sys.stdout, sys.stderr, or any TextIO)
         config_output_opts = {"stream": log_destination}
     else:
         # File logging to specified path
