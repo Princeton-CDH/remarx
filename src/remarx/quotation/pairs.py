@@ -153,7 +153,7 @@ def find_quote_pairs(
     original_corpus: pathlib.Path,
     reuse_corpus: pathlib.Path,
     out_csv: pathlib.Path,
-    score_cutoff: int = 0.8,
+    score_cutoff: float = 0.8,
     show_progress: bool = False,
 ) -> None:
     """
