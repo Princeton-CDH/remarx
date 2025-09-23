@@ -146,8 +146,9 @@ def compile_quote_pairs(
 ) -> pl.DataFrame:
     """
     Link sentence metadata to the detected sentence pairs from the given original
-    and reuse sentence corpus dataframes to form quote pairs. The input dataframes
-    must have the following two fields: sent_id and text.
+    and reuse sentence corpus dataframes to form quote pairs. The original sentence
+    corpus dataframe must have the fields: original_id, original_text. Similarly,
+    the reuse corpus dataframe must have the fields: reuse_id, reuse_text.
 
     Returns a dataframe with the following fields:
         - reuse_id: ID of the reuse sentence
