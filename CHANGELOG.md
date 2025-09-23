@@ -21,7 +21,7 @@
 
 - Add `parse_html` script for converting the manifesto html files to plain text for sentence corpus input (one-time use)
 
-### Miscs
+### Misc
 
 - Add a utility method (`configure_logging`) to configure logging, supporting logging to a file or to stdout.
 
