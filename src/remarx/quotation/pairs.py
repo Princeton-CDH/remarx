@@ -4,6 +4,7 @@ Library for finding sentence-level quote pairs.
 Note: Currently this script only supports one original and reuse corpus.
 """
 
+import logging
 import pathlib
 from timeit import default_timer as time
 
@@ -40,7 +41,7 @@ def get_sentence_pairs(
     score_cutoff: float,
     n_trees: int = 10,
     search_k: int = -1,
-    show_progress: bool = False,
+    show_progress_bar: bool = False,
 ) -> pl.DataFrame:
     """
     For a set of original and reuse sentences, identify pairs of original-reuse
@@ -57,24 +58,34 @@ def get_sentence_pairs(
     (cosine similarity) above the specified cutoff.
     Optionally, the parameters for Annoy may be specified.
     """
+    logger = logging.getLogger(__name__)
+
     # Generate embeddings
-    if show_progress:
+    if logger.isEnabledFor(logging.INFO):
+        logger.info("Now generating sentence embeddings")
         start = time()
     original_vecs = get_sentence_embeddings(
-        original_sents, show_progress_bar=show_progress
+        original_sents, show_progress_bar=show_progress_bar
     )
-    reuse_vecs = get_sentence_embeddings(reuse_sents, show_progress_bar=show_progress)
-    if show_progress:
-        print(f"Generated sentence embeddings in {time() - start: .1f} seconds")
+    reuse_vecs = get_sentence_embeddings(
+        reuse_sents, show_progress_bar=show_progress_bar
+    )
+    if logger.isEnabledFor(logging.INFO):
+        n_vecs = original_vecs.shape[0] + reuse_vecs.shape[0]
+        elapsed_time = time() - start
+        logger.info(
+            f"Generated {n_vecs} sentence embeddings in {elapsed_time: .1f} seconds"
+        )
 
     # Build Annoy index
     # NOTE: An index only needs to be generated once for a set of embeddings.
     #       Perhaps there's some potential reuse between runs?
-    if show_progress:
+    if logger.isEnabledFor(logging.INFO):
         start = time()
     index = build_annoy_index(original_vecs, n_trees)
-    if show_progress:
-        print(f"Built Annoy index in {time() - start: .1f} seconds")
+    if logger.isEnabledFor(logging.INFO):
+        elapsed_time = time() - start
+        logger.info(f"Built Annoy index in {elapsed_time: .1f} seconds")
 
     # Get sentence matches
     matches = []
@@ -82,7 +93,7 @@ def get_sentence_pairs(
         enumerate(reuse_vecs),
         desc="Finding sentence pairs",
         total=reuse_vecs.shape[0],
-        disable=not show_progress,
+        disable=not show_progress_bar,
     )
 
     for i, vec in progress_bar:
@@ -154,34 +165,39 @@ def find_quote_pairs(
     reuse_corpus: pathlib.Path,
     out_csv: pathlib.Path,
     score_cutoff: float = 0.8,
-    show_progress: bool = False,
+    show_progress_bar: bool = False,
 ) -> None:
     """
     For a given original and reuse sentence corpus, finds the likely sentence-level
     quote pairs. These quote pairs are saved as a CSV. Optionally, the required
     quality for quote pairs can be modified via `score_cutoff`.
     """
+    logger = logging.getLogger(__name__)
+
     # Build sentence dataframes
     original_df = load_sent_df(original_corpus, col_pfx="original_")
     reuse_df = load_sent_df(reuse_corpus, col_pfx="reuse_")
 
     # Determine sentence pairs
-    if show_progress:
-        print("Identifying sentence pairs...")
+    if logger.isEnabledFor(logging.INFO):
+        logger.info("Now identifying sentence pairs")
         start = time()
     # TODO: Add support for annoy parameters
     sent_pairs = get_sentence_pairs(
         original_df.get_column("original_text").to_list(),
         reuse_df.get_column("reuse_text").to_list(),
         score_cutoff,
-        show_progress=show_progress,
+        show_progress_bar=show_progress_bar,
     )
-    if show_progress:
-        print(f"...completed in {time() - start: .1f} seconds")
+    if logger.isEnabledFor(logging.INFO):
+        elapsed_time = time() - start
+        logger.info(
+            f"Identified {len(sent_pairs)} sentence pairs in {elapsed_time: .1f} seconds"
+        )
 
     # Build and save quote pairs
     quote_pairs = compile_quote_pairs(original_df, reuse_df, sent_pairs)
     # NOTE: Perhaps this should return a DataFrame rather than creating a CSV?
     quote_pairs.write_csv(out_csv)
-    if show_progress:
-        print(f"Quote pairs CSV saved to {out_csv}")
+    if logger.isEnabledFor(logging.INFO):
+        logger.info(f"Saved {len(quote_pairs)} quote pairs to {out_csv}")

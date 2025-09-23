@@ -2,6 +2,9 @@
 Library for generating sentence embeddings from pretrained Sentence Transformer models.
 """
 
+import logging
+from timeit import default_timer as time
+
 import numpy.typing as npt
 from sentence_transformers import SentenceTransformer
 
@@ -20,11 +23,19 @@ def get_sentence_embeddings(
     :param model_name: Name of the pretrained sentence transformer model to use (default: paraphrase-multilingual-mpnet-base-v2)
     :return: 2-dimensional numpy array of normalized sentence embeddings with shape [# sents, # dims]
     """
+    logger = logging.getLogger(__name__)
+
     # Generate embeddings using the specified model
+    if logger.isEnabledFor(logging.INFO):
+        start = time()
     model = SentenceTransformer(model_name)
     embeddings = model.encode(
         sentences,
         normalize_embeddings=True,
         show_progress_bar=show_progress_bar,
     )
+    if logger.isEnabledFor(logging.INFO):
+        n_vecs = embeddings.shape[0]
+        elapsed_time = time() - start
+        logger.info(f"Generated {n_vecs} embeddings in {elapsed_time: .1f} seconds")
     return embeddings
