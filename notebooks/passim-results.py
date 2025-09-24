@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.14.9"
+__generated_with = "0.14.16"
 app = marimo.App(
     width="medium",
     app_title="Passim evaluation",
@@ -61,9 +61,7 @@ def _(df, mo, pl):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(
-        r"""Load sentence corpora and use character indices to get a list of sentences overlapping with the passages found by passim."""
-    )
+    mo.md(r"""Load sentence corpora and use character indices to get a list of sentences overlapping with the passages found by passim.""")
     return
 
 
@@ -132,9 +130,7 @@ def _(passim_df, pl):
 
 @app.cell(hide_code=True)
 def _(mo):
-    mo.md(
-        r"""Load evaluation data and sentence corpora for comparison and evaluation of passim results."""
-    )
+    mo.md(r"""Load evaluation data and sentence corpora for comparison and evaluation of passim results.""")
     return
 
 
