@@ -159,7 +159,9 @@ def compile_quote_pairs(
     return (
         detected_pairs.join(reuse_corpus, on="reuse_index")
         .join(original_corpus, on="original_index")
-        .select(["reuse_id", "original_id", "match_score"])
+        .select(
+            ["reuse_id", "reuse_text", "original_id", "original_text", "match_score"]
+        )
     )
 
 
