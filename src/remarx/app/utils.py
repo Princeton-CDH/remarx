@@ -5,16 +5,30 @@ Utility methods associated with the remarx app
 import contextlib
 import pathlib
 import tempfile
-from collections.abc import Generator
+import webbrowser
+from collections.abc import AsyncGenerator, Generator
+from contextlib import asynccontextmanager
 
 import marimo as mo
 import uvicorn
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 
 # Does this class have a public facing type definition?
 from marimo._plugins.ui._impl.input import FileUploadResults
 
 import remarx
+
+# Server configuration
+HOST = "localhost"
+PORT = 8000
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """Lifespan context manager to open browser when server starts"""
+    webbrowser.open(f"http://{HOST}:{PORT}/")
+    yield
 
 
 def launch_app() -> None:
@@ -23,8 +37,6 @@ def launch_app() -> None:
     server = mo.create_asgi_app()
 
     # Add notebooks
-    ## For now set corpus builder as landing page
-    server = server.with_app(path="", root=remarx.app.corpus_builder.__file__)
     server = server.with_app(
         path="/corpus-builder", root=remarx.app.corpus_builder.__file__
     )
@@ -32,12 +44,18 @@ def launch_app() -> None:
         path="/quote-finder", root=remarx.app.quote_finder.__file__
     )
 
-    # Create a FastAPI app
-    app = FastAPI()
+    # Create a FastAPI app with lifespan to open browser
+    app = FastAPI(lifespan=lifespan)
+
+    # Add redirect from root to corpus-builder
+    @app.get("/")
+    async def redirect_root() -> RedirectResponse:
+        return RedirectResponse(url="/corpus-builder", status_code=302)
+
     app.mount("/", server.build())
 
     # Run server
-    uvicorn.run(app, host="localhost", port=8000)
+    uvicorn.run(app, host=HOST, port=PORT)
 
 
 def create_header() -> None:
@@ -49,8 +67,8 @@ def create_header() -> None:
             mo.md("---"),
             mo.nav_menu(
                 {
-                    "/corpus-builder": "## Sentence Corpus Builder",
-                    "/quote-finder": "## Quote Finder",
+                    "/corpus-builder": "### Sentence Corpus Builder",
+                    "/quote-finder": "### Quote Finder",
                 }
             ).center(),
             mo.md("---"),

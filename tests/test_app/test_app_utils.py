@@ -1,13 +1,23 @@
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
-from remarx.app import ui
 from remarx.app.utils import create_temp_input, launch_app
 
 
-@patch("remarx.app.utils.cli")
-def test_launch_app(mock_cli):
+@patch("remarx.app.utils.uvicorn")
+@patch("remarx.app.utils.mo")
+def test_launch_app(mock_mo, mock_uvicorn):
+    mock_server = Mock()
+    mock_mo.create_asgi_app.return_value = mock_server
+    mock_server.with_app.return_value = mock_server
+
     launch_app()
-    mock_cli.main.assert_called_once_with(["run", ui.__file__])
+
+    mock_mo.create_asgi_app.assert_called_once()
+    assert (
+        mock_server.with_app.call_count == 2
+    )  # twice, because of corpus-builder and quote-finder
+    mock_server.build.assert_called_once()
+    mock_uvicorn.run.assert_called_once()
 
 
 @patch("remarx.app.utils.FileUploadResults")
