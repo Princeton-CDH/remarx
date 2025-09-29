@@ -5,7 +5,8 @@
 ### Application
 
 - Add a sentence corpus selection interface for the quotation detection step
-- Logging is now automatically configured by the application, and the log file location is reported to the user.
+- Logging is now automatically configured by the application, and the log file location is reported to the user
+- Refactor the app into two notebooks (Sentence Corpus Builder & Quote Finder)
 
 ### Documentation
 
@@ -23,7 +24,7 @@
 
 ### Misc
 
-- Add a utility method (`configure_logging`) to configure logging, supporting logging to a file or to stdout.
+- Add a utility method (`configure_logging`) to configure logging, supporting logging to a file or to stdout
 
 ## [0.1.0] - 2025-09-08
 
