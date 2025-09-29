@@ -5,9 +5,11 @@ hide: [navigation]
 
 # Technical Design Document
 
-*The goal for this document is to surface the areas for design decisions and to document those decisions. The expectation is not a comprehensive listing of issues or tasks, but rather a recording of the key structural and process elements, as well as primary deliverables, that will guide development going forward.*
+*This serves as a living document to record the current design decisions for this project. The expectation is not a comprehensive listing of issues or tasks, but rather a recording of the key structural and process elements, as well as primary deliverables, that will guide development.*
 
 *The primary audience for this document is internal to the development team.*
+
+*Note: This document was originally written for planning. It will be updated during development, but it may be out of date.*
 
 ______________________________________________________________________
 
@@ -23,7 +25,7 @@ ______________________________________________________________________
 
 **Development Start Date:** 2025-08-04
 
-**Target Release Date:** 2025-09-24
+**Target Release Date:** Fall 2025
 
 ______________________________________________________________________
 
@@ -76,9 +78,11 @@ The primary use case for this tool is to identify direct quotes of Karl Marx's *
 
 ![System Architecture](images/system-architecture.svg)
 
-The system is composed of two separate software programs: an optional sentence corpus builder and the core pipeline.
+The system is composed of two separate software programs: the sentence corpus builder and the core pipeline.
 
-The sentence corpus builder is an optional program that takes as input some number of texts and outputs a CSV file containing sentence-level text and optionally metadata of these input texts. This program will have custom solutions for the primary use case of the tool as well as plaintext.
+The sentence corpus builder is a program for creating the input CSV files for the core pipeline.
+It takes as input some number of texts and outputs a CSV file containing sentence-level text and metadata for these input texts.
+This program will have custom solutions for the primary use case of the tool (TEI-XML, ALTO-XML) as well as plaintext for general use.
 
 The core pipeline has two key inputs: reuse and original sentence corpora. Each of these inputs are one or more CSV files where each row corresponds to a sentence from a reuse or original text (i.e., as produced by the sentence corpus builder). Ultimately, the system will output a CSV file containing the identified quotations which will be called the quoted corpus.
 
@@ -116,14 +120,13 @@ The core pipeline can be broken down into two key components:
 
 #### Sentence Corpus Builder
 
-This optional component is a standalone python program that should be run locally. It is separate from the core software, and will not be included within the application interface.
-
-This program extracts sentences from some number of input texts and compiles them into a single sentence-level corpus CSV file. It can be broken into two core stages: text extraction and sentence segmentation.
+This component is a python program that extracts sentences from some number of input texts and compiles them into a single sentence-level corpus CSV file.
+It can be broken into two core stages: text extraction and sentence segmentation.
 
 Text extraction will be customized to each of the supported input types:
 
 - MEGA digital TEI-XML files
-- HTML files (for the Communist Manifesto)
+- Communist Manifesto TXT files as produced by a custom, one-time script converting HTML files to plaintext
 - Transcription ALTO-XML files as produced by the research team’s custom text transcription and segmentation pipeline
 - Plaintext files (TXT)
 
@@ -151,7 +154,11 @@ The initial implementation will be based on sequential sentences in both corpora
 
 #### Application Interface
 
-This component is a Marimo notebook designed to run in application mode, which will provide a graphical user interface to the software pipeline. This notebook will allow users to select and upload input original and reuse texts. The notebook will internally call the core software pipeline. Users will have an option to save or download the output to a file location of their choice.
+This component is a Marimo notebook designed to run in application mode, which will provide a graphical user interface to the `remarx` software.
+This interface will allow users to run both the sentence corpus builder and the core pipeline.
+This notebook will allow users to select and upload original and reuse texts and sentence corpora.
+The notebook will contain minimal code and primarily call methods within the `remarx` package.
+Users will have an option to save or download the output to a file location of their choice.
 
 Depending on whether this notebook is run locally or on della via an Open OnDemand app, the pipeline’s intermediate files will be stored on either the user’s local machine or in a scratch folder on della. The software will provide a simple way to configure paths for downloaded and generated models, with sensible defaults for common scenarios.
 

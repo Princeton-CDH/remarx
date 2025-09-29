@@ -22,7 +22,9 @@ def _():
     import pathlib
     import tempfile
 
+    import logging
     import remarx
+    from remarx.utils import configure_logging
     from remarx.app.utils import create_header, create_temp_input
     from remarx.sentence.corpus.create import create_corpus
     from remarx.sentence.corpus import FileInput
@@ -33,6 +35,9 @@ def _():
         create_temp_input,
         mo,
         pathlib,
+        remarx,
+        logging,
+        configure_logging,
     )
 
 
@@ -40,6 +45,18 @@ def _():
 def _(create_header):
     create_header()
     return
+
+
+@app.cell
+def _(configure_logging, logging):
+    # Set up logging and get log file path
+    log_file_path = configure_logging()
+
+    # Log that UI started
+    logger = logging.getLogger("remarx-app")
+    logger.info("Remarx Corpus Builder notebook started")
+
+    return (log_file_path,)
 
 
 @app.cell
@@ -208,6 +225,12 @@ def _(button, create_corpus, create_temp_input, input_file, mo, output_csv):
         building_msg = f"✅ Sentence corpus saved to: {output_csv}"
 
     mo.md(building_msg).center()
+    return
+
+
+@app.cell
+def _(mo, log_file_path):
+    mo.md(f"Logs are being written to: {log_file_path}")
     return
 
 
