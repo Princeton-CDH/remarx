@@ -1,31 +1,39 @@
 from unittest.mock import Mock, patch
 
 import pytest
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
 
-from remarx.app.utils import create_header, create_temp_input, launch_app, lifespan
+from remarx.app.utils import (
+    create_header,
+    create_temp_input,
+    launch_app,
+    lifespan,
+    redirect_root,
+)
 
 
-@patch("remarx.app.utils.uvicorn")
+@patch("remarx.app.utils.uvicorn.run")
 @patch("remarx.app.utils.mo")
-def test_launch_app(mock_mo, mock_uvicorn):
+def test_launch_app(mock_mo, mock_uvicorn_run):
+    """Test that launch_app sets up the application structure correctly"""
     mock_server = Mock()
     mock_mo.create_asgi_app.return_value = mock_server
     mock_server.with_app.return_value = mock_server
+    mock_server.build.return_value = Mock()
 
     launch_app()
 
+    # Verify marimo app creation and configuration
     mock_mo.create_asgi_app.assert_called_once()
-    assert (
-        mock_server.with_app.call_count == 2
-    )  # twice, because of corpus-builder and quote-finder
+    assert mock_server.with_app.call_count == 2  # corpus-builder and quote-finder
     mock_server.build.assert_called_once()
-    mock_uvicorn.run.assert_called_once()
+
+    # Verify server startup
+    mock_uvicorn_run.assert_called_once()
 
 
 @patch("remarx.app.utils.FileUploadResults")
 def test_create_temp_input(mock_upload):
+    """Test temporary file creation and cleanup"""
     # Create mock file upload
     mock_upload.name = "file.txt"
     mock_upload.contents = b"bytes"
@@ -42,7 +50,7 @@ def test_create_temp_input(mock_upload):
         with create_temp_input(mock_upload) as tf:
             raise ValueError
     except ValueError:
-        # catch thrown thrown exception
+        # catch thrown exception
         pass
     assert not tf.is_file()
 
@@ -73,29 +81,12 @@ async def test_lifespan(mock_webbrowser):
     # Test the lifespan context manager
     async with lifespan(app):
         mock_webbrowser.open.assert_called_once_with("http://localhost:8000/")
-        pass
 
 
-@patch("remarx.app.utils.webbrowser")
-@patch("remarx.app.utils.mo")
-def test_fastapi_routes(mock_mo, mock_webbrowser):
-    """Test FastAPI routes created in launch_app"""
-    mock_server = Mock()
-    mock_mo.create_asgi_app.return_value = mock_server
-    mock_server.with_app.return_value = mock_server
-    mock_server.build.return_value = Mock()
+@pytest.mark.asyncio
+async def test_redirect_root():
+    """Test redirect_root function directly"""
+    response = await redirect_root()
 
-    app = FastAPI()
-
-    # Add the same redirect route as in launch_app
-    @app.get("/")
-    async def redirect_root():
-        from fastapi.responses import RedirectResponse
-
-        return RedirectResponse(url="/corpus-builder", status_code=302)
-
-    # Test the redirect route
-    client = TestClient(app)
-    response = client.get("/", follow_redirects=False)
     assert response.status_code == 302
     assert response.headers["location"] == "/corpus-builder"

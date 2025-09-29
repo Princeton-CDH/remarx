@@ -31,6 +31,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield
 
 
+async def redirect_root() -> RedirectResponse:
+    """Redirect root path to corpus-builder"""
+    return RedirectResponse(url="/corpus-builder", status_code=302)
+
+
 def launch_app() -> None:
     """Launch the remarx app in the default web browser"""
     # Create marimo asgi app
@@ -48,9 +53,7 @@ def launch_app() -> None:
     app = FastAPI(lifespan=lifespan)
 
     # Add redirect from root to corpus-builder
-    @app.get("/")
-    async def redirect_root() -> RedirectResponse:
-        return RedirectResponse(url="/corpus-builder", status_code=302)
+    app.get("/")(redirect_root)
 
     app.mount("/", server.build())
 

@@ -34,7 +34,6 @@ dependencies = [
   "transformers[torch]",
   "fastapi",
   "uvicorn",
-  "httpx",
   "pytest-asyncio",
 ]
 
