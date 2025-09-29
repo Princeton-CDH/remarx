@@ -21,12 +21,6 @@ wheels = [
 ]
 
 [[package]]
-name = "annoy"
-version = "1.17.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/07/38/e321b0e05d8cc068a594279fb7c097efb1df66231c295d482d7ad51b6473/annoy-1.17.3.tar.gz", hash = "sha256:9cbfebefe0a5f843eba29c6be4c84d601f4f41ad4ded0486f1b88c3b07739c15", size = 647460, upload-time = "2023-06-14T16:37:34.152Z" }
-
-[[package]]
 name = "anyio"
 version = "4.10.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1590,7 +1584,6 @@ wheels = [
 name = "remarx"
 source = { editable = "." }
 dependencies = [
-    { name = "annoy" },
     { name = "ipython" },
     { name = "marimo", extra = ["lsp"] },
     { name = "neuxml" },
@@ -1600,6 +1593,7 @@ dependencies = [
     { name = "sentence-transformers" },
     { name = "stanza" },
     { name = "transformers", extra = ["torch"] },
+    { name = "voyager" },
 ]
 
 [package.optional-dependencies]
@@ -1635,7 +1629,6 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "annoy" },
     { name = "bs4", marker = "extra == 'dev'" },
     { name = "bs4", marker = "extra == 'html'" },
     { name = "coverage", extras = ["toml"], marker = "extra == 'dev'" },
@@ -1662,6 +1655,7 @@ requires-dist = [
     { name = "sentence-transformers" },
     { name = "stanza" },
     { name = "transformers", extras = ["torch"] },
+    { name = "voyager", specifier = ">=2.1.0" },
 ]
 provides-extras = ["dev", "docs", "html", "test"]
 
@@ -2180,6 +2174,22 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/1c/14/37fcdba2808a6c615681cd216fecae00413c9dab44fb2e57805ecf3eaee3/virtualenv-20.34.0.tar.gz", hash = "sha256:44815b2c9dee7ed86e387b842a84f20b93f7f417f95886ca1996a72a4138eb1a", size = 6003808, upload-time = "2025-08-13T14:24:07.464Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/76/06/04c8e804f813cf972e3262f3f8584c232de64f0cde9f703b46cf53a45090/virtualenv-20.34.0-py3-none-any.whl", hash = "sha256:341f5afa7eee943e4984a9207c025feedd768baff6753cd660c857ceb3e36026", size = 5983279, upload-time = "2025-08-13T14:24:05.111Z" },
+]
+
+[[package]]
+name = "voyager"
+version = "2.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/07/c1/57d37108b0cc892314286c221ed9ffe0540768e0f1c5ac583ea6e14d8d9a/voyager-2.1.0-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:18ef1903fa85a2ff580f1d5a70f62c1eee710d39487eeeb192f34555cb50be6e", size = 702332, upload-time = "2024-12-13T19:50:55.492Z" },
+    { url = "https://files.pythonhosted.org/packages/3f/94/73002811f8c542d138952d3485bab94b2e280cf4ddf7fd901e1ac6884254/voyager-2.1.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:dc23adf051720560cf9f5a958df155edaba6f7b2c3746a1686f92bbc9b846d15", size = 362635, upload-time = "2024-12-13T19:50:57.773Z" },
+    { url = "https://files.pythonhosted.org/packages/ff/3b/770117e65710f22fdbc575072c43824f1526bdb1d000f5089bef5bd4a650/voyager-2.1.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:4b75034984411ed3120b919f4d7f16ed0406bb5863924a28525b48ac5b4010fa", size = 339880, upload-time = "2024-12-13T19:51:00.123Z" },
+    { url = "https://files.pythonhosted.org/packages/91/87/f3ed4ebeeff371b0b759c277025379dbcb5dbf00083df6c03f5c9727b6cd/voyager-2.1.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:cddf5359d8a88bd5fc12fc71c0e7fd332e4da1d96dac8ae445b0138871cd28b2", size = 4360919, upload-time = "2024-12-13T19:51:02.516Z" },
+    { url = "https://files.pythonhosted.org/packages/b7/13/a772a9a2d4cc427f6b4ae2aca65e50ec99f7bb6037c346cc22a07bc4a326/voyager-2.1.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9415b9c923bac493d5c68d55ae55c4289153c23f9f478422934de61acbaf4c01", size = 4444514, upload-time = "2024-12-13T19:51:04.235Z" },
+    { url = "https://files.pythonhosted.org/packages/c5/76/02b66dc8c1e9d373327ef15ff3ccdea5be0b104d43d65c8bf52848058331/voyager-2.1.0-cp312-cp312-win_amd64.whl", hash = "sha256:f8264f438f1df40d11e1f18a069980972a569f5a2f3c0a0d2abef9d4b4078d5c", size = 207456, upload-time = "2024-12-13T19:51:05.582Z" },
 ]
 
 [[package]]
