@@ -10,28 +10,28 @@ from timeit import default_timer as time
 
 import numpy.typing as npt
 import polars as pl
-from annoy import AnnoyIndex
-from tqdm import tqdm
+from voyager import Index, Space
 
 from remarx.quotation.embeddings import get_sentence_embeddings
 
+logger = logging.getLogger(__name__)
 
-def build_annoy_index(embeddings: npt.NDArray, n_trees: int) -> AnnoyIndex:
+
+def build_vector_index(embeddings: npt.NDArray, n_trees: int) -> Index:
     """
-    Builds an Annoy index for a given set of embeddings with the specified
+    Builds an index for a given set of embeddings with the specified
     number of trees.
     """
     # Instantiate annoy index using dot product
     n_dims = embeddings.shape[1]
-    index = AnnoyIndex(n_dims, "dot")
-
-    for i, vec in enumerate(embeddings):
-        index.add_item(i, vec)
-
-    # Build and return index
-    # NOTE: An index can be built / written to disk. This could help with
-    #       RAM constraints
-    index.build(n_trees)
+    index = Index(Space.InnerProduct, num_dimensions=n_dims)
+    # more efficient to add all vectors at once
+    index.add_items(embeddings)
+    # Return the index
+    # NOTE: index could be saved to disk, which may be helpful in future
+    logger.info(
+        f"Created index with {index.num_elements} items and {n_dims} dimensions"
+    )
     return index
 
 
@@ -58,12 +58,9 @@ def get_sentence_pairs(
     (cosine similarity) above the specified cutoff.
     Optionally, the parameters for Annoy may be specified.
     """
-    logger = logging.getLogger(__name__)
-
     # Generate embeddings
-    if logger.isEnabledFor(logging.INFO):
-        logger.info("Now generating sentence embeddings")
-        start = time()
+    logger.info("Now generating sentence embeddings")
+    start = time()
     original_vecs = get_sentence_embeddings(
         original_sents, show_progress_bar=show_progress_bar
     )
@@ -77,43 +74,31 @@ def get_sentence_pairs(
             f"Generated {n_vecs} sentence embeddings in {elapsed_time:.1f} seconds"
         )
 
-    # Build Annoy index
+    # Build search index
     # NOTE: An index only needs to be generated once for a set of embeddings.
     #       Perhaps there's some potential reuse between runs?
     if logger.isEnabledFor(logging.INFO):
         start = time()
-    index = build_annoy_index(original_vecs, n_trees)
+    index = build_vector_index(original_vecs, n_trees)
     if logger.isEnabledFor(logging.INFO):
         elapsed_time = time() - start
         logger.info(f"Built Annoy index in {elapsed_time:.1f} seconds")
 
-    # Get sentence matches
-    matches = []
-    progress_bar = tqdm(
-        enumerate(reuse_vecs),
-        desc="Finding sentence pairs",
-        total=reuse_vecs.shape[0],
-        disable=not show_progress_bar,
-    )
+    # Get sentence matches; query all vectors at once
+    # returns a list of lists with results for each reuse vector
+    all_neighbor_ids, all_distances = index.query(reuse_vecs, k=1)
 
-    for i, vec in progress_bar:
-        # NOTE: May want to experiment with different search_k values
-        #       search_k defaults to n_trees * n_neighbors
-        ann_results = index.get_nns_by_vector(
-            vec, 1, search_k=search_k, include_distances=True
+    return (
+        pl.DataFrame(
+            data={"original_index": all_neighbor_ids, "match_score": all_distances}
         )
-        match_score = ann_results[1][0]  # cosine similarity
-        if match_score > score_cutoff:
-            matches.append(
-                {
-                    "reuse_index": i,
-                    "original_index": ann_results[0][0],
-                    # NOTE: This score is subject to floating point / precision
-                    #       issues, so its range is not [-1,1]
-                    "match_score": match_score,
-                }
-            )
-    return pl.DataFrame(matches)
+        # add row index
+        .with_row_index(name="reuse_index")
+        # since we requested k=1, explode the lists to get single value result
+        .explode("original_index", "match_score")
+        # then filter by specified match score cutoff
+        .filter(pl.col("match_score").gt(score_cutoff))
+    )
 
 
 # TODO: Modify to include additional fields
@@ -177,16 +162,14 @@ def find_quote_pairs(
     quote pairs. These quote pairs are saved as a CSV. Optionally, the required
     quality for quote pairs can be modified via `score_cutoff`.
     """
-    logger = logging.getLogger(__name__)
 
     # Build sentence dataframes
     original_df = load_sent_df(original_corpus, col_pfx="original_")
     reuse_df = load_sent_df(reuse_corpus, col_pfx="reuse_")
 
     # Determine sentence pairs
-    if logger.isEnabledFor(logging.INFO):
-        logger.info("Now identifying sentence pairs")
-        start = time()
+    logger.info("Now identifying sentence pairs")
+    start = time()
     # TODO: Add support for annoy parameters
     sent_pairs = get_sentence_pairs(
         original_df.get_column("original_text").to_list(),
@@ -194,15 +177,18 @@ def find_quote_pairs(
         score_cutoff,
         show_progress_bar=show_progress_bar,
     )
-    if logger.isEnabledFor(logging.INFO):
-        elapsed_time = time() - start
-        logger.info(
-            f"Identified {len(sent_pairs)} sentence pairs in {elapsed_time:.1f} seconds"
-        )
+    elapsed_time = time() - start
+    logger.info(
+        f"Identified {len(sent_pairs)} sentence pairs in {elapsed_time:.1f} seconds"
+    )
 
-    # Build and save quote pairs
-    quote_pairs = compile_quote_pairs(original_df, reuse_df, sent_pairs)
-    # NOTE: Perhaps this should return a DataFrame rather than creating a CSV?
-    quote_pairs.write_csv(out_csv)
-    if logger.isEnabledFor(logging.INFO):
+    # Build and save quote pairs if any are found
+    if len(sent_pairs):
+        quote_pairs = compile_quote_pairs(original_df, reuse_df, sent_pairs)
+        # NOTE: Perhaps this should return a DataFrame rather than creating a CSV?
+        quote_pairs.write_csv(out_csv)
         logger.info(f"Saved {len(quote_pairs)} quote pairs to {out_csv}")
+    else:
+        logger.info(
+            "No sentence pairs for specified score cutoff; output file not created."
+        )
