@@ -22,9 +22,9 @@ classifiers = [
   "Topic :: Text Processing",
 ]
 dependencies = [
-  "ipython",         # Required by transformers for trainer functionality
+  "ipython", # Required by transformers for trainer functionality
   "marimo>=0.13.11",
-  "marimo[lsp]",     # marimo language server protocol
+  "marimo[lsp]", # marimo language server protocol
   "neuxml>=1",
   "numpy",
   "polars",
@@ -34,6 +34,8 @@ dependencies = [
   "transformers[torch]",
   "fastapi",
   "uvicorn",
+  "httpx",
+  "pytest-asyncio",
 ]
 
 [project.optional-dependencies]
