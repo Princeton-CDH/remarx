@@ -89,7 +89,7 @@ def test_get_sentence_pairs(mock_build_index, mock_embeddings, caplog):
         _ = get_sentence_pairs("original_sents", "reuse_sents", 0.2)
 
     # currently all logging is info level
-    assert len(caplog.record_tuples) == 2
+    assert len(caplog.record_tuples) == 4
     assert all(log[1] == logging.INFO for log in caplog.record_tuples)
     # check log messages for expected text;
     # order agnostic; just check for presence of expected messages
@@ -99,6 +99,11 @@ def test_get_sentence_pairs(mock_build_index, mock_embeddings, caplog):
         re.fullmatch(r"Generated 5 sentence embeddings in \d+\.\d seconds", log)
         for log in log_messages
     )
+    assert any(
+        re.fullmatch(r"Queried 3 sentence embeddings in \d+\.\d seconds", log)
+        for log in log_messages
+    )
+    assert "Identified 1 sentence pair under score cutuff 0.2" in log_messages
 
 
 def test_load_sent_df(tmp_path):

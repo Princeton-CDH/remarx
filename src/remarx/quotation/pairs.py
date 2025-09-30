@@ -68,12 +68,11 @@ def get_sentence_pairs(
     reuse_vecs = get_sentence_embeddings(
         reuse_sents, show_progress_bar=show_progress_bar
     )
-    if logger.isEnabledFor(logging.INFO):
-        n_vecs = len(original_vecs) + len(reuse_vecs)
-        elapsed_time = time() - start
-        logger.info(
-            f"Generated {n_vecs} sentence embeddings in {elapsed_time:.1f} seconds"
-        )
+    n_vecs = len(original_vecs) + len(reuse_vecs)
+    elapsed_time = time() - start
+    logger.info(
+        f"Generated {n_vecs:,} sentence embeddings in {elapsed_time:.1f} seconds"
+    )
 
     # Build search index
     # NOTE: An index only needs to be generated once for a set of embeddings.
@@ -82,8 +81,12 @@ def get_sentence_pairs(
 
     # Get sentence matches; query all vectors at once
     # returns a list of lists with results for each reuse vector
-    # TODO: Add logging here
+    start = time()
     all_neighbor_ids, all_distances = index.query(reuse_vecs, k=1)
+    elapsed_time = time() - start
+    logger.info(
+        f"Queried {len(reuse_vecs):,} sentence embeddings in {elapsed_time:.1f} seconds"
+    )
 
     result = (
         pl.DataFrame(
@@ -96,7 +99,10 @@ def get_sentence_pairs(
         # then filter by specified match score cutoff
         .filter(pl.col("match_score").lt(score_cutoff))
     )
-    # TODO: Move logging here
+    total = result.height
+    logger.info(
+        f"Identified {total:,} sentence pair{'' if total == 1 else 's'} under score cutuff {score_cutoff}"
+    )
     return result
 
 
@@ -180,7 +186,7 @@ def find_quote_pairs(
         quote_pairs = compile_quote_pairs(original_df, reuse_df, sent_pairs)
         # NOTE: Perhaps this should return a DataFrame rather than creating a CSV?
         quote_pairs.write_csv(out_csv)
-        logger.info(f"Saved {len(quote_pairs)} quote pairs to {out_csv}")
+        logger.info(f"Saved {len(quote_pairs):,} quote pairs to {out_csv}")
     else:
         logger.info(
             f"No sentence pairs for score cutoff = {score_cutoff} ; output file not created."
