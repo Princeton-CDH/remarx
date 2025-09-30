@@ -5,7 +5,6 @@ from unittest.mock import Mock, call, patch
 
 import numpy as np
 import polars as pl
-import pytest
 from polars.testing import assert_frame_equal
 from voyager import Index, Space
 
@@ -250,14 +249,14 @@ def test_find_quote_pairs_integration(tmp_path):
     test_orig = pl.DataFrame(
         [
             {
-                "sent_id": "A",
-                "corpus": "original",
-                "text": "Hat der alte Hexenmeister Sich doch einmal wegbegeben!",
-            },
-            {
                 "sent_id": "B",
                 "corpus": "original",
                 "text": "Und nun sollen seine Geister Auch nach meinem Willen leben.",
+            },
+            {
+                "sent_id": "A",
+                "corpus": "original",
+                "text": "Hat der alte Hexenmeister Sich doch einmal wegbegeben!",
             },
             {
                 "sent_id": "C",
@@ -285,10 +284,16 @@ def test_find_quote_pairs_integration(tmp_path):
     out_csv = tmp_path / "out.csv"
     find_quote_pairs(orig_csv, reuse_csv, out_csv)
     with out_csv.open(newline="") as file:
-        reader = csv.reader(file)
+        reader = csv.DictReader(file)
         results = list(reader)
-        assert len(results) == 2
-        assert results[0] == ["reuse_id", "original_id", "match_score"]
-        assert results[1][0] == "a"
-        assert results[1][1] == "A"
-        assert float(results[1][2]) == pytest.approx(1.0)
+        assert len(results) == 1
+        assert list(results[0].keys()) == [
+            "reuse_id",
+            "reuse_text",
+            "original_id",
+            "original_text",
+            "match_score",
+        ]
+        assert results[0]["reuse_id"] == "a"
+        assert results[0]["original_id"] == "A"
+        assert float(results[0]["match_score"]) == 0
