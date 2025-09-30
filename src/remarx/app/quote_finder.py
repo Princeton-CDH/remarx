@@ -33,6 +33,16 @@ def _(create_header):
     create_header()
     return
 
+@app.cell
+def _(configure_logging, logging):
+    # Set up logging and get log file path
+    log_file_path = configure_logging()
+
+    # Log that UI started
+    logger = logging.getLogger("remarx-app")
+    logger.info("Remarx Quote Finder notebook started")
+
+    return (log_file_path,)
 
 @app.cell
 def _(FileInput, mo):

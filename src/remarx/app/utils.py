@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 async def redirect_root() -> RedirectResponse:
-    """Redirect root path to corpus-builder"""
+    """Redirect root path to corpus-builder, since app currently has no home page"""
     return RedirectResponse(url="/corpus-builder", status_code=302)
 
 
