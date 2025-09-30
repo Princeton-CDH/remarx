@@ -1,8 +1,14 @@
 import logging
 from unittest.mock import Mock, patch
 
+import marimo
 import pytest
+from marimo._server.asgi import ASGIAppBuilder
 
+# Types pulled from marimo source code
+from starlette.types import ASGIApp
+
+import remarx
 from remarx.app.utils import (
     create_header,
     create_temp_input,
@@ -18,10 +24,10 @@ from remarx.app.utils import (
 @patch("remarx.app.utils.configure_logging")
 def test_launch_app(mock_configure_logging, mock_mo, mock_uvicorn_run):
     """Test that launch_app sets up the application structure correctly"""
-    mock_server = Mock()
+    mock_server = Mock(spec=ASGIAppBuilder)
     mock_mo.create_asgi_app.return_value = mock_server
     mock_server.with_app.return_value = mock_server
-    mock_server.build.return_value = Mock()
+    mock_server.build.return_value = Mock(spec=ASGIApp)
 
     # Mock configure_logging to return a log file path
     mock_configure_logging.return_value = "/path/to/log/file.log"
@@ -64,17 +70,35 @@ def test_create_temp_input(mock_upload):
     assert not tf.is_file()
 
 
-@patch("remarx.app.utils.mo")
-def test_create_header(mock_mo):
+@patch("remarx.app.utils.mo.vstack")
+@patch("remarx.app.utils.mo.nav_menu")
+@patch("remarx.app.utils.mo.md")
+def test_create_header(mock_md, mock_nav_menu, mock_vstack):
     """Test create_header function"""
     # Mock the marimo functions
-    mock_mo.vstack.return_value = "mocked_header"
-    mock_mo.md.return_value = Mock()
-    mock_mo.nav_menu.return_value = Mock()
+    ## Work around for HTML centering
+    mock_md.side_effect = (
+        lambda x: x
+        if x == "---"
+        else Mock(spec=marimo.Html, **{"text": x, "center.return_value": x})
+    )
+    mock_nav_menu.return_value = Mock(
+        spec=marimo.Html, **{"center.return_value": "nav_bar"}
+    )
+    mock_vstack.return_value = "mocked_header"
 
     result = create_header()
-
-    mock_mo.vstack.assert_called_once()
+    mock_nav_menu.assert_called_once()
+    assert mock_md.call_count == 4
+    mock_vstack.assert_called_once_with(
+        [
+            "# `remarx`",
+            f"Running version: {remarx.__version__}",
+            "---",
+            "nav_bar",
+            "---",
+        ]
+    )
     assert result == "mocked_header"
 
 

@@ -34,7 +34,6 @@ dependencies = [
   "transformers[torch]",
   "fastapi",
   "uvicorn",
-  "pytest-asyncio",
 ]
 
 [project.optional-dependencies]
@@ -48,6 +47,7 @@ dev = [
 test = [
   "pytest",
   "pytest-cov",
+  "pytest-asyncio",
   "coverage[toml]", # Enables coverage to read config from pyproject.toml
 ]
 docs = [
