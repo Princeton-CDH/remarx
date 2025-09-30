@@ -33,6 +33,8 @@ dependencies = [
   "stanza",
   "transformers[torch]",
   "voyager>=2.1.0",
+  "fastapi",
+  "uvicorn",
 ]
 
 [project.optional-dependencies]
@@ -46,6 +48,7 @@ dev = [
 test = [
   "pytest",
   "pytest-cov",
+  "pytest-asyncio",
   "coverage[toml]", # Enables coverage to read config from pyproject.toml
 ]
 docs = [
@@ -70,8 +73,10 @@ testpaths = ["tests"]
 
 [tool.coverage.run]
 branch = true
+# ignore app notebooks
 omit = [
-  "src/remarx/app/ui.py",   # marimo app notebook
+  "src/remarx/app/corpus_builder.py",
+  "src/remarx/app/quote_finder.py",
 ]
 
 [tool.coverage.report]
@@ -86,7 +91,10 @@ target-version = "py312"
 # Configure src path so ruff import fixes can identify local imports
 src = [ "src" ]
 # Also ignore the app notebook
-extend-exclude = [ "src/remarx/app/ui.py" ]
+extend-exclude = [
+  "src/remarx/app/corpus_builder.py",
+  "src/remarx/app/quote_finder.py",
+]
 
 [tool.ruff.lint]
 # Include these rules in addition to ruff's defaults
