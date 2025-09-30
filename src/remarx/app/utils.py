@@ -40,7 +40,7 @@ async def redirect_root() -> RedirectResponse:
 
 def launch_app() -> None:
     """Launch the remarx app in the default web browser"""
-    # Configure logging once at startup to prevent multiple log files created by separate notebooks
+    # Configure logging once at startup to prevent multiple log files created by the notebooks
     log_file_path = configure_logging()
 
     # Log that the app is starting

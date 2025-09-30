@@ -105,7 +105,7 @@ def test_get_current_log_file(tmp_path):
     logger = logging.getLogger()
     original_handlers = logger.handlers[:]
 
-    # first remove all handlers
+    # remove all handlers
     for handler in original_handlers:
         logger.removeHandler(handler)
 
@@ -132,3 +132,16 @@ def test_get_current_log_file(tmp_path):
     # restore original handlers
     for handler in original_handlers:
         logger.addHandler(handler)
+
+
+def test_launch_app_logging(tmp_path, monkeypatch):
+    """Test that launch_app logs the correct startup messages"""
+    monkeypatch.chdir(tmp_path)
+
+    with patch("remarx.app.utils.uvicorn.run"):
+        launch_app()
+
+    log_files = list((tmp_path / "logs").iterdir())
+    log_text = log_files[-1].read_text()
+    assert "Remarx application starting" in log_text
+    assert "Logs are being written to:" in log_text
