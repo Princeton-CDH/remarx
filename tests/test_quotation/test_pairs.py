@@ -5,6 +5,7 @@ from unittest.mock import Mock, call, patch
 
 import numpy as np
 import polars as pl
+import pytest
 from polars.testing import assert_frame_equal
 from voyager import Index, Space
 
@@ -18,29 +19,39 @@ from remarx.quotation.pairs import (
 
 
 @patch("remarx.quotation.pairs.Index")
-def test_build_vector_index(mock_index_class):
+def test_build_vector_index(mock_index_class, caplog):
     mock_index = Mock(spec=Index)
     mock_index_class.return_value = mock_index
     test_embeddings = np.ones([10, 50])
+    mock_index.num_elements = 10
 
     # Default case
-    result = build_vector_index(test_embeddings, 10)
+    result = build_vector_index(test_embeddings)
     assert result is mock_index
-    mock_index_class.assert_called_once_with(Space.InnerProduct, num_dimensions=50)
+    mock_index_class.assert_called_once_with(
+        Space.InnerProduct, num_dimensions=50, max_elements=10
+    )
     assert mock_index.add_items.call_count == 1
 
     # can't use assert call due to numpy array equality check
     # get args and check for expected match
     args, kwargs = mock_index.add_items.call_args
-    assert (args[0] == test_embeddings).all()
+    assert np.array_equal(args[0], test_embeddings)
+
+    # Check logging
+    caplog.clear()
+    with caplog.at_level(logging.INFO):
+        _ = build_vector_index(test_embeddings)
+    assert len(caplog.record_tuples) == 1
+    assert caplog.record_tuples[0][1] == logging.INFO
+    expected_msg = r"Created index with 10 items and 50 dimensions in \d+.\d seconds"
+    print(caplog.record_tuples[0][2])
+    assert re.fullmatch(expected_msg, caplog.record_tuples[0][2])
 
 
 @patch("remarx.quotation.pairs.get_sentence_embeddings")
 @patch("remarx.quotation.pairs.build_vector_index")
 def test_get_sentence_pairs(mock_build_index, mock_embeddings, caplog):
-    # capture logs at info level
-    caplog.set_level(logging.INFO)
-
     # setup mock index
     mock_index = Mock(spec=Index)
     # list of lists of ids, distances
@@ -67,12 +78,18 @@ def test_get_sentence_pairs(mock_build_index, mock_embeddings, caplog):
             call("reuse_sents", show_progress_bar=False),
         ]
     )
-    mock_build_index.assert_called_once_with(original_vecs, 10)
+    mock_build_index.assert_called_once_with(original_vecs)
     assert mock_index.query.call_count == 1
     mock_index.query.assert_called_with(reuse_vecs, k=1)
 
-    # check logging
+    # Case: Check logging
+    mock_embeddings.side_effect = [original_vecs, reuse_vecs]
+    caplog.clear()
+    with caplog.at_level(logging.INFO):
+        _ = get_sentence_pairs("original_sents", "reuse_sents", 0.2)
+
     # currently all logging is info level
+    assert len(caplog.record_tuples) == 2
     assert all(log[1] == logging.INFO for log in caplog.record_tuples)
     # check log messages for expected text;
     # order agnostic; just check for presence of expected messages
@@ -82,40 +99,6 @@ def test_get_sentence_pairs(mock_build_index, mock_embeddings, caplog):
         re.fullmatch(r"Generated 5 sentence embeddings in \d+\.\d seconds", log)
         for log in log_messages
     )
-
-    assert any(
-        re.fullmatch(r"Built vector index in \d+\.\d seconds", log)
-        for log in log_messages
-    )
-
-    # Case: specify annoy parameters
-    # mock_build_index.reset_mock()
-    # mock_index.get_nns_by_vector.side_effect = test_ann_results
-    # mock_embeddings.side_effect = [original_vecs, reuse_vecs]
-
-    # _ = get_sentence_pairs("original_sents", "reuse_sents", 0.8, search_k=4, n_trees=3)
-    # mock_build_index.assert_called_once_with(original_vecs, 3)
-    # assert mock_index.get_nns_by_vector.call_count == 3
-    # mock_index.get_nns_by_vector.assert_has_calls(
-    #     [call(x, 1, search_k=4, include_distances=True) for x in reuse_vecs]
-    # )
-
-    # # Case: show progress bar
-    # mock_index.get_nns_by_vector.side_effect = test_ann_results
-    # mock_embeddings.reset_mock()
-    # mock_embeddings.side_effect = [original_vecs, reuse_vecs]
-
-    # results = get_sentence_pairs(
-    #     "original_sents", "reuse_sents", 0.8, show_progress_bar=True
-    # )
-    # # check mocks
-    # assert mock_embeddings.call_count == 2
-    # mock_embeddings.assert_has_calls(
-    #     [
-    #         call("original_sents", show_progress_bar=True),
-    #         call("reuse_sents", show_progress_bar=True),
-    #     ]
-    # )
 
 
 def test_load_sent_df(tmp_path):
@@ -154,7 +137,8 @@ def test_compile_quote_pairs():
         {
             "reuse_index": [0, 1, 2, 3, 4],
             "reuse_id": ["a", "b", "c", "d", "e"],
-            "text": ["0", "1", "2", "3", "4"],
+            "reuse_text": ["0", "1", "2", "3", "4"],
+            "other": [4, 3, 2, 1, 0],
         }
     )
     orig_df = pl.DataFrame(
@@ -162,7 +146,8 @@ def test_compile_quote_pairs():
         {
             "original_index": [0, 1, 2],
             "original_id": ["A", "B", "C"],
-            "text": ["0", "1", "2"],
+            "original_text": ["0", "1", "2"],
+            "other": [2, 1, 0],
         }
     )
 
@@ -171,7 +156,7 @@ def test_compile_quote_pairs():
         {
             "reuse_index": [1, 3, 4],
             "original_index": [2, 0, 0],
-            "match_score": [0.9, 0.8, 0.99],
+            "match_score": [0.1, 0.225, 0.01],
         }
     )
 
@@ -179,8 +164,10 @@ def test_compile_quote_pairs():
     expected = pl.DataFrame(
         {
             "reuse_id": ["b", "d", "e"],
+            "reuse_text": ["1", "3", "4"],
             "original_id": ["C", "A", "A"],
-            "match_score": [0.9, 0.8, 0.99],
+            "original_text": ["2", "0", "0"],
+            "match_score": [0.1, 0.225, 0.01],
         }
     )
 
@@ -210,18 +197,21 @@ def test_find_quote_pairs(
     ## check mocks
     assert mock_load_df.call_count == 2
     mock_sent_pairs.assert_called_once_with(
-        orig_texts, reuse_texts, 0.8, show_progress_bar=False
+        orig_texts, reuse_texts, 0.225, show_progress_bar=False
     )
     mock_compile_pairs.assert_called_once_with(orig_df, reuse_df, ["sent_pairs"])
+
     ## check logging
+    mock_load_df.side_effect = [orig_df, reuse_df]
+    with caplog.at_level(logging.INFO):
+        caplog.clear()
+        find_quote_pairs("original", "reuse", out_csv)
     logs = caplog.record_tuples
-    assert len(logs) == 3
-    assert all(log[0] == "remarx.quotation.pairs" for log in logs)
-    assert all(log[1] == logging.INFO for log in logs)
+    assert len(logs) == 1
+    assert logs[0][0] == "remarx.quotation.pairs"
+    assert logs[0][1] == logging.INFO
     ### check log messages
-    assert logs[0][2] == "Now identifying sentence pairs"
-    assert re.fullmatch(r"Identified 1 sentence pairs in \d+\.\d seconds", logs[1][2])
-    assert re.fullmatch(f"Saved 1 quote pairs to {out_csv}", logs[2][2])
+    assert re.fullmatch(f"Saved 1 quote pairs to {out_csv}", logs[0][2])
 
     # Specify cutoff
     mock_load_df.side_effect = [orig_df, reuse_df]
@@ -239,8 +229,19 @@ def test_find_quote_pairs(
     find_quote_pairs("original", "reuse", out_csv, show_progress_bar=True)
     # check mocks
     mock_sent_pairs.assert_called_once_with(
-        orig_texts, reuse_texts, 0.8, show_progress_bar=True
+        orig_texts, reuse_texts, 0.225, show_progress_bar=True
     )
+
+    # Case no results
+    mock_load_df.side_effect = [orig_df, reuse_df]
+    mock_sent_pairs.return_value = []
+    with caplog.at_level(logging.INFO):
+        caplog.clear()
+        find_quote_pairs("original", "reuse", out_csv)
+    assert len(caplog.record_tuples) == 1
+    log = caplog.record_tuples[0]
+    assert log[1] == logging.INFO
+    assert "No sentence pairs for score cutoff = 0.225" in log[2]
 
 
 def test_find_quote_pairs_integration(tmp_path):
@@ -299,4 +300,4 @@ def test_find_quote_pairs_integration(tmp_path):
         ]
         assert results[0]["reuse_id"] == "a"
         assert results[0]["original_id"] == "A"
-        assert float(results[0]["match_score"]) == 0
+        assert float(results[0]["match_score"]) == pytest.approx(0)

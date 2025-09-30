@@ -17,20 +17,23 @@ from remarx.quotation.embeddings import get_sentence_embeddings
 logger = logging.getLogger(__name__)
 
 
-def build_vector_index(embeddings: npt.NDArray, n_trees: int) -> Index:
+def build_vector_index(embeddings: npt.NDArray) -> Index:
     """
     Builds an index for a given set of embeddings with the specified
     number of trees.
     """
+    # TODO: Add relevant voyager parameters
+    start = time()
     # Instantiate annoy index using dot product
-    n_dims = embeddings.shape[1]
-    index = Index(Space.InnerProduct, num_dimensions=n_dims)
+    n_vecs, n_dims = embeddings.shape
+    index = Index(Space.InnerProduct, num_dimensions=n_dims, max_elements=n_vecs)
     # more efficient to add all vectors at once
     index.add_items(embeddings)
     # Return the index
     # NOTE: index could be saved to disk, which may be helpful in future
+    elapsed_time = time() - start
     logger.info(
-        f"Created index with {index.num_elements} items and {n_dims} dimensions"
+        f"Created index with {index.num_elements} items and {n_dims} dimensions in {elapsed_time:.1f} seconds"
     )
     return index
 
@@ -39,8 +42,6 @@ def get_sentence_pairs(
     original_sents: list[str],
     reuse_sents: list[str],
     score_cutoff: float,
-    n_trees: int = 10,
-    search_k: int = -1,
     show_progress_bar: bool = False,
 ) -> pl.DataFrame:
     """
@@ -77,17 +78,14 @@ def get_sentence_pairs(
     # Build search index
     # NOTE: An index only needs to be generated once for a set of embeddings.
     #       Perhaps there's some potential reuse between runs?
-    # TODO: shift this logging to the build_vector_index method
-    start = time()
-    index = build_vector_index(original_vecs, n_trees)
-    elapsed_time = time() - start
-    logger.info(f"Built vector index in {elapsed_time:.1f} seconds")
+    index = build_vector_index(original_vecs)
 
     # Get sentence matches; query all vectors at once
     # returns a list of lists with results for each reuse vector
+    # TODO: Add logging here
     all_neighbor_ids, all_distances = index.query(reuse_vecs, k=1)
 
-    return (
+    result = (
         pl.DataFrame(
             data={"original_index": all_neighbor_ids, "match_score": all_distances}
         )
@@ -98,6 +96,8 @@ def get_sentence_pairs(
         # then filter by specified match score cutoff
         .filter(pl.col("match_score").lt(score_cutoff))
     )
+    # TODO: Move logging here
+    return result
 
 
 # TODO: Modify to include additional fields
@@ -167,18 +167,12 @@ def find_quote_pairs(
     reuse_df = load_sent_df(reuse_corpus, col_pfx="reuse_")
 
     # Determine sentence pairs
-    logger.info("Now identifying sentence pairs")
-    start = time()
-    # TODO: Add support for annoy parameters
+    # TODO: Add support for relevant voyager parameters
     sent_pairs = get_sentence_pairs(
         original_df.get_column("original_text").to_list(),
         reuse_df.get_column("reuse_text").to_list(),
         score_cutoff,
         show_progress_bar=show_progress_bar,
-    )
-    elapsed_time = time() - start
-    logger.info(
-        f"Identified {len(sent_pairs)} sentence pairs in {elapsed_time:.1f} seconds"
     )
 
     # Build and save quote pairs if any are found
@@ -189,5 +183,5 @@ def find_quote_pairs(
         logger.info(f"Saved {len(quote_pairs)} quote pairs to {out_csv}")
     else:
         logger.info(
-            "No sentence pairs for specified score cutoff; output file not created."
+            f"No sentence pairs for score cutoff = {score_cutoff} ; output file not created."
         )
