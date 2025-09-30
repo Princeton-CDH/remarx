@@ -37,6 +37,10 @@ def test_get_sentence_embeddings(mock_transformer_class, caplog):
 
     assert result == mock_embeddings
 
+    # Test logging
+    caplog.clear()
+    with caplog.at_level(logging.INFO):
+        result = get_sentence_embeddings(sentences)
     assert len(caplog.record_tuples) == 1
     log = caplog.record_tuples[0]
     assert log[0] == "remarx.quotation.embeddings"

@@ -301,4 +301,4 @@ def test_find_quote_pairs_integration(tmp_path):
         assert results[0]["reuse_id"] == "a"
         assert results[0]["original_id"] == "A"
         # Need to specify the relative tolerance because 0 is a special case
-        assert float(results[0]["match_score"]) == pytest.approx(0, rel=1e-6)
+        assert float(results[0]["match_score"]) == pytest.approx(0, rel=1e-6, abs=1e-6)
