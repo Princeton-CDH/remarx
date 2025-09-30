@@ -27,11 +27,12 @@ dependencies = [
   "marimo[lsp]", # marimo language server protocol
   "neuxml>=1",
   "numpy",
-  "polars",
+  "polars>=0.20.4",
   "ruff",
   "sentence-transformers",
   "stanza",
   "transformers[torch]",
+  "voyager>=2.1.0",
   "fastapi",
   "uvicorn",
 ]
