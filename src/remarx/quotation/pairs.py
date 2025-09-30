@@ -16,14 +16,20 @@ from tqdm import tqdm
 from remarx.quotation.embeddings import get_sentence_embeddings
 
 
-def build_annoy_index(embeddings: npt.NDArray, n_trees: int) -> AnnoyIndex:
+def build_annoy_index(
+    embeddings: npt.NDArray, n_trees: int, random_seed: int | None = None
+) -> AnnoyIndex:
     """
     Builds an Annoy index for a given set of embeddings with the specified
-    number of trees.
+    number of trees. Optionally, the seed for initializing the index's underlying
+    random number generator can be provided.
     """
     # Instantiate annoy index using dot product
     n_dims = embeddings.shape[1]
     index = AnnoyIndex(n_dims, "dot")
+
+    if random_seed is not None:
+        index.set_seed(random_seed)
 
     for i, vec in enumerate(embeddings):
         index.add_item(i, vec)
@@ -41,6 +47,7 @@ def get_sentence_pairs(
     score_cutoff: float,
     n_trees: int = 10,
     search_k: int = -1,
+    random_seed: int | None = None,
     show_progress_bar: bool = False,
 ) -> pl.DataFrame:
     """
@@ -82,7 +89,7 @@ def get_sentence_pairs(
     #       Perhaps there's some potential reuse between runs?
     if logger.isEnabledFor(logging.INFO):
         start = time()
-    index = build_annoy_index(original_vecs, n_trees)
+    index = build_annoy_index(original_vecs, n_trees, random_seed=random_seed)
     if logger.isEnabledFor(logging.INFO):
         elapsed_time = time() - start
         logger.info(f"Built Annoy index in {elapsed_time:.1f} seconds")
@@ -170,6 +177,9 @@ def find_quote_pairs(
     reuse_corpus: pathlib.Path,
     out_csv: pathlib.Path,
     score_cutoff: float = 0.8,
+    n_trees: int = 10,
+    search_k: int = -1,
+    random_seed: int | None = None,
     show_progress_bar: bool = False,
 ) -> None:
     """
@@ -192,6 +202,9 @@ def find_quote_pairs(
         original_df.get_column("original_text").to_list(),
         reuse_df.get_column("reuse_text").to_list(),
         score_cutoff,
+        n_trees=n_trees,
+        search_k=search_k,
+        random_seed=random_seed,
         show_progress_bar=show_progress_bar,
     )
     if logger.isEnabledFor(logging.INFO):
