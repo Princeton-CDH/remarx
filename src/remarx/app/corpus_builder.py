@@ -24,8 +24,7 @@ def _():
 
     import logging
     import remarx
-    from remarx.utils import configure_logging
-    from remarx.app.utils import create_header, create_temp_input
+    from remarx.app.utils import create_header, create_temp_input, get_current_log_file
     from remarx.sentence.corpus.create import create_corpus
     from remarx.sentence.corpus import FileInput
     return (
@@ -33,11 +32,11 @@ def _():
         create_corpus,
         create_header,
         create_temp_input,
+        get_current_log_file,
         mo,
         pathlib,
         remarx,
         logging,
-        configure_logging,
     )
 
 
@@ -48,9 +47,9 @@ def _(create_header):
 
 
 @app.cell
-def _(configure_logging, logging):
-    # Set up logging and get log file path
-    log_file_path = configure_logging()
+def _(get_current_log_file, logging):
+    # Get log file path from already configured logging
+    log_file_path = get_current_log_file()
 
     # Log that UI started
     logger = logging.getLogger("remarx-app")

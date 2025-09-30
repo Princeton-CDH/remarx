@@ -3,6 +3,7 @@ Utility methods associated with the remarx app
 """
 
 import contextlib
+import logging
 import pathlib
 import tempfile
 import webbrowser
@@ -18,6 +19,7 @@ from fastapi.responses import RedirectResponse
 from marimo._plugins.ui._impl.input import FileUploadResults
 
 import remarx
+from remarx.utils import configure_logging
 
 # Server configuration
 HOST = "localhost"
@@ -38,6 +40,15 @@ async def redirect_root() -> RedirectResponse:
 
 def launch_app() -> None:
     """Launch the remarx app in the default web browser"""
+    # Configure logging once at startup to prevent multiple log files created by the notebooks
+    log_file_path = configure_logging()
+
+    # Log that the app is starting
+    logger = logging.getLogger("remarx-app")
+    logger.info("Remarx application starting")
+    if log_file_path:
+        logger.info(f"Logs are being written to: {log_file_path}")
+
     # Create marimo asgi app
     server = mo.create_asgi_app()
 
@@ -59,6 +70,18 @@ def launch_app() -> None:
 
     # Run server
     uvicorn.run(app, host=HOST, port=PORT)
+
+
+def get_current_log_file() -> pathlib.Path | None:
+    """
+    Get the path to the current log file from the root logger's file handler.
+    Returns None if logging is not configured to a file.
+    """
+    root_logger = logging.getLogger()
+    for handler in root_logger.handlers:
+        if isinstance(handler, logging.FileHandler):
+            return pathlib.Path(handler.baseFilename)
+    return None
 
 
 def create_header() -> None:

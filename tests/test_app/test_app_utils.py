@@ -1,3 +1,4 @@
+import logging
 from unittest.mock import Mock, patch
 
 import pytest
@@ -5,6 +6,7 @@ import pytest
 from remarx.app.utils import (
     create_header,
     create_temp_input,
+    get_current_log_file,
     launch_app,
     lifespan,
     redirect_root,
@@ -13,14 +15,21 @@ from remarx.app.utils import (
 
 @patch("remarx.app.utils.uvicorn.run")
 @patch("remarx.app.utils.mo")
-def test_launch_app(mock_mo, mock_uvicorn_run):
+@patch("remarx.app.utils.configure_logging")
+def test_launch_app(mock_configure_logging, mock_mo, mock_uvicorn_run):
     """Test that launch_app sets up the application structure correctly"""
     mock_server = Mock()
     mock_mo.create_asgi_app.return_value = mock_server
     mock_server.with_app.return_value = mock_server
     mock_server.build.return_value = Mock()
 
+    # Mock configure_logging to return a log file path
+    mock_configure_logging.return_value = "/path/to/log/file.log"
+
     launch_app()
+
+    # Verify logging is configured first
+    mock_configure_logging.assert_called_once()
 
     # Verify marimo app creation and configuration
     mock_mo.create_asgi_app.assert_called_once()
@@ -90,3 +99,36 @@ async def test_redirect_root():
 
     assert response.status_code == 302
     assert response.headers["location"] == "/corpus-builder"
+
+
+def test_get_current_log_file(tmp_path):
+    logger = logging.getLogger()
+    original_handlers = logger.handlers[:]
+
+    # first remove all handlers
+    for handler in original_handlers:
+        logger.removeHandler(handler)
+
+    # should return None when there is no FileHandler
+    stream_handler = logging.StreamHandler()
+    logger.addHandler(stream_handler)
+    try:
+        result = get_current_log_file()
+        assert result is None
+    finally:
+        logger.removeHandler(stream_handler)
+
+    # should return log_file path when there is a FileHandler
+    log_file = tmp_path / "test.log"
+    file_handler = logging.FileHandler(log_file)
+    logger.addHandler(file_handler)
+    try:
+        result = get_current_log_file()
+        assert result == log_file
+    finally:
+        logger.removeHandler(file_handler)
+        file_handler.close()
+
+    # restore original handlers
+    for handler in original_handlers:
+        logger.addHandler(handler)
