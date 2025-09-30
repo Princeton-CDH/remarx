@@ -35,7 +35,7 @@ def test_build_vector_index(mock_index_class, caplog):
 
     # can't use assert call due to numpy array equality check
     # get args and check for expected match
-    args, kwargs = mock_index.add_items.call_args
+    args, _kwargs = mock_index.add_items.call_args
     assert np.array_equal(args[0], test_embeddings)
 
     # Check logging
