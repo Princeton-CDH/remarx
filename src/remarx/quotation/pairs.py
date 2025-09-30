@@ -97,7 +97,7 @@ def get_sentence_pairs(
         # since we requested k=1, explode the lists to get single value result
         .explode("original_index", "match_score")
         # then filter by specified match score cutoff
-        .filter(pl.col("match_score").gt(score_cutoff))
+        .filter(pl.col("match_score").lt(score_cutoff))
     )
 
 
@@ -154,7 +154,7 @@ def find_quote_pairs(
     original_corpus: pathlib.Path,
     reuse_corpus: pathlib.Path,
     out_csv: pathlib.Path,
-    score_cutoff: float = 0.8,
+    score_cutoff: float = 0.2,
     show_progress_bar: bool = False,
 ) -> None:
     """
