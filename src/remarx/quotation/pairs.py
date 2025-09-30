@@ -77,12 +77,11 @@ def get_sentence_pairs(
     # Build search index
     # NOTE: An index only needs to be generated once for a set of embeddings.
     #       Perhaps there's some potential reuse between runs?
-    if logger.isEnabledFor(logging.INFO):
-        start = time()
+    # TODO: shift this logging to the build_vector_index method
+    start = time()
     index = build_vector_index(original_vecs, n_trees)
-    if logger.isEnabledFor(logging.INFO):
-        elapsed_time = time() - start
-        logger.info(f"Built Annoy index in {elapsed_time:.1f} seconds")
+    elapsed_time = time() - start
+    logger.info(f"Built vector index in {elapsed_time:.1f} seconds")
 
     # Get sentence matches; query all vectors at once
     # returns a list of lists with results for each reuse vector
@@ -154,7 +153,7 @@ def find_quote_pairs(
     original_corpus: pathlib.Path,
     reuse_corpus: pathlib.Path,
     out_csv: pathlib.Path,
-    score_cutoff: float = 0.2,
+    score_cutoff: float = 0.225,
     show_progress_bar: bool = False,
 ) -> None:
     """

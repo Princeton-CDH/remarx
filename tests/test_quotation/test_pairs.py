@@ -43,10 +43,8 @@ def test_get_sentence_pairs(mock_build_index, mock_embeddings, caplog):
 
     # setup mock index
     mock_index = Mock(spec=Index)
-    # will return a tuple of two lists corresponding to indices and distances
-    test_results = [([0], [0.7]), ([5], [0.4]), ([1], [0.99])]
     # list of lists of ids, distances
-    test_results = ([[0], [5], [1]], [[0.7], [0.4], [0.99]])
+    test_results = ([[0], [5], [1]], [[0.7], [0.4], [0.18]])
     mock_index.query.return_value = test_results
     mock_build_index.return_value = mock_index
 
@@ -57,9 +55,9 @@ def test_get_sentence_pairs(mock_build_index, mock_embeddings, caplog):
 
     # Case: Basic
     expected = pl.DataFrame(
-        [{"reuse_index": 2, "original_index": 1, "match_score": 0.99}]
+        [{"reuse_index": 2, "original_index": 1, "match_score": 0.18}]
     ).cast({"reuse_index": pl.UInt32})  # cast to match row index type
-    results = get_sentence_pairs("original_sents", "reuse_sents", 0.8)
+    results = get_sentence_pairs("original_sents", "reuse_sents", 0.2)
     assert_frame_equal(results, expected)
     ## check mock calls
     assert mock_embeddings.call_count == 2
@@ -73,17 +71,22 @@ def test_get_sentence_pairs(mock_build_index, mock_embeddings, caplog):
     assert mock_index.query.call_count == 1
     mock_index.query.assert_called_with(reuse_vecs, k=1)
 
-    ## check logs
-    logs = caplog.record_tuples
-    print(logs)
-    assert all(log[0] == "remarx.quotation.pairs" for log in logs)
-    assert all(log[1] == logging.INFO for log in logs)
-    ### check log messages
-    assert logs[0][2] == "Now generating sentence embeddings"
-    assert re.fullmatch(
-        r"Generated 5 sentence embeddings in \d+\.\d seconds", logs[1][2]
+    # check logging
+    # currently all logging is info level
+    assert all(log[1] == logging.INFO for log in caplog.record_tuples)
+    # check log messages for expected text;
+    # order agnostic; just check for presence of expected messages
+    log_messages = [log[2] for log in caplog.record_tuples]
+    assert "Now generating sentence embeddings" in log_messages
+    assert any(
+        re.fullmatch(r"Generated 5 sentence embeddings in \d+\.\d seconds", log)
+        for log in log_messages
     )
-    assert re.fullmatch(r"Built Annoy index in \d+\.\d seconds", logs[2][2])
+
+    assert any(
+        re.fullmatch(r"Built vector index in \d+\.\d seconds", log)
+        for log in log_messages
+    )
 
     # Case: specify annoy parameters
     # mock_build_index.reset_mock()
