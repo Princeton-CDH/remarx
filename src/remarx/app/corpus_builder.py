@@ -221,7 +221,7 @@ def _(button, create_corpus, create_temp_input, input_file, mo, output_csv):
                 create_corpus(
                     temp_path, output_csv, filename_override=input_file.name
                 )
-        building_msg = f"✅ Sentence corpus saved to: {output_csv}"
+        building_msg = f":white_check_mark: Sentence corpus saved to: {output_csv}"
 
     mo.md(building_msg).center()
     return

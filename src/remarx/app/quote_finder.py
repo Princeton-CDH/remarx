@@ -62,7 +62,7 @@ def _(get_current_log_file, logging):
 def _(mo):
     mo.md(
         r"""
-    ## 🔍 Quotation Finder
+    ## :mag: Quotation Finder
     Determine and identify the passages of a text corpus (**reuse**) that quote passages from texts in another corpus (**original**).
     This process requires sentence corpora (`CSVs`) created in the previous section.
     """
@@ -76,7 +76,7 @@ def _(mo):
         r"""
     ### 1. Select Input CSV Files
 
-    Browse and select CSV files for each category (currently supports single file pairs):
+    Browse and select CSV files for each category (currently only supports one file each):
 
     - **Original Sentence Corpora**: Sentence-level text corpora of the texts that we are searching for quotations of.
     - **Reuse Sentence Corpora**: Text that may contain quotations from the original text that will be detected.
@@ -131,7 +131,7 @@ def _(mo, original_csv_browser, reuse_csv_browser):
                 mo.vstack(
                     [
                         mo.md(
-                            "**🗂 Select Original Sentence Corpora (CSVs)**"
+                            "**:card_file_box: Select Original Sentence Corpora (CSVs)**"
                         ).center(),
                         original_csv_browser,
                         mo.md(original_msg),
@@ -143,7 +143,7 @@ def _(mo, original_csv_browser, reuse_csv_browser):
                 mo.vstack(
                     [
                         mo.md(
-                            "**♻️ Select Reuse Sentence Corpora (CSVs)**"
+                            "**:recycle: Select Reuse Sentence Corpora (CSVs)**"
                         ).center(),
                         reuse_csv_browser,
                         mo.md(reuse_msg),
@@ -278,10 +278,9 @@ def _(button, find_quote_pairs, mo, original_file, reuse_file, output_csv):
                 original_corpus=original_file.path,
                 reuse_corpus=reuse_file.path,
                 out_csv=output_csv,
-                score_cutoff=0.225,  # For now, just use the default cutoff
                 show_progress_bar=False
             )
-        finding_msg = f"✅ Quote pairs saved to: {output_csv}"
+        finding_msg = f":white_check_mark: Quote pairs saved to: {output_csv}"
 
     mo.md(finding_msg).center()
     return
