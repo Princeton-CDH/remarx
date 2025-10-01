@@ -7,6 +7,7 @@
 - Add a sentence corpus selection interface for the quotation detection step
 - Logging is now automatically configured by the application, and the log file location is reported to the user
 - Refactor the app into two notebooks (Sentence Corpus Builder & Quote Finder)
+- Quote Finder notebook now supports quotation detection between a single pair of original and reuse sentence corpus files
 
 ### Documentation
 
