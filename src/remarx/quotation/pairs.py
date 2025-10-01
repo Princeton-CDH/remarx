@@ -49,9 +49,9 @@ def get_sentence_pairs(
     sentence pairs where quotation is likely. Returns these sentence pairs as
     a polars DataFrame including for each pair:
 
-        - original_index : the index of the original sentence
-        - reuse_index : the index of the reuse sentence
-        - match_score: the quality of the match
+    - `original_index`: the index of the original sentence
+    - `reuse_index`: the index of the reuse sentence
+    - `match_score`: the quality of the match
 
     Likely quote pairs are identified through the sentences' embeddings. The Annoy
     library is used to find the nearest original sentence for each reuse sentence.
@@ -106,29 +106,30 @@ def get_sentence_pairs(
     return result
 
 
-# TODO: Modify to include additional fields
 def load_sent_df(sentence_corpus: pathlib.Path, col_pfx: str = "") -> pl.DataFrame:
     """
-    For a given sentence corpus, create a polars DataFrame with the fields needed
-    for finding sentence-level quote pairs. Optionally, a prefix can be added to
-    all column names.
+    For a given sentence corpus, create a polars DataFrame suitable for finding
+    sentence-level quote pairs. Optionally, a prefix can be added to all column names.
 
-    The resulting dataframe has the following fields:
-        - index : row index
-        - id : sentence id
-        - text : sentence text
+    The resulting dataframe has the same fields as the input corpus except with:
+
+    - a new field `index` corresponding to the row index
+    - the sentence id field `sent_id` is renamed to `id`
 
     """
     # NOTE: Since all required fields are strings, there's no need to infer schema
+    init_df = pl.read_csv(sentence_corpus, row_index_name="index", infer_schema=False)
+    start_cols = ["index", "sent_id", "text"]
+    col_order = start_cols + [
+        col for col in init_df.columns if col not in set(start_cols)
+    ]
     return (
-        pl.read_csv(sentence_corpus, row_index_name="index", infer_schema=False)
-        .select(["index", "sent_id", "text"])
-        .rename(lambda x: "id" if x == "sent_id" else x)
+        init_df.select(col_order)
+        .rename({"sent_id": "id"})
         .rename(lambda x: f"{col_pfx}{x}")
     )
 
 
-# TODO: Modify to include all fields in the expected order
 def compile_quote_pairs(
     original_corpus: pl.DataFrame,
     reuse_corpus: pl.DataFrame,
@@ -136,22 +137,22 @@ def compile_quote_pairs(
 ) -> pl.DataFrame:
     """
     Link sentence metadata to the detected sentence pairs from the given original
-    and reuse sentence corpus dataframes to form quote pairs. The original sentence
-    corpus dataframe must have the fields: original_id, original_text. Similarly,
-    the reuse corpus dataframe must have the fields: reuse_id, reuse_text.
+    and reuse sentence corpus dataframes to form quote pairs. The original and reuse
+    corpus dataframes must contain a row index column named `original_index` and
+    `reuse_index` respectively. Ideally, these dataframes should be built using
+    [load_sent_df][remarx.quotation.pairs.load_sent_df].
 
     Returns a dataframe with the following fields:
-        - reuse_id: ID of the reuse sentence
-        - original_id: ID of the original sentence
-        - match_score: Estimated quality of the match
+
+    - `match_score`: Estimated quality of the match
+    - All non-index fields from the reuse corpus (`reuse_id`, `reuse_text`, ...)
+    - All non-index fields from the original corpus (`original_id`, `original_text`, ...)
     """
     # Build and return quote pairs
     return (
         detected_pairs.join(reuse_corpus, on="reuse_index")
         .join(original_corpus, on="original_index")
-        .select(
-            ["reuse_id", "reuse_text", "original_id", "original_text", "match_score"]
-        )
+        .drop(["reuse_index", "original_index"])
     )
 
 
