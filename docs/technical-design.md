@@ -217,7 +217,7 @@ A CSV file with each row corresponding to an original-reuse sentence pair that h
 | original_sent_index | Sentence-level index within original document | Integer  | Required                | For identifying sequential sentences for quote compilation |
 
 Additional metadata for the corresponding reuse and original sentences will be included depending on the contents of the input sentence corpora.
-This metadata of each corpus will follow its sentence index field (i.e., `reuse_sent_index`, `original_sent_index`).
+Each corpus's additional metadata fields will follow its sentence index field (i.e., `reuse_sent_index`, `original_sent_index`).
 
 #### Quotes Corpus
 
