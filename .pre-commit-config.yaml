@@ -25,6 +25,7 @@ repos:
         additional_dependencies:
           - mdformat-mkdocs
           - mdformat-frontmatter
+          - mdformat-pyproject # support configuration in pyproject.toml
         args: [--wrap, keep]
         # Temporarily exclude docs/api/index.md due because it messes up the formatting
         exclude: ^docs/api/index\.md$
