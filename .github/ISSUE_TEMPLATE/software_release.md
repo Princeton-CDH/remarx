@@ -21,9 +21,10 @@ assignees: ''
 - [ ] Confirm that all checks for the draft PR pass (e.g., unit tests, code coverage checks)
 - [ ] Build documentation on the release branch and run the server to review and make sure it is up to date.
 
-Review issues included in the release to make sure they have testing instructions before marking them as ready for acceptance testing.
+### BEFORE acceptance testing
 
-Give project team members instructions about how to install the release candidate version.
+- [ ] Review issues included in the release to make sure they have testing instructions before marking them as ready for acceptance testing.
+- [ ] Give project team members instructions about how to install the release candidate version.
 
 ### IF acceptance testing fails
 
