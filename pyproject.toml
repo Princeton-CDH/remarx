@@ -146,3 +146,6 @@ allow-direct-references = true
 
 [tool.uv]
 required-version = ">=0.8.6"
+
+[tool.mdformat]
+number = true

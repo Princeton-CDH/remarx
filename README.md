@@ -51,7 +51,7 @@ The app will not close automatically when you close the browser window or tab.
 To close the app:
 
 1. Type control+c within the terminal where the `remarx-app` command was run
-1. Then, when prompted, type `y` followed by enter.
+2. Then, when prompted, type `y` followed by enter.
 
 ## Documentation
 

@@ -45,7 +45,6 @@ def test_build_vector_index(mock_index_class, caplog):
     assert len(caplog.record_tuples) == 1
     assert caplog.record_tuples[0][1] == logging.INFO
     expected_msg = r"Created index with 10 items and 50 dimensions in \d+.\d seconds"
-    print(caplog.record_tuples[0][2])
     assert re.fullmatch(expected_msg, caplog.record_tuples[0][2])
 
 
@@ -112,13 +111,13 @@ def test_load_sent_df(tmp_path):
     test_data = {
         "sent_id": ["a", "b", "c"],
         "text": ["foo", "bar", "baz"],
-        "other": ["x", "y", "z"],
     }
 
     test_df = pl.DataFrame(test_data)
     test_df.write_csv(test_csv)
 
-    # Case: No prefix
+    # Basic case (minimal fields)
+    ## No prefix
     expected_data = {
         "index": [0, 1, 2],
         "id": test_data["sent_id"],
@@ -127,11 +126,32 @@ def test_load_sent_df(tmp_path):
     expected = pl.DataFrame(expected_data)
     result = load_sent_df(test_csv)
     assert_frame_equal(result, expected, check_dtypes=False)
+    ## With prefix
+    pfx_expected = pl.DataFrame({f"test_{k}": v for k, v in expected_data.items()})
+    result = load_sent_df(test_csv, "test_")
+    assert_frame_equal(result, pfx_expected, check_dtypes=False)
 
-    # Case: With prefix
-    expected = pl.DataFrame({f"test_{k}": v for k, v in expected_data.items()})
-    result = load_sent_df(test_csv, col_pfx="test_")
+    # Case additional metadata fields
+    test_df = test_df.with_columns(
+        pl.Series("other", ["x", "y", "z"]),
+        pl.Series("misc", [0, 1, 2]),
+    )
+    test_df.write_csv(test_csv)
+    ## No prefix
+    expected = expected.with_columns(
+        pl.Series("other", ["x", "y", "z"]),
+        # Values are strings because no schema inference
+        pl.Series("misc", ["0", "1", "2"]),
+    )
+    result = load_sent_df(test_csv)
     assert_frame_equal(result, expected, check_dtypes=False)
+    ## With prefix
+    pfx_expected = pfx_expected.with_columns(
+        expected.get_column("other").rename("test_other"),
+        expected.get_column("misc").rename("test_misc"),
+    )
+    result = load_sent_df(test_csv, "test_")
+    assert_frame_equal(result, pfx_expected, check_dtypes=False)
 
 
 def test_compile_quote_pairs():
@@ -143,7 +163,7 @@ def test_compile_quote_pairs():
             "reuse_index": [0, 1, 2, 3, 4],
             "reuse_id": ["a", "b", "c", "d", "e"],
             "reuse_text": ["0", "1", "2", "3", "4"],
-            "other": [4, 3, 2, 1, 0],
+            "reuse_other": [4, 3, 2, 1, 0],
         }
     )
     orig_df = pl.DataFrame(
@@ -152,7 +172,7 @@ def test_compile_quote_pairs():
             "original_index": [0, 1, 2],
             "original_id": ["A", "B", "C"],
             "original_text": ["0", "1", "2"],
-            "other": [2, 1, 0],
+            "original_other": [2, 1, 0],
         }
     )
 
@@ -168,15 +188,19 @@ def test_compile_quote_pairs():
     # Expecting 3 quote pairs: b-C, d-A, e-A
     expected = pl.DataFrame(
         {
+            "match_score": [0.1, 0.225, 0.01],
             "reuse_id": ["b", "d", "e"],
             "reuse_text": ["1", "3", "4"],
+            "reuse_other": [3, 1, 0],
             "original_id": ["C", "A", "A"],
             "original_text": ["2", "0", "0"],
-            "match_score": [0.1, 0.225, 0.01],
+            "original_other": [0, 2, 2],
         }
     )
 
     result = compile_quote_pairs(orig_df, reuse_df, detected_pairs)
+    print(f"result: {result.columns}")
+    print(f"expected: {expected.columns}")
     assert_frame_equal(result, expected, check_row_order=False)
 
 
@@ -296,12 +320,15 @@ def test_find_quote_pairs_integration(tmp_path):
         reader = csv.DictReader(file)
         results = list(reader)
         assert len(results) == 1
+        print(results[0].keys())
         assert list(results[0].keys()) == [
+            "match_score",
             "reuse_id",
             "reuse_text",
+            "reuse_corpus",
             "original_id",
             "original_text",
-            "match_score",
+            "original_corpus",
         ]
         assert results[0]["reuse_id"] == "a"
         assert results[0]["original_id"] == "A"
