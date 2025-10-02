@@ -117,14 +117,11 @@ def load_sent_df(sentence_corpus: pathlib.Path, col_pfx: str = "") -> pl.DataFra
     - the sentence id field `sent_id` is renamed to `id`
 
     """
-    # NOTE: Since all required fields are strings, there's no need to infer schema
-    init_df = pl.read_csv(sentence_corpus, row_index_name="index", infer_schema=False)
     start_cols = ["index", "sent_id", "text"]
-    col_order = start_cols + [
-        col for col in init_df.columns if col not in set(start_cols)
-    ]
     return (
-        init_df.select(col_order)
+        # Since all required fields are strings, there's no need to infer schema
+        pl.read_csv(sentence_corpus, row_index_name="index", infer_schema=False)
+        .select(*start_cols, pl.all().exclude(start_cols))
         .rename({"sent_id": "id"})
         .rename(lambda x: f"{col_pfx}{x}")
     )
@@ -145,8 +142,8 @@ def compile_quote_pairs(
     Returns a dataframe with the following fields:
 
     - `match_score`: Estimated quality of the match
-    - All non-index fields from the reuse corpus (`reuse_id`, `reuse_text`, ...)
-    - All non-index fields from the original corpus (`original_id`, `original_text`, ...)
+    - All other fields in order from the reuse corpus except its row index
+    - All other fields in order from the original corpus except its row index
     """
     # Build and return quote pairs
     return (
