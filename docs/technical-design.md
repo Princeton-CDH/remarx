@@ -193,7 +193,7 @@ A CSV file with each row corresponding to a single sentence in either an origina
 | :------------- | :------------------------------------------------------------ | :------- | :---------------------- | :--------------------------------------------------------- |
 | id             | Unique identifier for each sentence                           | String   | Required                | For tracking, reference                                    |
 | text           | Sentence text content                                         | String   | Required                | For quote detection                                        |
-| doc            | Corresponding document filename                               | String   | Required                | For tracking, reference, metadata linking                  |
+| file           | Corresponding document filename                               | String   | Required                | For tracking, reference, metadata linking                  |
 | sent_index     | Sentence-level index within document (0-based indexing)       | Integer  | Required                | For identifying sequential sentences for quote compilation |
 | section_type   | What text section the sentence comes from (text vs. footnote) | enum     | Optional                | For reference and debugging                                |
 | multi_page     | Indicates whether the sentence spans multiple pages.          | Boolean  | Required                | For reference and debugging                                |
@@ -202,18 +202,23 @@ The sentence corpora produced by the Sentence Corpus Builder program must includ
 
 #### Quote Sentence Pairs
 
-A CSV file with each row corresponding to a original-reuse sentence pair that has been identified as a quote.
+A CSV file with each row corresponding to an original-reuse sentence pair that has been identified as a quote.
 
-| **Field Name** | **Description**               | **Type** | **Required / Optional** | **Reason**                  |
-| :------------- | :---------------------------- | :------- | :---------------------- | :-------------------------- |
-| reuse_id       | ID of the reuse text sentence | String   | Required                | For tracking, reference     |
-| original_id    | ID of the original sentence   | String   | Required                | For tracking, reference     |
-| match_score    | Some match quality score      | Float    | Required                | For development, evaluation |
+| **Field Name**      | **Description**                            | **Type** | **Required / Optional** | **Reason**                                                 |
+| :------------------ | :----------------------------------------- | :------- | :---------------------- | :--------------------------------------------------------- |
+| match_score         | Some match quality score                   | Float    | Required                | For development, evaluation                                |
+| reuse_id            | ID of the reuse text sentence              | String   | Required                | For tracking, reference                                    |
+| reuse_text          | Text of the reuse sentence                 | String   | Required                | For reference                                              |
+| reuse_file          | Reuse document filename                    | String   | Required                | For tracking, reference                                    |
+| reuse_sent_index    | Sentence-level index within reuse document | Integer  | Required                | For identifying sequential sentences for quote compilation |
+| original_id         | ID of the original sentence                | String   | Required                | For tracking, reference, metadata linking                  |
+| original_text       | Text of the original sentence              | String   | Required                | For reference                                              |
+| original_file       | Original document filename                 | String   | Required                | For tracking, reference, metadata linking                  |
+| original_sent_index | Sentence-level index within reuse document | Integer  | Required                | For identifying sequential sentences for quote compilation |
 
-Depending on performance and resource needs, this could be to include each sentence’s fields within the sentence corpus.
-
-- Resource: This increases storage use since there will be field duplication between multiple data files.
-- Performance: This would eliminate the computational overhead of gathering sentence-level data for quote compilation.
+Additional metadata for the corresponding reuse and original sentences will be included depending on the contents of the inoput sentence corpora.
+Additional reuse fields will follow `reuse_sent_index`.
+Additional original fields will follow `original_sent_index`.
 
 #### Quotes Corpus
 
