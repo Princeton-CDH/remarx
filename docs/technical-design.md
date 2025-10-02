@@ -204,17 +204,17 @@ The sentence corpora produced by the Sentence Corpus Builder program must includ
 
 A CSV file with each row corresponding to an original-reuse sentence pair that has been identified as a quote.
 
-| **Field Name**      | **Description**                            | **Type** | **Required / Optional** | **Reason**                                                 |
-| :------------------ | :----------------------------------------- | :------- | :---------------------- | :--------------------------------------------------------- |
-| match_score         | Some match quality score                   | Float    | Required                | For development, evaluation                                |
-| reuse_id            | ID of the reuse text sentence              | String   | Required                | For tracking, reference                                    |
-| reuse_text          | Text of the reuse sentence                 | String   | Required                | For reference                                              |
-| reuse_file          | Reuse document filename                    | String   | Required                | For tracking, reference                                    |
-| reuse_sent_index    | Sentence-level index within reuse document | Integer  | Required                | For identifying sequential sentences for quote compilation |
-| original_id         | ID of the original sentence                | String   | Required                | For tracking, reference, metadata linking                  |
-| original_text       | Text of the original sentence              | String   | Required                | For reference                                              |
-| original_file       | Original document filename                 | String   | Required                | For tracking, reference, metadata linking                  |
-| original_sent_index | Sentence-level index within reuse document | Integer  | Required                | For identifying sequential sentences for quote compilation |
+| **Field Name**      | **Description**                               | **Type** | **Required / Optional** | **Reason**                                                 |
+| :------------------ | :-------------------------------------------- | :------- | :---------------------- | :--------------------------------------------------------- |
+| match_score         | Some match quality score                      | Float    | Required                | For development, evaluation                                |
+| reuse_id            | ID of the reuse text sentence                 | String   | Required                | For tracking, reference                                    |
+| reuse_text          | Text of the reuse sentence                    | String   | Required                | For reference                                              |
+| reuse_file          | Reuse document filename                       | String   | Required                | For tracking, reference                                    |
+| reuse_sent_index    | Sentence-level index within reuse document    | Integer  | Required                | For identifying sequential sentences for quote compilation |
+| original_id         | ID of the original sentence                   | String   | Required                | For tracking, reference, metadata linking                  |
+| original_text       | Text of the original sentence                 | String   | Required                | For reference                                              |
+| original_file       | Original document filename                    | String   | Required                | For tracking, reference, metadata linking                  |
+| original_sent_index | Sentence-level index within original document | Integer  | Required                | For identifying sequential sentences for quote compilation |
 
 Additional metadata for the corresponding reuse and original sentences will be included depending on the contents of the inoput sentence corpora.
 Additional reuse fields will follow `reuse_sent_index`.
