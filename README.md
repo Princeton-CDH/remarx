@@ -1,9 +1,5 @@
 # Citing Marx – Get `Passim` quote detection results on MEGA and DNZ for comparison with `remarx`
 
-This is work associated with the CDH project [Citing Marx](https://cdh.princeton.edu/projects/citing-marx)
-
-## Pretrained text embeddings experiments
-
 This branch contains code and data for quote detection result using `passim`.
 
 ### Contents
@@ -14,7 +10,7 @@ Scripts:
 - `run_passim.py`: Script to run Passim on a combined JSONL corpus to detect text reuse.
 
 Notebooks:
-- `run_passim_on_texts.ipynb`: Notebook to run `passim` on MEGA and DNZ datasets for extracting quote detection results.
+- `run_passim_on_texts.ipynb`: Notebook to run `passim` on MEGA and DNZ datasets for extracting quote detection results (If not running scripts).
 - `display_passim_pairs.ipynb`: Notebook to visualize `passim`'s output JSON (`align.json`), displaying detected sentence pairs.
 
 Data:
