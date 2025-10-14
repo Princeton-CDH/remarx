@@ -26,6 +26,9 @@
 ### Scripts
 
 - Add `parse_html` script for converting the manifesto html files to plain text for sentence corpus input (one-time use)
+- Add `convert_xml` script for converting Das Kapital XML files to plain text files (one-time use)
+- Add `convert_texts_to_passim_corpus` script for procssing plain text files of two corpus into one combined corpus for `passim`
+- Add `run_passim` script for running `passim` to detect sentence pairs on Das Kapital and DNZ
 
 ### Misc
 
