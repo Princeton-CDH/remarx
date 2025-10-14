@@ -1,10 +1,9 @@
 """
-Script to convert MEGA TEI/XML content to plain text files.
 Reads a specified MEGA TEI/XML file and outputs text files, one per page,
 to a specified directory.
 
 Example Usage:
-    python convert_xml.py texts/MEGA_xml/MEGA_A2_B005-00_ETX.xml texts/MEGA_texts
+    python scripts/convert_xml.py "texts/MEGA_xml/MEGA_A2_B005-00_ETX.xml 11-46-21-885.xml" texts/MEGA_texts
 """
 
 import argparse
