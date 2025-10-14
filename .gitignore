@@ -9,4 +9,4 @@
 /logs
 /texts
 /passim_output
-/texts_json_for_passim
+/scripts/__pycache__

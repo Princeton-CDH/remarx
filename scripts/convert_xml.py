@@ -1,9 +1,13 @@
 """
 Script to convert MEGA TEI/XML content to plain text files.
-Reads texts/MEGA_xml/MEGA_A2_B005-00_ETX.xml and outputs text files
-to texts/MEGA_texts directory, organized by page.
+Reads a specified MEGA TEI/XML file and outputs text files, one per page,
+to a specified directory.
+
+Example Usage:
+    python convert_xml.py texts/MEGA_xml/MEGA_A2_B005-00_ETX.xml texts/MEGA_texts
 """
 
+import argparse
 import pathlib
 import re
 import sys
@@ -221,12 +225,20 @@ def convert_xml_to_text_files(
 
 
 def main():
-    """
-    Main function to convert MEGA XML to text files.
-    """
-    # Define input and output paths
-    xml_file = pathlib.Path("texts/MEGA_xml/MEGA_A2_B005-00_ETX.xml")
-    output_dir = pathlib.Path("texts/MEGA_texts")
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "xml_file",
+        type=pathlib.Path,
+    )
+    parser.add_argument(
+        "output_dir",
+        type=pathlib.Path,
+    )
+
+    args = parser.parse_args()
+
+    xml_file = args.xml_file
+    output_dir = args.output_dir
 
     # Check if input file exists
     if not xml_file.exists():
@@ -235,7 +247,7 @@ def main():
 
     print(f"Converting {xml_file} to text files in {output_dir}")
     convert_xml_to_text_files(xml_file, output_dir)
-    print("Conversion completed successfully!")
+    print("Conversion completed!")
 
 
 if __name__ == "__main__":
