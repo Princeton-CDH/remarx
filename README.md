@@ -9,8 +9,8 @@ This branch contains code and data for quote detection result using `passim`.
 ### Contents
 
 - `convert_xml.py`: Script to convert MEGA TEI/XML files into plain text files, organized by page.
-- `run_passim_on_texts.ipynb`: Notebook to execute `passim` on MEGA and DNZ datasets for extracting quote detection results.
-- `display_passim_pairs.ipynb`: Notebook for visualizing `passim`'s output JSON, displaying detected sentence pairs.
+- `run_passim_on_texts.ipynb`: Notebook to run `passim` on MEGA and DNZ datasets for extracting quote detection results.
+- `display_passim_pairs.ipynb`: Notebook to visualize `passim`'s output JSON (`align.json`), displaying detected sentence pairs.
 
 - `texts`: Directory containing the original text and XML files.
 - `texts_json_for_passim`: Directory for storing preprocessed, Passim-compatible text files.
