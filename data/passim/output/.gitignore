@@ -1,7 +1,0 @@
-# Ignore spark/local temp outputs
-local-*/
-run-*/
-retry-*/
-**/.crc
-**/_SUCCESS
-**/*.parquet
