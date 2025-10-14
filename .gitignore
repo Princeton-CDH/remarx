@@ -173,14 +173,8 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-# Project-specific ignores
-# Passim output files
-/passim_output/tmp
-/passim_output
-
+# Passim data
 # Text data directories
-/texts/DNZ_texts
-/texts/MEGA_texts
 /texts
 
 # JSON data for Passim
@@ -194,3 +188,6 @@ cython_debug/
 
 # Python cache
 /scripts/__pycache__
+
+# Passim output
+/passim_output
