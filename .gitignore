@@ -173,7 +173,6 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-<<<<<<< HEAD
 # Passim data
 # Text data directories
 /texts
@@ -198,7 +197,3 @@ cython_debug/
 passim_output/align.json/_SUCCESS
 passim_output/out.json/_SUCCESS
 passim_output/tmp/3280aef9-4b21-4859-90d3-4423c0876c62/connected-components-7b3d35d0/2/_SUCCESS
-=======
-# built mkdocs site
-site/
->>>>>>> develop
