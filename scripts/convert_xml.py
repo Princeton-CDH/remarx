@@ -217,13 +217,14 @@ def convert_xml_to_text_files(
             page_num = page.number if page.number else str(i + 1)
             output_file = output_dir / f"page_{page_num.zfill(3)}.txt"
 
-            with open(output_file, "w", encoding="utf-8") as f:
+            with output_file.open("w", encoding="utf-8") as f:
                 f.write(page_content)
 
             print(f"Written page {page_num} to {output_file.name}")
 
 
-def main():
+def main() -> None:
+    """Main function to convert XML to text files."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "xml_file",

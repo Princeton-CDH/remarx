@@ -19,8 +19,9 @@ import argparse
 import json
 import re
 import sys
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Dict, Iterator, Optional
+from typing import Any
 
 import ftfy
 from tqdm import tqdm
@@ -38,7 +39,7 @@ def clean_text(text: str) -> str:
     return result_text
 
 
-def convert_text_to_jsonl(text_dir: str, series_name: str) -> Iterator[Dict[str, Any]]:
+def convert_text_to_jsonl(text_dir: str, series_name: str) -> Iterator[dict[str, Any]]:
     """Convert text files to raw JSONL format and yield records."""
     text_dir = Path(text_dir)
 
@@ -52,7 +53,7 @@ def convert_text_to_jsonl(text_dir: str, series_name: str) -> Iterator[Dict[str,
 
     for txt_file in tqdm(txt_files, desc=f"Processing {series_name} texts"):
         try:
-            with open(txt_file, "r", encoding="utf-8") as txt_f:
+            with txt_file.open(encoding="utf-8") as txt_f:
                 content = txt_f.read().strip()
             yield {"id": txt_file.stem, "text": content, "series": series_name}
         except Exception as e:
@@ -60,12 +61,12 @@ def convert_text_to_jsonl(text_dir: str, series_name: str) -> Iterator[Dict[str,
 
 
 def transform_record(
-    record: Dict[str, Any],
+    record: dict[str, Any],
     corpus_name: str = "",
     id_field: str = "id",
     preserve_fields: bool = True,
-    corpus_from_field: Optional[str] = None,
-) -> Dict[str, Any]:
+    corpus_from_field: str | None = None,
+) -> dict[str, Any]:
     """
     Convert one record to passim-friendly dict:
       - id: taken from record[id_field]
@@ -74,7 +75,7 @@ def transform_record(
     if id_field not in record:
         raise ValueError(f"Record missing required id_field '{id_field}'")
 
-    out_record: Dict[str, Any] = {}
+    out_record: dict[str, Any] = {}
     if preserve_fields:
         if id_field != "id" and "id" in record:
             raise ValueError("Record already has 'id' while id_field != 'id'")
@@ -94,13 +95,13 @@ def transform_record(
 
 def process_directory_to_passim(
     text_dir: str, series_name: str
-) -> Iterator[Dict[str, Any]]:
+) -> Iterator[dict[str, Any]]:
     """Process a directory of text files and yield Passim-friendly records."""
     for record in convert_text_to_jsonl(text_dir, series_name):
         yield transform_record(record, preserve_fields=True)
 
 
-def main():
+def main() -> None:
     """Main function to convert texts to Passim format."""
     parser = argparse.ArgumentParser(
         description="Convert text files to Passim-friendly JSONL format",
@@ -156,7 +157,7 @@ Examples:
 
     total_records = 0
 
-    with open(output_path, "w", encoding="utf-8") as outf:
+    with output_path.open("w", encoding="utf-8") as outf:
         # Process first directory
         print(f"Processing {dir1_path}...")
         for record in process_directory_to_passim(str(dir1_path), series1):

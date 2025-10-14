@@ -53,7 +53,7 @@ def run_passim(
         str(output_dir),  # <output_path>
     ]
 
-    cmd = ["passim"] + passim_args
+    cmd = ["passim", *passim_args]
 
     print(f"Command: {' '.join(cmd)}")
     print("\n⏱️ Starting Passim... (this may take a few minutes)")
@@ -88,7 +88,7 @@ def run_passim(
         sys.exit(1)
 
 
-def main():
+def main() -> None:
     """Main function."""
     parser = argparse.ArgumentParser()
     parser.add_argument("input_file", type=Path)
@@ -107,7 +107,7 @@ def main():
         print(f"Error: Input file does not exist: {args.input_file}")
         sys.exit(1)
 
-    if not args.input_file.suffix == ".jsonl":
+    if args.input_file.suffix != ".jsonl":
         print(f"Error: Input file must be a .jsonl file: {args.input_file}")
         sys.exit(1)
 
