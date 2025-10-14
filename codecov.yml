@@ -1,0 +1,14 @@
+# Copyright (c) 2025, Center for Digital Humanities, Princeton University
+# SPDX-License-Identifier: Apache-2.0
+coverage:
+  status:
+    project:
+      default: false # disable default status check
+      all: # custom target for app+tests
+        target: 95% # coverage target for source code
+        paths:
+          - "src/"
+      tests: # declare a new status context for "tests"
+        target: 100% # we always want 100% coverage here
+        paths:
+          - "tests/"

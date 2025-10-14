@@ -1,0 +1,31 @@
+name: Check docs + style
+on:
+  # Run on pull requests to develop or main
+  pull_request:
+    branches: [develop, main]
+  # Allow running manually
+  workflow_dispatch:
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Install dependencies for building docs
+        run: uv sync --extra docs
+      - name: Check that documentation builds with no errors or warnings
+        run: uv run mkdocs build --strict
+  style:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Install package with dependencies
+        run: uv sync
+        # Note: default deps currently include ruff, but probably should not
+      - name: Check with ruff
+        run: uv run ruff check
+      - name: Check formatting with ruff
+        run: uv run ruff format --check
