@@ -173,5 +173,27 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-# built mkdocs site
-site/
+# Passim data
+# Text data directories
+/texts
+
+# JSON data for Passim
+/texts_json_for_passim
+
+# System files
+.DS_Store
+
+# Logs
+/logs
+
+# Python cache
+/scripts/__pycache__
+
+# Passim output
+# temporarily upload output files for PR review
+#/passim_output
+*.crc
+*.parquet
+passim_output/align.json/_SUCCESS
+passim_output/out.json/_SUCCESS
+passim_output/tmp/3280aef9-4b21-4859-90d3-4423c0876c62/connected-components-7b3d35d0/2/_SUCCESS
