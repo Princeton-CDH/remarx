@@ -10,11 +10,12 @@ from collections import namedtuple
 from collections.abc import Generator
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import ClassVar, NamedTuple, Self
+from typing import Any, ClassVar, NamedTuple, Self
 
 from lxml.etree import XMLSyntaxError, _Element
 from neuxml import xmlmap
 
+from remarx.sentence.corpus import base_input
 from remarx.sentence.corpus.base_input import FileInput, SectionType
 
 TEI_NAMESPACE = "http://www.tei-c.org/ns/1.0"
@@ -94,6 +95,20 @@ class TEIPage(BaseTEIXmlObject):
             page_footnotes.append(footnote)
 
         return page_footnotes
+
+    def get_line_number_for_position(
+        self, text: str, char_pos: int, is_footnote: bool = False
+    ) -> int:
+        """
+        Get the line number for a given character position in the text by counting newlines.
+        """
+
+        line_number = 1  # default to line 1
+        for i in range(min(char_pos, len(text))):
+            if text[i] == "\n":
+                line_number += 1
+
+        return line_number
 
     def get_body_text(self) -> str:
         """
@@ -200,6 +215,7 @@ class TEIinput(FileInput):
         *FileInput.field_names,
         "page_number",
         "section_type",
+        "line_number",
     )
     "List of field names for sentences from TEI XML input files"
 
@@ -242,3 +258,47 @@ class TEIinput(FileInput):
                     "page_number": page.number,
                     "section_type": SectionType.FOOTNOTE.value,
                 }
+
+    def get_sentences(self) -> Generator[dict[str, Any]]:
+        """
+        Rewritten get_sentences method from base input class to include line numbers.
+
+        :returns: Generator of one dictionary per sentence; dictionary
+        always includes: `text` (text content), `file` (filename),
+        `sent_index` (sentence index within the document), `sent_id`
+        (sentence id), `page_number`, `section_type`, and `line_number`.
+        """
+        # zero-based sentence index for this file, across all chunks
+        sentence_index = 0
+        for chunk_info in self.get_text():
+            # each chunk of text is a dictionary that contains text and metadata
+            chunk_text = chunk_info["text"]
+            page_number = chunk_info["page_number"]
+            section_type = chunk_info["section_type"]
+            is_footnote = section_type == SectionType.FOOTNOTE.value
+
+            # Find the corresponding page object to calculate line numbers
+            page = next(
+                (p for p in self.xml_doc.pages if p.number == page_number), None
+            )
+
+            for char_idx, sentence in base_input.segment_text(chunk_text):
+                # Calculate line number for this sentence using character index
+                line_number = 1  # default line number
+                if page:
+                    line_number = page.get_line_number_for_position(
+                        chunk_text, char_idx, is_footnote
+                    )
+
+                # for each sentence, yield text, filename, and sentence index
+                # with any other metadata included in chunk_info
+                yield chunk_info | {
+                    "text": sentence,
+                    "file": self.file_name,
+                    "sent_index": sentence_index,
+                    "sent_id": f"{self.file_name}:{sentence_index}",
+                    "line_number": line_number,
+                }
+
+                # increment sentence index
+                sentence_index += 1

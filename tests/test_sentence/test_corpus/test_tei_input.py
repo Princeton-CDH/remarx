@@ -169,11 +169,12 @@ class TestTEIinput:
         assert isinstance(tei_input.xml_doc, TEIDocument)
 
     def test_field_names(self):
-        # includes defaults from text input and adds page number and section type
+        # includes defaults from text input and adds page number, section type, and line number
         assert TEIinput.field_names == (
             *FileInput.field_names,
             "page_number",
             "section_type",
+            "line_number",
         )
 
     def test_get_text(self):
@@ -235,6 +236,9 @@ class TestTEIinput:
         # sentence index is set and continues across pages
         assert sentences[0]["sent_index"] == 0
         assert sentences[1]["sent_index"] == 1
+        # line number set
+        assert "line_number" in sentences[0]
+        assert "line_number" in sentences[1]
 
     @patch("remarx.sentence.corpus.base_input.segment_text")
     def test_get_sentences_with_footnotes(self, mock_segment_text: Mock):
@@ -251,3 +255,5 @@ class TestTEIinput:
         section_types = [s["section_type"] for s in sentences]
         assert "text" in section_types
         assert "footnote" in section_types
+        # line number should be present in all sentences
+        assert all("line_number" in s for s in sentences)
