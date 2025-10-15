@@ -22,12 +22,19 @@ classifiers = [
   "Topic :: Text Processing",
 ]
 dependencies = [
+  "ipython", # Required by transformers for trainer functionality
   "marimo>=0.13.11",
-  "marimo[lsp]",     # marimo language server protocol
+  "marimo[lsp]", # marimo language server protocol
   "neuxml>=1",
-  "polars",
+  "numpy",
+  "polars>=0.20.4",
   "ruff",
+  "sentence-transformers",
   "stanza",
+  "transformers[torch]",
+  "voyager>=2.1.0",
+  "fastapi",
+  "uvicorn",
 ]
 
 [project.optional-dependencies]
@@ -36,10 +43,12 @@ dev = [
   "ruff",
   "remarx[test]",
   "remarx[docs]",
+  "remarx[html]",
 ]
 test = [
   "pytest",
   "pytest-cov",
+  "pytest-asyncio",
   "coverage[toml]", # Enables coverage to read config from pyproject.toml
 ]
 docs = [
@@ -47,12 +56,13 @@ docs = [
   "mkdocs-material",
   "mkdocstrings[python]",
 ]
+html = [ "bs4" ]
 
 [dependency-groups]
 dev = [ "remarx[dev]" ]
 
 [project.scripts]
-remarx-app = "remarx.app_utils:launch_app"
+remarx-app = "remarx.app.utils:launch_app"
 remarx-create-corpus = "remarx.sentence.corpus.create:main"
 
 [tool.hatch.version]
@@ -63,8 +73,10 @@ testpaths = ["tests"]
 
 [tool.coverage.run]
 branch = true
+# ignore app notebooks
 omit = [
-  "src/remarx/app.py",   # marimo app notebook
+  "src/remarx/app/corpus_builder.py",
+  "src/remarx/app/quote_finder.py",
 ]
 
 [tool.coverage.report]
@@ -79,7 +91,10 @@ target-version = "py312"
 # Configure src path so ruff import fixes can identify local imports
 src = [ "src" ]
 # Also ignore the app notebook
-extend-exclude = [ "src/remarx/app.py" ]
+extend-exclude = [
+  "src/remarx/app/corpus_builder.py",
+  "src/remarx/app/quote_finder.py",
+]
 
 [tool.ruff.lint]
 # Include these rules in addition to ruff's defaults
@@ -131,3 +146,6 @@ allow-direct-references = true
 
 [tool.uv]
 required-version = ">=0.8.6"
+
+[tool.mdformat]
+number = true

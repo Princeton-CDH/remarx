@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0" xmlns:m="http://www.w3.org/1998/Math/MathML" xml:lang="de-DE">
+    <teiHeader type="text">
+        <fileDesc>
+            <titleStmt>
+                <title>sample TEI with footnotes for test fixture</title>
+            </titleStmt>
+        </fileDesc>
+    </teiHeader>
+    <text n="2/5">
+        <group>
+            <text n="0">
+                <pb n="17"/>
+                <p>
+                    <lb n="1"/>Der Reichthum der Gesellschaften, in welchen kapitalistische Produktions-
+                    <lb n="2"/>weise herrscht, erscheint als eine „ungeheure Waarensammlung"<ref type="footnote" target="fn1-1">
+                        <hi rendition="sup">1</hi>)</ref>, die
+                    <lb n="3"/>einzelne Waare als seine <hi rendition="i">Elementarform</hi>. Unsere Untersuchung beginnt
+                    <lb n="4"/>daher mit der Analyse der Waare.
+                </p>
+                <p>
+                    <lb n="5"/>Die Waare ist zunächst ein äußerer Gegenstand, ein Ding, das durch seine
+                    <lb n="6"/>Eigenschaften menschliche Bedürfnisse irgend einer Art befriedigt<ref type="footnote" target="fn2-0">
+                        <hi rendition="sup">2</hi>)</ref>. Die Natur dieser
+                    <lb n="7"/>Bedürfnisse, ob sie z. B. dem Magen oder der Phantasie entspringen, ändert
+                    <lb n="8"/>nichts an der Sache.
+                </p>
+
+                <!-- Footnotes for this page -->
+                <note type="footnote" xml:id="fn1-1">
+                    <lb n="17"/>
+                    <label type="footnote">
+                        <hi rendition="sup">1</hi>)</label>
+                    <hi rendition="i">Karl Marx:</hi>„<hi rendition="i">Zur Kritik der Politischen Oekonomie. Berlin 1859</hi>", p. 3.
+                </note>
+                <note type="footnote" xml:id="fn2-0">
+                    <lb n="18"/>
+                    <label type="footnote">
+                        <hi rendition="sup">2</hi>)</label> "Desire implies want; it is the appetite of the mind, and as natural as hunger to the body …
+                    <lb n="19"/>the greatest number (of things) have their value from supplying the wants of the mind …"
+                    <lb n="20"/>
+                    <hi rendition="i">Nicholas Barbon:„A Discourse on coining the new money lighter, in answer to Mr. Locke's
+                    <lb n="21"/>Considerations</hi> etc. <hi rendition="i">London</hi> 1696", p.2, 3.
+                </note>
+
+                <pb n="18"/>
+                <p>
+                    <lb n="1"/>Es handelt sich dabei nicht darum, wie die Sache, die menschliche Bedürfnisse
+                    <lb n="2"/>befriedigt, zu dieser Eigenschaft kommt, ob unmittelbar als Lebensmittel, d. h.
+                    <lb n="3"/>als Gegenstand des Genusses, oder auf einem Umweg, als Produktionsmittel.
+                </p>
+                <p>
+                    <lb n="4"/>Die Nützlichkeit eines Dings macht es zum Gebrauchswerth<ref type="footnote" target="fn3-0">
+                        <hi rendition="sup">3</hi>)</ref>. Aber diese
+                    <lb n="5"/>Nützlichkeit schwebt nicht in der Luft.
+                </p>
+
+                <!-- Footnotes for page 18 -->
+                <note type="footnote" xml:id="fn3-0">
+                    <lb n="15"/>
+                    <label type="footnote">
+                        <hi rendition="sup">3</hi>)</label> „Die natürliche Eigenschaft einer Sache besteht darin, daß sie Bedürfnisse
+                    <lb n="16"/>befriedigen, oder mit andern Worten, Nutzen gewähren kann."
+                </note>
+                <note type="footnote" xml:id="fn4-0">
+                    <lb n="17"/>
+                    <label type="footnote">
+                        <hi rendition="sup">4</hi>)</label> Zweite Anmerkung auf Seite 18.
+                </note>
+
+                <pb n="19"/>
+                <p>
+                    <lb n="3"/>Durch die Eigenschaften des Waarenkörpers bedingt, existiert sie nur durch
+                    <lb n="4"/>denselben. Der Waarenkörper selbst, wie Eisen, Weizen, Diamant u. s. w. ist
+                    <lb n="5"/>daher ein Gebrauchswerth oder Gut.
+                </p>
+                <!-- Footnote for page 19 -->
+                <note type="footnote" xml:id="fn5-0">
+                    <lb n="6"/>
+                    <label type="footnote">
+                        <hi rendition="sup">5</hi>)</label> Erste Anmerkung auf Seite 19.
+                </note>
+            </text>
+        </group>
+    </text>
+</TEI>

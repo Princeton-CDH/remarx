@@ -11,7 +11,7 @@ Example Usage:
 
 import marimo
 
-__generated_with = "0.14.17"
+__generated_with = "0.15.2"
 app = marimo.App(width="medium")
 
 
@@ -22,37 +22,47 @@ def _():
     import pathlib
     import tempfile
 
+    import logging
     import remarx
-    from remarx.app_utils import create_temp_input
+    from remarx.app.utils import create_header, create_temp_input, get_current_log_file
     from remarx.sentence.corpus.create import create_corpus
     from remarx.sentence.corpus import FileInput
-    return FileInput, create_corpus, create_temp_input, mo, pathlib, remarx
-
-
-@app.cell
-def _(mo):
-    mo.vstack(
-        [
-            mo.md("# `remarx`: Quotation Finder").center(),
-            mo.md(
-                "This is the preliminary graphical user interface for the `remarx` software tool."
-            ).center(),
-        ]
+    return (
+        FileInput,
+        create_corpus,
+        create_header,
+        create_temp_input,
+        get_current_log_file,
+        mo,
+        pathlib,
+        remarx,
+        logging,
     )
+
+
+@app.cell
+def _(create_header):
+    create_header()
     return
 
 
 @app.cell
-def _(mo, remarx):
-    mo.md(rf"""Running `remarx` version: {remarx.__version__}""")
-    return
+def _(get_current_log_file, logging):
+    # Get log file path from already configured logging
+    log_file_path = get_current_log_file()
+
+    # Log that UI started
+    logger = logging.getLogger("remarx-app")
+    logger.info("Remarx Corpus Builder notebook started")
+
+    return (log_file_path,)
 
 
 @app.cell
 def _(mo):
     mo.md(
         rf"""
-    ## Sentence Corpus Prep
+    ## 📝 Sentence Corpus Builder
     Create a sentence corpus (`CSV`) from a text.
     This process can be run multiple times for different files (currently one file at a time).
     """
@@ -64,7 +74,7 @@ def _(mo):
 def _(FileInput, mo):
     mo.md(
         rf"""
-    **1. Select Input Text**
+    ### 1. Select Input Text
 
     Upload and select an input file (`{"`, `".join(FileInput.supported_types())}`) for sentence corpus creation.
     Currently, only a single file may be selected.
@@ -99,7 +109,7 @@ def _(mo, select_input):
 def _(mo):
     mo.md(
         r"""
-    **2. Select Output Location**
+    ### 2. Select Output Location
 
     Select the folder where the resulting sentence corpus file should be saved.
     The output CSV file will be named based on the input file.
@@ -147,7 +157,7 @@ def _(mo, select_output_dir):
 def _(mo):
     mo.md(
         r"""
-    **3. Build Sentence Corpus**
+    ### 3. Build Sentence Corpus
 
     Click the "Build Corpus" to run `remarx`.
     The sentence corpus for the input text will be saved as a CSV in the selected save location.
@@ -211,9 +221,15 @@ def _(button, create_corpus, create_temp_input, input_file, mo, output_csv):
                 create_corpus(
                     temp_path, output_csv, filename_override=input_file.name
                 )
-        building_msg = f"✅ Sentence corpus saved to: {output_csv}"
+        building_msg = f":white_check_mark: Sentence corpus saved to: {output_csv}"
 
     mo.md(building_msg).center()
+    return
+
+
+@app.cell
+def _(mo, log_file_path):
+    mo.md(f"Logs are being written to: {log_file_path}")
     return
 
 

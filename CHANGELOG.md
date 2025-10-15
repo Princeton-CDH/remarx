@@ -1,5 +1,35 @@
 # CHANGELOG
 
+## 0.2.0
+
+### Application
+
+- The app now consists of two notebooks (Sentence Corpus Builder & Quote Finder)
+- Logging is now automatically configured by the application, and the log file location is reported to the user
+- Quote Finder notebook now supports quotation detection between two sentence corpus files (original and reuse)
+
+### Documentation
+
+- Add technical design document to MkDocs documentation
+
+### Sentence corpus creation
+
+- Add sentence id field (`sent_id`) to generated sentence corpora
+- Processes TEI/XML documents to yield separate chunks for body text and footnotes, with each footnote yielded individually as a separate element
+
+### Quotation detection
+
+- Add a method for generating sentence embeddings from a list of sentences
+- Added method for identifying likely quote sentence pairs
+
+### Scripts
+
+- Add `parse_html` script for converting the manifesto html files to plain text for sentence corpus input (one-time use)
+
+### Misc
+
+- Add a utility method (`configure_logging`) to configure logging, supporting logging to a file or to stdout
+
 ## [0.1.0] - 2025-09-08
 
 _Initial release._
@@ -26,7 +56,6 @@ _Initial release._
 
 ### Misc
 
-- Add GitHub Actions workflow to build and publish python package on PyPI when a new GitHub release
- created
+- Add GitHub Actions workflow to build and publish python package on PyPI when a new GitHub release created
 
 [0.1.0]: https://github.com/Princeton-CDH/remarx/tree/0.1

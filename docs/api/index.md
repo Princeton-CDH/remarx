@@ -5,9 +5,11 @@ hide: [navigation]
 
 # ::: remarx
 
+## ::: remarx.utils
+
 ## ::: remarx.app
 
-## ::: remarx.app_utils
+## ::: remarx.app.utils
 
 ## ::: remarx.sentence
 
@@ -26,3 +28,9 @@ hide: [navigation]
 #### ::: remarx.sentence.corpus.text_input
     options:
       members: false
+
+## ::: remarx.quotation
+
+### ::: remarx.quotation.embeddings
+
+### ::: remarx.quotation.pairs

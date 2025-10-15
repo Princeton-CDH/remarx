@@ -36,7 +36,7 @@ def test_file_name_override(tmp_path: pathlib.Path):
 
 
 def test_field_names(tmp_path: pathlib.Path):
-    assert FileInput.field_names == ("file", "sent_index", "text")
+    assert FileInput.field_names == ("sent_id", "file", "sent_index", "text")
 
 
 def test_supported_types():
@@ -51,6 +51,26 @@ def test_get_text(tmp_path: pathlib.Path):
     base_input = FileInput(input_file=txt_file)
     with pytest.raises(NotImplementedError):
         base_input.get_text()
+
+
+@patch("remarx.sentence.corpus.base_input.segment_text")
+@patch.object(FileInput, "get_text")
+def test_get_sentences(mock_text, mock_segment, tmp_path: pathlib.Path):
+    mock_segment.side_effect = lambda x: [(0, x)]
+    mock_text.return_value = [{"id": i, "text": f"s{i}"} for i in range(3)]
+    txt_file = tmp_path / "test.txt"
+    base_input = FileInput(input_file=txt_file)
+
+    results = list(base_input.get_sentences())
+    assert len(results) == 3
+    for i in range(3):
+        assert results[i] == {
+            "id": i,
+            "text": f"s{i}",
+            "file": "test.txt",
+            "sent_index": i,
+            "sent_id": f"test.txt:{i}",
+        }
 
 
 def test_create_txt(tmp_path: pathlib.Path):
