@@ -5,6 +5,6 @@
 
 from remarx import app, sentence
 
-__version__ = "0.2rc1"
+__version__ = "0.2"
 
 __all__ = ["__version__", "app", "sentence"]
