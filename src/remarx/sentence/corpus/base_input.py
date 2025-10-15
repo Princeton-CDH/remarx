@@ -60,6 +60,16 @@ class FileInput:
         """
         raise NotImplementedError
 
+    def get_line_number(
+        self, chunk_info: dict[str, Any], char_idx: int, sentence: str
+    ) -> int | None:
+        """
+        Hook method for subclasses to override to provide line number for a sentence.
+
+        :returns: Line number (1-indexed) if available, None otherwise
+        """
+        return None
+
     def get_sentences(self) -> Generator[dict[str, Any]]:
         """
         Get sentences for this file, with associated metadata.
@@ -76,18 +86,25 @@ class FileInput:
             # each chunk of text is a dictionary that at minimum
             # contains text for that chunk; it may include other metadata
             chunk_text = chunk_info["text"]
-            for _char_idx, sentence in segment_text(chunk_text):
+            for char_idx, sentence in segment_text(chunk_text):
                 # for each sentence, yield text, filename, and sentence index
                 # with any other metadata included in chunk_info
 
-                # character index is not included in output,
-                # but may be useful for sub-chunk metadata (e.g., line number)
-                yield chunk_info | {
+                # Get line number from subclass hook if available
+                line_number = self.get_line_number(chunk_info, char_idx, sentence)
+
+                result = chunk_info | {
                     "text": sentence,
                     "file": self.file_name,
                     "sent_index": sentence_index,
                     "sent_id": f"{self.file_name}:{sentence_index}",
                 }
+
+                # Only add line_number if it's available (when processing TEI XML)
+                if line_number is not None:
+                    result["line_number"] = line_number
+
+                yield result
 
                 # increment sentence index
                 sentence_index += 1
