@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 0.2.0
+## [0.2.0] - 2025-10-15
 
 ### Application
 
@@ -59,3 +59,4 @@ _Initial release._
 - Add GitHub Actions workflow to build and publish python package on PyPI when a new GitHub release created
 
 [0.1.0]: https://github.com/Princeton-CDH/remarx/tree/0.1
+[0.2.0]: https://github.com/Princeton-CDH/remarx/tree/0.2
