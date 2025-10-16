@@ -334,8 +334,6 @@ class TEIinput(FileInput):
 
         # Find the corresponding page object to calculate line numbers
         page = next((p for p in self.xml_doc.pages if p.number == page_number), None)
-        if page is None:
-            return {"line_number": 1}
 
         if section_type == SectionType.FOOTNOTE.value:
             line_number = page.get_footnote_line_number(chunk_info["text"])
