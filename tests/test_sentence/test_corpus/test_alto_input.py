@@ -71,7 +71,7 @@ def test_validate_archive_success(alto_sample_zip):
 def test_validate_archive_rejects_non_xml(tmp_path: Path):
     archive_path = tmp_path / "invalid.zip"
     with ZipFile(archive_path, "w") as archive:
-        archive.writestr("page1.txt", "not xml")
+        archive.writestr("page1.txt", "not xml file")
 
     alto_input = ALTOInput(input_file=archive_path)
     with pytest.raises(ValueError, match="Non-XML file"):
@@ -90,9 +90,7 @@ def test_validate_archive_rejects_non_alto_xml(tmp_path: Path):
 
 def test_validate_archive_rejects_unknown_namespace(tmp_path: Path):
     archive_path = tmp_path / "unknown_ns.zip"
-    xml_content = (
-        '<alto xmlns="http://example.com/alto/ns#"><Description></Description></alto>'
-    )
+    xml_content = '<alto xmlns="http://unknown_namespace.com/alto/ns#"><Description></Description></alto>'
     with ZipFile(archive_path, "w") as archive:
         archive.writestr("page1.xml", xml_content)
 

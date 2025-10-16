@@ -3,8 +3,6 @@ Functionality related to parsing ALTO XML content packaged within a zipfile,
 with the goal of creating a sentence corpus with associated metadata from ALTO.
 """
 
-from __future__ import annotations
-
 import logging
 import xml.etree.ElementTree as ET
 from collections.abc import Generator
@@ -44,15 +42,11 @@ class ALTOInput(FileInput):
         """
         self.validate_archive()
 
-        with ZipFile(self.input_file):
+        with ZipFile(self.input_file) as archive:
             for member_name in self._alto_members:
                 logger.info("Processing ALTO XML file: %s", member_name)
 
-                # Yield stub metadata for each ALTO XML; actual text extraction forthcoming.
-                yield {
-                    "text": "",
-                    "section_type": SectionType.TEXT.value,
-                }
+                yield from self._yield_text_for_member(archive, member_name)
 
     def validate_archive(self) -> None:
         """
@@ -64,7 +58,8 @@ class ALTOInput(FileInput):
             return
 
         with ZipFile(self.input_file) as archive:
-            member_names: list[str] = []
+            # ALTO XML filenames discovered in the zipfile
+            member_filenames: list[str] = []
             for zip_info in archive.infolist():
                 if zip_info.is_dir():
                     continue
@@ -72,12 +67,12 @@ class ALTOInput(FileInput):
                     raise ValueError(
                         f"Non-XML file found in ALTO zipfile: {zip_info.filename}"
                     )
-                member_names.append(zip_info.filename)
+                member_filenames.append(zip_info.filename)
 
-            if not member_names:
+            if not member_filenames:
                 raise ValueError("ALTO zipfile does not contain any XML files")
 
-            for member_name in member_names:
+            for member_name in member_filenames:
                 with archive.open(member_name) as member_file:
                     try:
                         root = ET.parse(member_file).getroot()
@@ -96,8 +91,19 @@ class ALTOInput(FileInput):
                         f"Unsupported ALTO namespace in {member_name}: {namespace}"
                     )
 
-        self._alto_members = sorted(member_names)
+        self._alto_members = sorted(member_filenames)
         self._validated = True
+
+    def _yield_text_for_member(
+        self, archive: ZipFile, member_name: str
+    ) -> Generator[dict[str, str], None, None]:
+        """
+        Hook for future ALTO parsing.
+        """
+        yield {
+            "text": "",
+            "section_type": SectionType.TEXT.value,
+        }
 
     @staticmethod
     def _split_tag(tag: str) -> tuple[str | None, str]:
