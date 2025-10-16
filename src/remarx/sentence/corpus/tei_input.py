@@ -182,11 +182,8 @@ class TEIPage(BaseTEIXmlObject):
             if parent.tag == TEI_TAG.lb:
                 line_number_attr = parent.get("n")
                 if line_number_attr:
-                    try:
-                        line_number = int(line_number_attr)
-                    except ValueError:
-                        line_number = None
-                    if line_number is not None and char_offset not in line_index:
+                    line_number = int(line_number_attr)
+                    if char_offset not in line_index:
                         line_index[char_offset] = line_number
                         offsets.append(char_offset)
 
