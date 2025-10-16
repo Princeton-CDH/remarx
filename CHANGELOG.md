@@ -1,13 +1,12 @@
 # CHANGELOG
 
-## 0.2.0
+## [0.2.0] - 2025-10-15
 
 ### Application
 
-- Add a sentence corpus selection interface for the quotation detection step
+- The app now consists of two notebooks (Sentence Corpus Builder & Quote Finder)
 - Logging is now automatically configured by the application, and the log file location is reported to the user
-- Refactor the app into two notebooks (Sentence Corpus Builder & Quote Finder)
-- Quote Finder notebook now supports quotation detection between a single pair of original and reuse sentence corpus files
+- Quote Finder notebook now supports quotation detection between two sentence corpus files (original and reuse)
 
 ### Documentation
 
@@ -60,3 +59,4 @@ _Initial release._
 - Add GitHub Actions workflow to build and publish python package on PyPI when a new GitHub release created
 
 [0.1.0]: https://github.com/Princeton-CDH/remarx/tree/0.1
+[0.2.0]: https://github.com/Princeton-CDH/remarx/tree/0.2
