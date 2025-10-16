@@ -126,9 +126,6 @@ class TEIPage(BaseTEIXmlObject):
         )
         offsets: list[int] = getattr(self, "_sorted_line_offsets", [])
 
-        if not offsets:
-            return 1
-
         line_number = line_number_by_offset[offsets[0]]
         for offset in offsets:
             if offset > char_pos:
