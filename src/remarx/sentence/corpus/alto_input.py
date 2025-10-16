@@ -5,6 +5,7 @@ with the goal of creating a sentence corpus with associated metadata from ALTO.
 
 from __future__ import annotations
 
+import logging
 import xml.etree.ElementTree as ET
 from collections.abc import Generator
 from dataclasses import dataclass, field
@@ -12,6 +13,8 @@ from typing import ClassVar
 from zipfile import ZipFile
 
 from remarx.sentence.corpus.base_input import FileInput, SectionType
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -43,7 +46,7 @@ class ALTOInput(FileInput):
 
         with ZipFile(self.input_file):
             for member_name in self._alto_members:
-                print(f"Processing ALTO XML file: {member_name}")
+                logger.info("Processing ALTO XML file: %s", member_name)
 
                 # Yield stub metadata for each ALTO XML; actual text extraction forthcoming.
                 yield {
