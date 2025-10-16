@@ -118,9 +118,6 @@ class TEIPage(BaseTEIXmlObject):
         """
         Return the TEI line number for the line preceding ``char_pos``.
         """
-        if char_pos < 0:
-            char_pos = 0
-
         if not hasattr(self, "_line_index_by_offset"):
             self.get_body_text()
 
