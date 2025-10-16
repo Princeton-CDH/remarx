@@ -217,9 +217,7 @@ class TEIPage(BaseTEIXmlObject):
         line_number = getattr(self, "_footnote_line_number_map", {}).get(
             id(footnote_text)
         )
-        if line_number is not None:
-            return line_number
-        return 1
+        return line_number if line_number is not None else 1
 
     def get_footnote_text(self) -> str:
         """
