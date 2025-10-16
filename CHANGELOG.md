@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.3.0
+
+### Sentence corpus creation
+
+- Add sentence line number field (`line_number`) to sentence corpora generated from TEI files
+
 ## [0.2.0] - 2025-10-15
 
 ### Application
