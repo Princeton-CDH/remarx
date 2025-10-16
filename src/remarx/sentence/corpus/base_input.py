@@ -60,15 +60,15 @@ class FileInput:
         """
         raise NotImplementedError
 
-    def get_line_number(
+    def get_extra_metadata(
         self, chunk_info: dict[str, Any], char_idx: int, sentence: str
-    ) -> int | None:
+    ) -> dict[str, Any]:
         """
-        Hook method for subclasses to override to provide line number for a sentence.
+        Hook method for subclasses to override to provide extra metadata for a sentence (e.g. line number).
 
-        :returns: Line number (1-indexed) if available, None otherwise
+        :returns: Dictionary of additional metadata fields to include, or empty dict
         """
-        return None
+        return {}
 
     def get_sentences(self) -> Generator[dict[str, Any]]:
         """
@@ -90,19 +90,19 @@ class FileInput:
                 # for each sentence, yield text, filename, and sentence index
                 # with any other metadata included in chunk_info
 
-                # Get line number from subclass hook if available
-                line_number = self.get_line_number(chunk_info, char_idx, sentence)
+                # Get extra metadata from subclass hook if available
+                extra_metadata = self.get_extra_metadata(chunk_info, char_idx, sentence)
 
-                result = chunk_info | {
-                    "text": sentence,
-                    "file": self.file_name,
-                    "sent_index": sentence_index,
-                    "sent_id": f"{self.file_name}:{sentence_index}",
-                }
-
-                # Only add line_number if it's available (when processing TEI XML)
-                if line_number is not None:
-                    result["line_number"] = line_number
+                result = (
+                    chunk_info
+                    | {
+                        "text": sentence,
+                        "file": self.file_name,
+                        "sent_index": sentence_index,
+                        "sent_id": f"{self.file_name}:{sentence_index}",
+                    }
+                    | extra_metadata
+                )
 
                 yield result
 
