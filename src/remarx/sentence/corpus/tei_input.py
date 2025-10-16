@@ -118,31 +118,31 @@ class TEIPage(BaseTEIXmlObject):
         """
         Return the TEI line number for the line preceding ``char_pos``.
         """
-        if not hasattr(self, "_line_index_by_offset"):
+        if not hasattr(self, "_line_number_by_offset"):
             self.get_body_text()
 
-        line_index: OrderedDict[int, int] = getattr(
-            self, "_line_index_by_offset", OrderedDict()
+        line_number_by_offset: OrderedDict[int, int] = getattr(
+            self, "_line_number_by_offset", OrderedDict()
         )
         offsets: list[int] = getattr(self, "_sorted_line_offsets", [])
 
         if not offsets:
             return 1
 
-        line_number = line_index[offsets[0]]
+        line_number = line_number_by_offset[offsets[0]]
         for offset in offsets:
             if offset > char_pos:
                 break
-            line_number = line_index[offset]
+            line_number = line_number_by_offset[offset]
         return line_number
 
     def get_body_text(self) -> str:
         """
         Extract body text content for this page, excluding footnotes and editorial content.
-        While collecting the text, build an index of character offsets to TEI line numbers.
+        While collecting the text, build a mapping of character offsets to TEI line numbers.
         """
         body_text_parts: list[str] = []
-        line_index: OrderedDict[int, int] = OrderedDict()
+        line_number_by_offset: OrderedDict[int, int] = OrderedDict()
         offsets: list[int] = []
         char_offset = 0
 
@@ -180,8 +180,8 @@ class TEIPage(BaseTEIXmlObject):
                 line_number_attr = parent.get("n")
                 if line_number_attr:
                     line_number = int(line_number_attr)
-                    if char_offset not in line_index:
-                        line_index[char_offset] = line_number
+                    if char_offset not in line_number_by_offset:
+                        line_number_by_offset[char_offset] = line_number
                         offsets.append(char_offset)
 
             body_text_parts.append(cleaned_fragment)
@@ -190,7 +190,7 @@ class TEIPage(BaseTEIXmlObject):
         # join fragments and trim trailing whitespace to mirror prior normalization
         body_text = "".join(body_text_parts).rstrip()
 
-        self._line_index_by_offset = line_index
+        self._line_number_by_offset = line_number_by_offset
         self._sorted_line_offsets = offsets
 
         return body_text

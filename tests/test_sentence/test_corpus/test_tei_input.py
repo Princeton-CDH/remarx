@@ -102,7 +102,7 @@ class TestTEIPage:
         )  # codespell:ignore
         assert "1) Karl Marx:" not in body_text  # Footnote content should be excluded
 
-    def test_get_body_text_line_indices(self):
+    def test_get_body_text_line_numbers(self):
         tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
         page_17 = next(p for p in tei_doc.pages if p.number == "17")
 
@@ -113,6 +113,22 @@ class TestTEIPage:
         assert page_17.get_body_text_line_number(first_line_idx) == 1
         assert page_17.get_body_text_line_number(second_line_idx) == 5
         assert page_17.get_body_text_line_number(second_line_idx + 10) == 5
+
+    def test_get_body_text_line_number_without_cached_data(self):
+        """Test get_body_text_line_number when _line_number_by_offset doesn't exist yet."""
+        tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
+        page_17 = next(p for p in tei_doc.pages if p.number == "17")
+
+        # Ensure the page doesn't have cached line number data
+        assert not hasattr(page_17, "_line_number_by_offset")
+
+        # This should trigger the hasattr check and call get_body_text()
+        line_number = page_17.get_body_text_line_number(0)
+
+        # After the call, the attributes should be set
+        assert hasattr(page_17, "_line_number_by_offset")
+        assert hasattr(page_17, "_sorted_line_offsets")
+        assert line_number == 1
 
     def test_get_footnote_text_with_footnotes(self):
         tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
@@ -125,7 +141,7 @@ class TestTEIPage:
             "Der Reichthum der Gesellschaften" not in footnote_text
         )  # Body text should be excluded
 
-    def test_get_footnote_line_indices(self):
+    def test_get_footnote_line_numbers(self):
         tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
         page_17 = next(p for p in tei_doc.pages if p.number == "17")
 
