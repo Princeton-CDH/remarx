@@ -5,6 +5,7 @@ from the TEI.
 """
 
 import pathlib
+import re
 from collections import OrderedDict, namedtuple
 from collections.abc import Generator
 from dataclasses import dataclass, field
@@ -170,7 +171,8 @@ class TEIPage(BaseTEIXmlObject):
                 # OR if text comes immediately after (is_tail) and is whitespace only
                 continue
 
-            cleaned_fragment = "\n".join(line.strip() for line in str(text).split("\n"))
+            raw_fragment = str(text)
+            cleaned_fragment = re.sub(r"\s*\n\s*", "\n", raw_fragment)
             if not body_text_parts:
                 cleaned_fragment = cleaned_fragment.lstrip()
 
