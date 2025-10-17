@@ -11,7 +11,7 @@ def test_subclasses():
     subclass_names = [cls.__name__ for cls in FileInput.subclasses()]
     # NOTE: that we use names here rather than importing, to
     # confirm subclasses are found without a direct import
-    for input_cls_name in ["TextInput", "TEIinput"]:
+    for input_cls_name in ["TextInput", "TEIinput", "ALTOInput"]:
         assert input_cls_name in subclass_names
 
 
@@ -42,7 +42,7 @@ def test_field_names(tmp_path: pathlib.Path):
 def test_supported_types():
     # check for expected supported types
     # NOTE: checking directly to avoid importing input classes
-    assert set(FileInput.supported_types()) == {".txt", ".xml"}
+    assert set(FileInput.supported_types()) == {".txt", ".xml", ".zip"}
 
 
 def test_get_text(tmp_path: pathlib.Path):
@@ -113,10 +113,19 @@ def test_create_tei(mock_tei_doc, tmp_path: pathlib.Path):
     mock_tei_doc.init_from_file.assert_called_with(xml_input_file)
 
 
+def test_create_alto(tmp_path: pathlib.Path):
+    from remarx.sentence.corpus.alto_input import ALTOInput
+
+    zip_input_file = tmp_path / "input.zip"
+    zip_input_file.touch()
+    zip_input = FileInput.create(input_file=zip_input_file)
+    assert isinstance(zip_input, ALTOInput)
+
+
 def test_create_unsupported(tmp_path: pathlib.Path):
     test_file = tmp_path / "input.test"
     with pytest.raises(
         ValueError,
-        match="\\.test is not a supported input type \\(must be one of \\.txt, \\.xml\\)",
+        match="\\.test is not a supported input type \\(must be one of \\.txt, \\.xml, \\.zip\\)",
     ):
         FileInput.create(input_file=test_file)
