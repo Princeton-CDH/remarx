@@ -61,7 +61,7 @@ class FileInput:
         raise NotImplementedError
 
     def get_extra_metadata(
-        self, chunk_info: dict[str, Any], char_idx: int, sentence: str
+        self, chunk_info: dict[str, Any], _char_idx: int, sentence: str
     ) -> dict[str, Any]:
         """
         Hook method for subclasses to override to provide extra metadata for a sentence (e.g. line number).
@@ -86,12 +86,14 @@ class FileInput:
             # each chunk of text is a dictionary that at minimum
             # contains text for that chunk; it may include other metadata
             chunk_text = chunk_info["text"]
-            for char_idx, sentence in segment_text(chunk_text):
+            for _char_idx, sentence in segment_text(chunk_text):
                 # for each sentence, yield text, filename, and sentence index
                 # with any other metadata included in chunk_info
 
                 # Get extra metadata from subclass hook if available
-                extra_metadata = self.get_extra_metadata(chunk_info, char_idx, sentence)
+                extra_metadata = self.get_extra_metadata(
+                    chunk_info, _char_idx, sentence
+                )
 
                 result = (
                     chunk_info
