@@ -61,8 +61,6 @@ class ALTOInput(FileInput):
             # ALTO XML filenames discovered in the zipfile
             member_filenames: list[str] = []
             for zip_info in archive.infolist():
-                if zip_info.is_dir():
-                    continue
                 if not zip_info.filename.lower().endswith(".xml"):
                     raise ValueError(
                         f"Non-XML file found in ALTO zipfile: {zip_info.filename}"

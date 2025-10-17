@@ -97,3 +97,13 @@ def test_validate_archive_rejects_unknown_namespace(tmp_path: Path):
     alto_input = ALTOInput(input_file=archive_path)
     with pytest.raises(ValueError, match="Unsupported ALTO namespace"):
         alto_input.validate_archive()
+
+
+def test_validate_archive_rejects_empty_zip(tmp_path: Path):
+    archive_path = tmp_path / "empty.zip"
+    with ZipFile(archive_path, "w"):
+        pass
+
+    alto_input = ALTOInput(input_file=archive_path)
+    with pytest.raises(ValueError, match="does not contain any XML files"):
+        alto_input.validate_archive()
