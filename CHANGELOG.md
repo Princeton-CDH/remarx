@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.3.0
+
+### Sentence corpus creation
+
+- Add preliminary ALTO XML zipfile input with validation logic
+
 ## [0.2.0] - 2025-10-15
 
 ### Application
