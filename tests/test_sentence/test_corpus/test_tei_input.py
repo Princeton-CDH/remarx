@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 import pytest
 from lxml.etree import Element
 
-from remarx.sentence.corpus.base_input import FileInput
+from remarx.sentence.corpus.base_input import FileInput, SectionType
 from remarx.sentence.corpus.tei_input import TEI_TAG, TEIDocument, TEIinput, TEIPage
 
 FIXTURE_DIR = pathlib.Path(__file__).parent / "fixtures"
@@ -102,6 +102,34 @@ class TestTEIPage:
         )  # codespell:ignore
         assert "1) Karl Marx:" not in body_text  # Footnote content should be excluded
 
+    def test_get_body_text_line_numbers(self):
+        tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
+        page_17 = next(p for p in tei_doc.pages if p.number == "17")
+
+        body_text = page_17.get_body_text()
+        first_line_idx = body_text.index("Der Reichthum der Gesellschaften")
+        second_line_idx = body_text.index("Die Waare ist zunächst")  # codespell:ignore
+
+        assert page_17.get_body_text_line_number(first_line_idx) == 1
+        assert page_17.get_body_text_line_number(second_line_idx) == 5
+        assert page_17.get_body_text_line_number(second_line_idx + 10) == 5
+
+    def test_get_body_text_line_number_without_cached_data(self):
+        """Test get_body_text_line_number when _line_number_by_offset doesn't exist yet."""
+        tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
+        page_17 = next(p for p in tei_doc.pages if p.number == "17")
+
+        # Ensure the page doesn't have cached line number data
+        assert not hasattr(page_17, "_line_number_by_offset")
+
+        # This should trigger the hasattr check and call get_body_text()
+        line_number = page_17.get_body_text_line_number(0)
+
+        # After the call, the attributes should be set
+        assert hasattr(page_17, "_line_number_by_offset")
+        assert hasattr(page_17, "_sorted_line_offsets")
+        assert line_number == 1
+
     def test_get_footnote_text_with_footnotes(self):
         tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
         page_17 = next(p for p in tei_doc.all_pages if p.number == "17")
@@ -112,6 +140,15 @@ class TestTEIPage:
         assert (
             "Der Reichthum der Gesellschaften" not in footnote_text
         )  # Body text should be excluded
+
+    def test_get_footnote_line_numbers(self):
+        tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
+        page_17 = next(p for p in tei_doc.pages if p.number == "17")
+
+        footnotes = list(page_17.get_individual_footnotes())
+        assert footnotes  # sanity check
+        assert page_17.get_footnote_line_number(footnotes[0]) == 17
+        assert page_17.get_footnote_line_number(footnotes[1]) == 18
 
     def test_get_footnote_text_delimiter(self):
         # Test that footnotes are properly separated by double newlines
@@ -169,11 +206,12 @@ class TestTEIinput:
         assert isinstance(tei_input.xml_doc, TEIDocument)
 
     def test_field_names(self):
-        # includes defaults from text input and adds page number and section type
+        # includes defaults from text input and adds page number, section type, and line number
         assert TEIinput.field_names == (
             *FileInput.field_names,
             "page_number",
             "section_type",
+            "line_number",
         )
 
     def test_get_text(self):
@@ -214,6 +252,36 @@ class TestTEIinput:
         assert all("page_number" in chunk for chunk in text_chunks)
         assert all(isinstance(chunk["text"], str) for chunk in text_chunks)
 
+    def test_get_extra_metadata_line_numbers(self):
+        tei_input = TEIinput(input_file=TEST_TEI_WITH_FOOTNOTES_FILE)
+        text_chunks = list(tei_input.get_text())
+
+        body_chunk = next(
+            chunk
+            for chunk in text_chunks
+            if chunk["section_type"] == SectionType.TEXT.value
+            and chunk["page_number"] == "17"
+        )
+        body_idx = body_chunk["text"].index(
+            "Die Waare ist zunächst"  # codespell:ignore
+        )  # codespell:ignore
+        body_metadata = tei_input.get_extra_metadata(
+            body_chunk, body_idx, body_chunk["text"]
+        )
+        assert body_metadata["line_number"] == 5
+
+        footnote_chunk = next(
+            chunk
+            for chunk in text_chunks
+            if chunk["section_type"] == SectionType.FOOTNOTE.value
+            and chunk["page_number"] == "17"
+            and chunk["text"].startswith("1) Karl Marx:")
+        )
+        footnote_metadata = tei_input.get_extra_metadata(
+            footnote_chunk, 4, footnote_chunk["text"]
+        )
+        assert footnote_metadata["line_number"] == 17
+
     @patch("remarx.sentence.corpus.base_input.segment_text")
     def test_get_sentences(self, mock_segment_text: Mock):
         tei_input = TEIinput(input_file=TEST_TEI_FILE)
@@ -235,6 +303,9 @@ class TestTEIinput:
         # sentence index is set and continues across pages
         assert sentences[0]["sent_index"] == 0
         assert sentences[1]["sent_index"] == 1
+        # line number set
+        assert "line_number" in sentences[0]
+        assert "line_number" in sentences[1]
 
     @patch("remarx.sentence.corpus.base_input.segment_text")
     def test_get_sentences_with_footnotes(self, mock_segment_text: Mock):
@@ -251,3 +322,5 @@ class TestTEIinput:
         section_types = [s["section_type"] for s in sentences]
         assert "text" in section_types
         assert "footnote" in section_types
+        # line number should be present in all sentences
+        assert all("line_number" in s for s in sentences)

@@ -6,11 +6,11 @@ from the TEI.
 
 import pathlib
 import re
-from collections import namedtuple
+from collections import OrderedDict, namedtuple
 from collections.abc import Generator
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import ClassVar, NamedTuple, Self
+from typing import Any, ClassVar, NamedTuple, Self
 
 from lxml.etree import XMLSyntaxError, _Element
 from neuxml import xmlmap
@@ -37,6 +37,25 @@ class BaseTEIXmlObject(xmlmap.XmlObject):
     ROOT_NAMESPACES: ClassVar[dict[str, str]] = {"t": TEI_NAMESPACE}
 
 
+class TEIFootnote(BaseTEIXmlObject):
+    """XmlObject wrapper for footnotes with convenience accessors."""
+
+    first_line_break = xmlmap.StringField("(.//t:lb[@n])[1]/@n")
+    "Line number of the first TEI line break (`lb`) within this footnote"
+
+    def get_first_line_number(self) -> int:
+        """Return the first line number for this footnote."""
+        return int(self.first_line_break)
+
+    def get_text(self) -> str:
+        """Return cleaned text content for the footnote."""
+        # Split on newlines and strip each line, then join with spaces
+        text = " ".join(
+            line.strip() for line in "".join(self.node.itertext()).splitlines()
+        )
+        return " ".join(text.split())
+
+
 class TEIPage(BaseTEIXmlObject):
     """
     Custom :class:`eulxml.xmlmap.XmlObject` instance for a page
@@ -56,7 +75,7 @@ class TEIPage(BaseTEIXmlObject):
     # fetch footnotes after the current page break; will filter them in Python later
     # pb is a delimiter (not a container), so "following::note" returns all later footnotes
     following_footnotes = xmlmap.NodeListField(
-        "following::t:note[@type='footnote']", xmlmap.XmlObject
+        "following::t:note[@type='footnote']", TEIFootnote
     )
     "list of footnote elements within this page and following pages"
 
@@ -80,12 +99,12 @@ class TEIPage(BaseTEIXmlObject):
             TEIPage.is_footnote_content(ancestor) for ancestor in el.iterancestors()
         )
 
-    def get_page_footnotes(self) -> list[xmlmap.XmlObject]:
+    def get_page_footnotes(self) -> list[TEIFootnote]:
         """
         Filters footnotes to keep only the footnotes that belong to this page.
         Only includes footnotes that occur between this pb and the next standard pb[not(@ed)].
         """
-        page_footnotes: list[xmlmap.XmlObject] = []
+        page_footnotes: list[TEIFootnote] = []
 
         for footnote in self.following_footnotes:
             # If we have a next page and this footnote belongs to it, we're done
@@ -95,11 +114,35 @@ class TEIPage(BaseTEIXmlObject):
 
         return page_footnotes
 
+    def get_body_text_line_number(self, char_pos: int) -> int:
+        """
+        Return the TEI line number for the line preceding ``char_pos``.
+        """
+        if not hasattr(self, "_line_number_by_offset"):
+            self.get_body_text()
+
+        line_number_by_offset: OrderedDict[int, int] = getattr(
+            self, "_line_number_by_offset", OrderedDict()
+        )
+        offsets: list[int] = getattr(self, "_sorted_line_offsets", [])
+
+        line_number = line_number_by_offset[offsets[0]]
+        for offset in offsets:
+            if offset > char_pos:
+                break
+            line_number = line_number_by_offset[offset]
+        return line_number
+
     def get_body_text(self) -> str:
         """
         Extract body text content for this page, excluding footnotes and editorial content.
+        While collecting the text, build a mapping of character offsets to TEI line numbers.
         """
-        body_text_parts = []
+        body_text_parts: list[str] = []
+        line_number_by_offset: OrderedDict[int, int] = OrderedDict()
+        offsets: list[int] = []
+        char_offset = 0
+
         for text in self.text_nodes:
             # text here is an lxml smart string, which preserves context
             # in the xml tree and is associated with a parent tag.
@@ -122,11 +165,32 @@ class TEIPage(BaseTEIXmlObject):
                 # OR if text comes immediately after (is_tail) and is whitespace only
                 continue
 
-            body_text_parts.append(text)
+            raw_fragment = str(text)
+            cleaned_fragment = re.sub(r"\s*\n\s*", "\n", raw_fragment)
+            if not body_text_parts:
+                cleaned_fragment = cleaned_fragment.lstrip()
 
-        # consolidate whitespace once after joining all parts
-        # (i.e., space between indented tags in the XML)
-        return re.sub(r"\s*\n\s*", "\n", "".join(body_text_parts)).strip()
+            if not cleaned_fragment:
+                continue
+
+            if parent.tag == TEI_TAG.lb:
+                line_number_attr = parent.get("n")
+                if line_number_attr:
+                    line_number = int(line_number_attr)
+                    if char_offset not in line_number_by_offset:
+                        line_number_by_offset[char_offset] = line_number
+                        offsets.append(char_offset)
+
+            body_text_parts.append(cleaned_fragment)
+            char_offset += len(cleaned_fragment)
+
+        # join fragments and trim trailing whitespace to mirror prior normalization
+        body_text = "".join(body_text_parts).rstrip()
+
+        self._line_number_by_offset = line_number_by_offset
+        self._sorted_line_offsets = offsets
+
+        return body_text
 
     def get_individual_footnotes(self) -> Generator[str]:
         """
@@ -134,11 +198,23 @@ class TEIPage(BaseTEIXmlObject):
         Yields each footnote's text content individually as a separate string element.
         Each yielded element corresponds to one complete footnote from the page.
         """
+        self._footnote_line_number_map: dict[int, int] = {}
+
         for footnote in self.get_page_footnotes():
-            footnote_text = str(footnote).strip()
-            # consolidate whitespace for footnotes
-            footnote_text = re.sub(r"\s*\n\s*", "\n", footnote_text)
+            footnote_text = footnote.get_text()
+            line_number = footnote.get_first_line_number() or 1
+
+            self._footnote_line_number_map[id(footnote_text)] = line_number
             yield footnote_text
+
+    def get_footnote_line_number(self, footnote_text: str) -> int:
+        """
+        Return the first TEI line number recorded for the provided footnote text.
+        """
+        line_number = getattr(self, "_footnote_line_number_map", {}).get(
+            id(footnote_text)
+        )
+        return line_number if line_number is not None else 1
 
     def get_footnote_text(self) -> str:
         """
@@ -200,6 +276,7 @@ class TEIinput(FileInput):
         *FileInput.field_names,
         "page_number",
         "section_type",
+        "line_number",
     )
     "List of field names for sentences from TEI XML input files"
 
@@ -242,3 +319,25 @@ class TEIinput(FileInput):
                     "page_number": page.number,
                     "section_type": SectionType.FOOTNOTE.value,
                 }
+
+    def get_extra_metadata(
+        self, chunk_info: dict[str, Any], char_idx: int, sentence: str
+    ) -> dict[str, Any]:
+        """
+        Calculate extra metadata including line number for a sentence in TEI documents
+        based on the character position within the text chunk (page body or footnote).
+
+        :returns: Dictionary with line_number (1-indexed) for the sentence
+        """
+        page_number = chunk_info["page_number"]
+        section_type = chunk_info["section_type"]
+
+        # Find the corresponding page object to calculate line numbers
+        page = next((p for p in self.xml_doc.pages if p.number == page_number), None)
+
+        if section_type == SectionType.FOOTNOTE.value:
+            line_number = page.get_footnote_line_number(chunk_info["text"])
+        else:
+            line_number = page.get_body_text_line_number(char_idx)
+
+        return {"line_number": line_number}
