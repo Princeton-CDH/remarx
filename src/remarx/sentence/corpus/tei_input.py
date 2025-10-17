@@ -39,7 +39,7 @@ class BaseTEIXmlObject(xmlmap.XmlObject):
 
 class TEIPage(BaseTEIXmlObject):
     """
-    Custom :class:`eulxml.xmlmap.XmlObject` instance for a page
+    Custom :class:`neuxml.xmlmap.XmlObject` instance for a page
     of content within a TEI XML document.
     """
 
@@ -155,7 +155,7 @@ class TEIPage(BaseTEIXmlObject):
 
 class TEIDocument(BaseTEIXmlObject):
     """
-    Custom :class:`eulxml.xmlmap.XmlObject` instance for TEI XML document.
+    Custom :class:`neuxml.xmlmap.XmlObject` instance for TEI XML document.
     Customized for MEGA TEI XML.
     """
 
