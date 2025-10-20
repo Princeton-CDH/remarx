@@ -155,7 +155,9 @@ class ALTOInput(FileInput):
                     )
                     continue
 
-                chunks = list(self._yield_text_for_document(alto_xmlobj))
+                chunks = list(
+                    self._yield_text_for_document(alto_xmlobj, archive_filename)
+                )
                 member_filenames.append(archive_filename)
                 chunk_cache[archive_filename] = chunks
 
@@ -167,7 +169,7 @@ class ALTOInput(FileInput):
         self._validated = True
 
     def _yield_text_for_document(
-        self, alto_doc: AltoDocument
+        self, alto_doc: AltoDocument, member_name: str
     ) -> Generator[dict[str, str], None, None]:
         """
         Hook for future ALTO parsing.
@@ -175,6 +177,9 @@ class ALTOInput(FileInput):
         lines: list[str] = []
         for block in alto_doc.blocks:
             lines.extend(line.text_content for line in block.lines if line.text_content)
+
+        if not lines:
+            logger.warning("No text content found in ALTO XML file: %s", member_name)
 
         yield {
             "text": "\n".join(lines),

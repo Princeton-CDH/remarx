@@ -28,13 +28,14 @@ def test_get_text_iterates_xml(alto_sample_zip, caplog):
     with caplog.at_level(logging.INFO, logger="remarx.sentence.corpus.alto_input"):
         chunks = list(alto_input.get_text())
 
-    expected_files = {
+    expected_files = [
         "1896-97a.pdf_page_1.xml",
         "1896-97a.pdf_page_2.xml",
         "1896-97a.pdf_page_3.xml",
         "1896-97a.pdf_page_4.xml",
         "1896-97a.pdf_page_5.xml",
-    }
+        "empty_page.xml",
+    ]
 
     assert alto_input._alto_members == sorted(expected_files)
     assert len(chunks) == len(expected_files)
@@ -46,13 +47,13 @@ def test_get_text_iterates_xml(alto_sample_zip, caplog):
     assert "Arbeiter und Gewerbeausstellung." in first_page_text  # codespell:ignore
     assert "\n" in first_page_text
 
-    processed_files = {
+    processed_files = [
         record.getMessage().removeprefix("Processing ALTO XML file: ").strip()
         for record in caplog.records
         if record.name == "remarx.sentence.corpus.alto_input"
         and record.getMessage().startswith("Processing ALTO XML file: ")
-    }
-    assert processed_files == expected_files
+    ]
+    assert sorted(processed_files) == sorted(expected_files)
 
 
 def test_validate_archive_success(alto_sample_zip):
@@ -68,8 +69,26 @@ def test_validate_archive_success(alto_sample_zip):
             "1896-97a.pdf_page_3.xml",
             "1896-97a.pdf_page_4.xml",
             "1896-97a.pdf_page_5.xml",
+            "empty_page.xml",
         ]
     )
+
+
+def test_validate_archive_warns_on_no_text(alto_sample_zip, caplog):
+    alto_input = ALTOInput(input_file=alto_sample_zip)
+    with caplog.at_level(logging.WARNING, logger="remarx.sentence.corpus.alto_input"):
+        alto_input.validate_archive()
+
+    warning_messages = [
+        record.getMessage()
+        for record in caplog.records
+        if record.name == "remarx.sentence.corpus.alto_input"
+    ]
+    assert any(
+        message == "No text content found in ALTO XML file: empty_page.xml"
+        for message in warning_messages
+    )
+    assert alto_input._chunk_cache["empty_page.xml"][0]["text"] == ""
 
 
 def test_validate_archive_rejects_non_xml(tmp_path: Path):
