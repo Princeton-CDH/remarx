@@ -4,8 +4,9 @@ from pathlib import Path
 from zipfile import ZipFile
 
 import pytest
+from neuxml import xmlmap
 
-from remarx.sentence.corpus.alto_input import ALTOInput
+from remarx.sentence.corpus.alto_input import AltoDocument, ALTOInput
 from remarx.sentence.corpus.base_input import FileInput, SectionType
 
 
@@ -120,6 +121,40 @@ def test_validate_archive_rejects_unknown_namespace(tmp_path: Path):
     alto_input = ALTOInput(input_file=archive_path)
     with pytest.raises(ValueError, match="does not contain any valid ALTO XML files"):
         alto_input.validate_archive()
+
+
+def test_validate_archive_logs_invalid_xml(tmp_path: Path, caplog):
+    archive_path = tmp_path / "invalid_xml.zip"
+    with ZipFile(archive_path, "w") as archive:
+        archive.writestr("page1.xml", "<alto>")
+
+    alto_input = ALTOInput(input_file=archive_path)
+    with (
+        caplog.at_level(logging.WARNING, logger="remarx.sentence.corpus.alto_input"),
+        pytest.raises(ValueError, match="does not contain any valid ALTO XML files"),
+    ):
+        alto_input.validate_archive()
+
+    warning_messages = [
+        record.getMessage()
+        for record in caplog.records
+        if record.name == "remarx.sentence.corpus.alto_input"
+    ]
+    assert any(
+        message == "Skipping ALTO zipfile member with invalid XML: page1.xml"
+        for message in warning_messages
+    )
+
+
+def test_text_line_str_returns_text(alto_sample_zip):
+    with (
+        ZipFile(alto_sample_zip) as archive,
+        archive.open("1896-97a.pdf_page_1.xml") as xmlfile,
+    ):
+        doc = xmlmap.load_xmlobject_from_file(xmlfile, AltoDocument)
+
+    first_line = doc.blocks[0].lines[0]
+    assert str(first_line) == first_line.text_content
 
 
 def test_validate_archive_rejects_empty_zip(tmp_path: Path):
