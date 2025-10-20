@@ -170,12 +170,7 @@ class TEIPage(BaseTEIXmlObject):
                 continue
 
             if parent.tag == TEI_TAG.lb:
-                line_number_attr = parent.get("n")
-                if line_number_attr:
-                    line_number = int(line_number_attr)
-                    if char_offset not in line_number_by_offset:
-                        line_number_by_offset[char_offset] = line_number
-                        offsets.append(char_offset)
+                line_number_by_offset[char_offset] = int(parent.get("n"))
 
             body_text_parts.append(cleaned_fragment)
             char_offset += len(cleaned_fragment)
