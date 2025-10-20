@@ -38,22 +38,14 @@ class BaseTEIXmlObject(xmlmap.XmlObject):
 
 
 class TEIFootnote(BaseTEIXmlObject):
-    """XmlObject wrapper for footnotes with convenience accessors."""
+    """XmlObject class for footnotes."""
 
-    first_line_break = xmlmap.StringField("(.//t:lb[@n])[1]/@n")
-    "Line number of the first TEI line break (`lb`) within this footnote"
+    line_number = xmlmap.IntegerField("./t:lb[1]/@n")
+    "Line number where this footnote begins, based on first TEI line beginning (`lb`) within this note"
 
-    def get_first_line_number(self) -> int:
-        """Return the first line number for this footnote."""
-        return int(self.first_line_break)
-
-    def get_text(self) -> str:
-        """Return cleaned text content for the footnote."""
-        # Split on newlines and strip each line, then join with spaces
-        text = " ".join(
-            line.strip() for line in "".join(self.node.itertext()).splitlines()
-        )
-        return " ".join(text.split())
+    # use xmlmap StringField method with normalize=True to collapse whitespace in the footnote text
+    text = xmlmap.StringField(".", normalize=True)
+    "Normalized text content for the footnote (collapses whitespace)"
 
 
 class TEIPage(BaseTEIXmlObject):
@@ -126,6 +118,10 @@ class TEIPage(BaseTEIXmlObject):
         )
         offsets: list[int] = getattr(self, "_sorted_line_offsets", [])
 
+        # When there are no line breaks with line numbers, default to line 1
+        if not offsets:
+            return 1
+
         line_number = line_number_by_offset[offsets[0]]
         for offset in offsets:
             if offset > char_pos:
@@ -184,7 +180,7 @@ class TEIPage(BaseTEIXmlObject):
             body_text_parts.append(cleaned_fragment)
             char_offset += len(cleaned_fragment)
 
-        # join fragments and trim trailing whitespace to mirror prior normalization
+        # join fragments and trim trailing whitespace
         body_text = "".join(body_text_parts).rstrip()
 
         self._line_number_by_offset = line_number_by_offset
@@ -201,8 +197,8 @@ class TEIPage(BaseTEIXmlObject):
         self._footnote_line_number_map: dict[int, int] = {}
 
         for footnote in self.get_page_footnotes():
-            footnote_text = footnote.get_text()
-            line_number = footnote.get_first_line_number() or 1
+            footnote_text = footnote.text
+            line_number = footnote.line_number
 
             self._footnote_line_number_map[id(footnote_text)] = line_number
             yield footnote_text
