@@ -4,7 +4,7 @@
 
 ### Sentence corpus creation
 
-- Add preliminary ALTO XML zipfile input with validation logic
+- Preliminary support for ALTO XML input as a zipfile of multiple pages
 
 ## [0.2.0] - 2025-10-15
 
