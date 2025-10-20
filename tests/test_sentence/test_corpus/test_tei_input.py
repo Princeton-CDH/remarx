@@ -115,19 +115,18 @@ class TestTEIPage:
         assert page_17.get_body_text_line_number(second_line_idx + 10) == 5
 
     def test_get_body_text_line_number_without_cached_data(self):
-        """Test get_body_text_line_number when _line_number_by_offset doesn't exist yet."""
+        """Test get_body_text_line_number when line_number_by_offset doesn't exist yet."""
         tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
         page_17 = next(p for p in tei_doc.pages if p.number == "17")
 
         # Ensure the page doesn't have cached line number data
-        assert not hasattr(page_17, "_line_number_by_offset")
+        assert not hasattr(page_17, "line_number_by_offset")
 
         # This should trigger the hasattr check and call get_body_text()
         line_number = page_17.get_body_text_line_number(0)
 
-        # After the call, the attributes should be set
-        assert hasattr(page_17, "_line_number_by_offset")
-        assert hasattr(page_17, "_sorted_line_offsets")
+        # After the call, the attribute should be set
+        assert hasattr(page_17, "line_number_by_offset")
         assert line_number == 1
 
     def test_get_footnote_text_with_footnotes(self):
@@ -147,8 +146,9 @@ class TestTEIPage:
 
         footnotes = list(page_17.get_individual_footnotes())
         assert footnotes  # sanity check
-        assert page_17.get_footnote_line_number(footnotes[0]) == 17
-        assert page_17.get_footnote_line_number(footnotes[1]) == 18
+        # tuples of (text, line_number)
+        assert footnotes[0][1] == 17
+        assert footnotes[1][1] == 18
 
     def test_get_footnote_text_delimiter(self):
         # Test that footnotes are properly separated by double newlines
@@ -196,6 +196,21 @@ class TestTEIPage:
         # Test element outside footnote structure
         standalone_p = Element("p")
         assert not TEIPage.is_footnote_content(standalone_p)
+
+    def test_get_body_text_line_numbers_missing_lb_number(self):
+        tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
+        page_20 = next(p for p in tei_doc.pages if p.number == "20")
+
+        body_text = page_20.get_body_text()
+        assert "Erste Umschlagseite der Erstausgabe" in body_text, (
+            "Fixture text missing expected caption content"
+        )
+
+        # No numbered line marker before the first characters, so None is expected
+        assert page_20.get_body_text_line_number(0) is None
+
+        second_line_idx = body_text.index("Second line with an explicit line number.")
+        assert page_20.get_body_text_line_number(second_line_idx) == 2
 
 
 class TestTEIinput:

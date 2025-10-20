@@ -6,7 +6,7 @@ from the TEI.
 
 import pathlib
 import re
-from collections import OrderedDict, namedtuple
+from collections import namedtuple
 from collections.abc import Generator
 from dataclasses import dataclass, field
 from functools import cached_property
@@ -106,27 +106,23 @@ class TEIPage(BaseTEIXmlObject):
 
         return page_footnotes
 
-    def get_body_text_line_number(self, char_pos: int) -> int:
+    def get_body_text_line_number(self, char_pos: int) -> int | None:
         """
-        Return the TEI line number for the line preceding ``char_pos``.
+        Return the TEI line number for the line at or before `char_pos`.
+        Returns None if no line number can be determined.
         """
-        if not hasattr(self, "_line_number_by_offset"):
+        if not hasattr(self, "line_number_by_offset"):
             self.get_body_text()
 
-        line_number_by_offset: OrderedDict[int, int] = getattr(
-            self, "_line_number_by_offset", OrderedDict()
-        )
-        offsets: list[int] = getattr(self, "_sorted_line_offsets", [])
+        # When there are no line breaks with line numbers, return None
+        if not self.line_number_by_offset:
+            return None
 
-        # When there are no line breaks with line numbers, default to line 1
-        if not offsets:
-            return 1
-
-        line_number = line_number_by_offset[offsets[0]]
-        for offset in offsets:
+        line_number = None
+        for offset, ln in self.line_number_by_offset.items():
             if offset > char_pos:
                 break
-            line_number = line_number_by_offset[offset]
+            line_number = ln
         return line_number
 
     def get_body_text(self) -> str:
@@ -135,8 +131,7 @@ class TEIPage(BaseTEIXmlObject):
         While collecting the text, build a mapping of character offsets to TEI line numbers.
         """
         body_text_parts: list[str] = []
-        line_number_by_offset: OrderedDict[int, int] = OrderedDict()
-        offsets: list[int] = []
+        self.line_number_by_offset: dict[int, int] = {}
         char_offset = 0
 
         for text in self.text_nodes:
@@ -161,57 +156,43 @@ class TEIPage(BaseTEIXmlObject):
                 # OR if text comes immediately after (is_tail) and is whitespace only
                 continue
 
-            raw_fragment = str(text)
-            cleaned_fragment = re.sub(r"\s*\n\s*", "\n", raw_fragment)
-            if not body_text_parts:
-                cleaned_fragment = cleaned_fragment.lstrip()
+            raw_text = str(text)
+            cleaned_text = re.sub(r"\s*\n\s*", "\n", raw_text)
 
-            if not cleaned_fragment:
+            # Strip leading whitespace only from the very first text fragment
+            if not body_text_parts:
+                cleaned_text = cleaned_text.lstrip()
+
+            if not cleaned_text:
                 continue
 
             if parent.tag == TEI_TAG.lb:
-                line_number_by_offset[char_offset] = int(parent.get("n"))
+                line_attr = parent.get("n")
+                if line_attr is not None:
+                    self.line_number_by_offset[char_offset] = int(line_attr)
 
-            body_text_parts.append(cleaned_fragment)
-            char_offset += len(cleaned_fragment)
+            body_text_parts.append(cleaned_text)
+            char_offset += len(cleaned_text)
 
-        # join fragments and trim trailing whitespace
+        # join text parts and trim trailing whitespace
         body_text = "".join(body_text_parts).rstrip()
-
-        self._line_number_by_offset = line_number_by_offset
-        self._sorted_line_offsets = offsets
 
         return body_text
 
-    def get_individual_footnotes(self) -> Generator[str]:
+    def get_individual_footnotes(self) -> Generator[tuple[str, int | None]]:
         """
         Get individual footnote content as a generator.
-        Yields each footnote's text content individually as a separate string element.
+        Yields tuples of (footnote_text, line_number) for each footnote.
         Each yielded element corresponds to one complete footnote from the page.
         """
-        self._footnote_line_number_map: dict[int, int] = {}
-
         for footnote in self.get_page_footnotes():
-            footnote_text = footnote.text
-            line_number = footnote.line_number
-
-            self._footnote_line_number_map[id(footnote_text)] = line_number
-            yield footnote_text
-
-    def get_footnote_line_number(self, footnote_text: str) -> int:
-        """
-        Return the first TEI line number recorded for the provided footnote text.
-        """
-        line_number = getattr(self, "_footnote_line_number_map", {}).get(
-            id(footnote_text)
-        )
-        return line_number if line_number is not None else 1
+            yield (footnote.text, footnote.line_number)
 
     def get_footnote_text(self) -> str:
         """
         Get all footnote content as a single string, with footnotes separated by double newlines.
         """
-        return "\n\n".join(self.get_individual_footnotes())
+        return "\n\n".join(text for text, _ in self.get_individual_footnotes())
 
     def __str__(self) -> str:
         """
@@ -304,11 +285,12 @@ class TEIinput(FileInput):
 
             # Yield each footnote individually to enforce separate sentence segmentation
             # so that separate footnotes cannot be combined into a single sentence by segmentation.
-            for footnote_text in page.get_individual_footnotes():
+            for footnote_text, line_number in page.get_individual_footnotes():
                 yield {
                     "text": footnote_text,
                     "page_number": page.number,
                     "section_type": SectionType.FOOTNOTE.value,
+                    "line_number": line_number,
                 }
 
     def get_extra_metadata(
@@ -318,17 +300,18 @@ class TEIinput(FileInput):
         Calculate extra metadata including line number for a sentence in TEI documents
         based on the character position within the text chunk (page body or footnote).
 
-        :returns: Dictionary with line_number (1-indexed) for the sentence
+        :returns: Dictionary with line_number for the sentence (None if not found)
         """
-        page_number = chunk_info["page_number"]
-        section_type = chunk_info["section_type"]
+        # If line_number is already in chunk_info (e.g., for footnotes), use it directly
+        if "line_number" in chunk_info:
+            return {"line_number": chunk_info["line_number"]}
 
-        # Find the corresponding page object to calculate line numbers
+        # Otherwise, calculate it for body text based on character position
+        page_number = chunk_info["page_number"]
         page = next((p for p in self.xml_doc.pages if p.number == page_number), None)
 
-        if section_type == SectionType.FOOTNOTE.value:
-            line_number = page.get_footnote_line_number(chunk_info["text"])
-        else:
+        if page:
             line_number = page.get_body_text_line_number(char_idx)
+            return {"line_number": line_number}
 
-        return {"line_number": line_number}
+        return {"line_number": None}

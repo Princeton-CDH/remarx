@@ -80,6 +80,16 @@
                     <label type="footnote">
                         <hi rendition="sup">5</hi>)</label> Erste Anmerkung auf Seite 19.
                 </note>
+
+                <!-- A real example from Das Kapital where <lb/> tag has no line number -->
+                <pb n="20"/>
+                <figure type="facsimile">
+                    <graphic url="facsimiles/sample-caption-page.jpg" mimeType="image/jpeg"/>
+                    <ab type="caption">
+                        <lb/>Erste Umschlagseite der Erstausgabe
+                        <lb n="2"/>Second line with an explicit line number.
+                    </ab>
+                </figure>
             </text>
         </group>
     </text>
