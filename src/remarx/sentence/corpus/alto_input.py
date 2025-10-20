@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from typing import ClassVar
 from zipfile import ZipFile
 
+from lxml.etree import XMLSyntaxError
 from neuxml import xmlmap
 
 from remarx.sentence.corpus.base_input import FileInput, SectionType
@@ -87,32 +88,20 @@ class ALTOInput(FileInput):
     _alto_members: list[str] = field(init=False, default_factory=list)
     """Sorted list of ALTO XML filenames discovered during validation."""
 
+    _chunk_cache: dict[str, list[dict[str, str]]] = field(
+        init=False, default_factory=dict
+    )
+    """Cached chunk data for validated ALTO XML members."""
+
     def get_text(self) -> Generator[dict[str, str], None, None]:
         """
         Iterate over ALTO XML files contained in the zipfile to get all the text content.
         """
         self.validate_archive()
 
-        with ZipFile(self.input_file) as archive:
-            # ALTO XML filenames discovered in the zipfile
-            for archive_filename in archive.namelist():
-                # ignore & log non-xml files
-                if not archive_filename.lower().endswith(".xml"):
-                    logger.info(
-                        "Ignoring non-xml file included in ALTO zipfile:  {archive_filename}"
-                    )
-                    continue
-
-                # preliminary output to confirm accessing properly
-                print("\n\n")
-                print(archive_filename)
-                with archive.open(archive_filename) as xmlfile:
-                    # zipfile open returns a file-like object
-                    alto_xmlobj = xmlmap.load_xmlobject_from_file(xmlfile, AltoDocument)
-                    # iterate over blocks and lines as needed
-                    for block in alto_xmlobj.blocks:
-                        for i, line in enumerate(block.lines):
-                            print(f"{i} {line}")
+        for member_name in self._alto_members:
+            logger.info("Processing ALTO XML file: %s", member_name)
+            yield from self._chunk_cache.get(member_name, [])
 
     def validate_archive(self) -> None:
         """
@@ -121,6 +110,12 @@ class ALTOInput(FileInput):
         so later `get_text` calls can skip rescanning large zipfiles.
         """
 
+        if self._validated:
+            return
+
+        member_filenames: list[str] = []
+        chunk_cache: dict[str, list[dict[str, str]]] = {}
+
         with ZipFile(self.input_file) as archive:
             # ALTO XML filenames discovered in the zipfile
             for archive_filename in archive.namelist():
@@ -132,50 +127,57 @@ class ALTOInput(FileInput):
                     continue
 
                 with archive.open(archive_filename) as xmlfile:
-                    alto_xmlobj = xmlmap.load_xmlobject_from_file(xmlfile, AltoDocument)
-                    print(alto_xmlobj.blocks)
+                    try:
+                        alto_xmlobj = xmlmap.load_xmlobject_from_file(
+                            xmlfile, AltoDocument
+                        )
+                    except XMLSyntaxError as err:
+                        logger.warning(
+                            "Skipping ALTO zipfile member with invalid XML: %s",
+                            archive_filename,
+                        )
+                        logger.debug("Invalid XML error", exc_info=err)
+                        continue
 
-            # member_filenames: list[str] = []
-            # for zip_info in archive.infolist():
-            #     if not zip_info.filename.lower().endswith(".xml"):
-            #         raise ValueError(
-            #             f"Non-XML file found in ALTO zipfile: {zip_info.filename}"
-            #         )
-            #     member_filenames.append(zip_info.filename)
+                namespace, local_tag = self._split_tag(alto_xmlobj.node.tag)
+                if local_tag.lower() != "alto":
+                    logger.warning(
+                        "Skipping non-ALTO XML file in zip: %s (root tag %s)",
+                        archive_filename,
+                        alto_xmlobj.node.tag,
+                    )
+                    continue
+                if namespace and namespace != self.ALTO_NAMESPACE:
+                    logger.warning(
+                        "Skipping ALTO XML file with unsupported namespace in %s: %s",
+                        archive_filename,
+                        namespace,
+                    )
+                    continue
 
-            # if not member_filenames:
-            #     raise ValueError("ALTO zipfile does not contain any XML files")
+                chunks = list(self._yield_text_for_document(alto_xmlobj))
+                member_filenames.append(archive_filename)
+                chunk_cache[archive_filename] = chunks
 
-            # for member_name in member_filenames:
-            #     with archive.open(member_name) as member_file:
-            #         try:
-            #             root = ET.parse(member_file).getroot()
-            #         except ET.ParseError as exc:
-            #             raise ValueError(
-            #                 f"Invalid XML in ALTO zipfile member: {member_name}"
-            #             ) from exc
+        if not member_filenames:
+            raise ValueError("ALTO zipfile does not contain any valid ALTO XML files")
 
-            #     namespace, local_tag = self._split_tag(root.tag)
-            #     if local_tag.lower() != "alto":
-            #         raise ValueError(
-            #             f"File {member_name} is not an ALTO document (root tag {root.tag})"
-            #         )
-            #     if namespace and namespace != self.ALTO_NAMESPACE:
-            #         raise ValueError(
-            #             f"Unsupported ALTO namespace in {member_name}: {namespace}"
-            #         )
+        self._alto_members = sorted(member_filenames)
+        self._chunk_cache = chunk_cache
+        self._validated = True
 
-        # self._alto_members = sorted(member_filenames)
-        # self._validated = True
-
-    def _yield_text_for_member(
-        self, archive: ZipFile, member_name: str
+    def _yield_text_for_document(
+        self, alto_doc: AltoDocument
     ) -> Generator[dict[str, str], None, None]:
         """
         Hook for future ALTO parsing.
         """
+        lines: list[str] = []
+        for block in alto_doc.blocks:
+            lines.extend(line.text_content for line in block.lines if line.text_content)
+
         yield {
-            "text": "",
+            "text": "\n".join(lines),
             "section_type": SectionType.TEXT.value,
         }
 

@@ -36,11 +36,15 @@ def test_get_text_iterates_xml(alto_sample_zip, caplog):
         "1896-97a.pdf_page_5.xml",
     }
 
+    assert alto_input._alto_members == sorted(expected_files)
     assert len(chunks) == len(expected_files)
-    assert all(
-        chunk == {"text": "", "section_type": SectionType.TEXT.value}
-        for chunk in chunks
-    )
+    assert all(chunk["section_type"] == SectionType.TEXT.value for chunk in chunks)
+
+    archive_to_chunk = dict(zip(alto_input._alto_members, chunks, strict=False))
+    first_page_text = archive_to_chunk["1896-97a.pdf_page_1.xml"]["text"]
+    assert "Die Neue Zeit." in first_page_text  # codespell:ignore
+    assert "Arbeiter und Gewerbeausstellung." in first_page_text  # codespell:ignore
+    assert "\n" in first_page_text
 
     processed_files = {
         record.getMessage().removeprefix("Processing ALTO XML file: ").strip()
@@ -74,7 +78,7 @@ def test_validate_archive_rejects_non_xml(tmp_path: Path):
         archive.writestr("page1.txt", "not xml file")
 
     alto_input = ALTOInput(input_file=archive_path)
-    with pytest.raises(ValueError, match="Non-XML file"):
+    with pytest.raises(ValueError, match="does not contain any valid ALTO XML files"):
         alto_input.validate_archive()
 
 
@@ -84,7 +88,7 @@ def test_validate_archive_rejects_non_alto_xml(tmp_path: Path):
         archive.writestr("page1.xml", "<root></root>")
 
     alto_input = ALTOInput(input_file=archive_path)
-    with pytest.raises(ValueError, match="not an ALTO document"):
+    with pytest.raises(ValueError, match="does not contain any valid ALTO XML files"):
         alto_input.validate_archive()
 
 
@@ -95,7 +99,7 @@ def test_validate_archive_rejects_unknown_namespace(tmp_path: Path):
         archive.writestr("page1.xml", xml_content)
 
     alto_input = ALTOInput(input_file=archive_path)
-    with pytest.raises(ValueError, match="Unsupported ALTO namespace"):
+    with pytest.raises(ValueError, match="does not contain any valid ALTO XML files"):
         alto_input.validate_archive()
 
 
@@ -105,5 +109,5 @@ def test_validate_archive_rejects_empty_zip(tmp_path: Path):
         pass
 
     alto_input = ALTOInput(input_file=archive_path)
-    with pytest.raises(ValueError, match="does not contain any XML files"):
+    with pytest.raises(ValueError, match="does not contain any valid ALTO XML files"):
         alto_input.validate_archive()
