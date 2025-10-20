@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.3.0
+
+### Sentence corpus creation
+
+- Preliminary support for ALTO XML input as a zipfile of multiple pages
+
 ## [0.2.0] - 2025-10-15
 
 ### Application
