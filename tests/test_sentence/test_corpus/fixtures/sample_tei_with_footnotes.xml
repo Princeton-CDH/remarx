@@ -90,6 +90,14 @@
                         <lb n="2"/>Second line with an explicit line number.
                     </ab>
                 </figure>
+
+                <!-- A example where we have multiple line breaks on the same line -->
+                <pb n="21"/>
+                <p>
+                    <lb n="27"/>Zur Vorbereitung auf die folgenden Abschnitte fasse ich den bisherigen Gang:
+                    <lb n="28"/>Das bisher Entwickelte gilt unter der Voraussetzung, daß im Fortgang der<lb n="29"/>Accumulation <hi rendition="i">das Verhältniß zwischen der Masse der Produktionsmittel und</hi>
+                    <lb n="30"/>der Beschäftigten stets neu austariert werden muß.
+                </p>
             </text>
         </group>
     </text>

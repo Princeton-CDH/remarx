@@ -129,6 +129,15 @@ class TestTEIPage:
         assert hasattr(page_17, "line_number_by_offset")
         assert line_number == 1
 
+    def test_get_body_text_multiple_lb_line_breaks(self):
+        tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
+        page_21 = next(p for p in tei_doc.pages if p.number == "21")
+
+        body_text = page_21.get_body_text()
+
+        assert "Fortgang der\nAccumulation" in body_text
+        assert "derAccumulation" not in body_text
+
     def test_get_footnote_text_with_footnotes(self):
         tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
         page_17 = next(p for p in tei_doc.all_pages if p.number == "17")

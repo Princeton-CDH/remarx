@@ -165,10 +165,23 @@ class TEIPage(BaseTEIXmlObject):
             if not body_text_parts:
                 cleaned_text = cleaned_text.lstrip()
 
+            is_line_break = parent.tag == TEI_TAG.lb
+
+            if is_line_break:
+                previous_text = body_text_parts[-1] if body_text_parts else ""
+                # If the current text is not empty, add a newline if the previous text is not a line break
+                if cleaned_text:
+                    if body_text_parts and not previous_text.endswith("\n"):
+                        cleaned_text = f"\n{cleaned_text}"
+                elif char_offset > 0:
+                    # Preserve explicit blank lines introduced by <lb/> elements.
+                    cleaned_text = "\n"
+
             if not cleaned_text:
                 continue
 
-            if parent.tag == TEI_TAG.lb:
+            # If the current text is a line break, add the line number to the offset
+            if is_line_break:
                 line_attr = parent.get("n")
                 if line_attr is not None:
                     self.line_number_by_offset[char_offset] = int(line_attr)
