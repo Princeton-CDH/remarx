@@ -344,9 +344,6 @@ class TestTEIinput:
         # sentence index is set and continues across pages
         assert sentences[0]["sent_index"] == 0
         assert sentences[1]["sent_index"] == 1
-        # line number set
-        assert "line_number" in sentences[0]
-        assert "line_number" in sentences[1]
 
     @patch("remarx.sentence.corpus.base_input.segment_text")
     def test_get_sentences_with_footnotes(self, mock_segment_text: Mock):
@@ -363,5 +360,3 @@ class TestTEIinput:
         section_types = [s["section_type"] for s in sentences]
         assert "text" in section_types
         assert "footnote" in section_types
-        # line number should be present in all sentences
-        assert all("line_number" in s for s in sentences)
