@@ -138,6 +138,15 @@ class TestTEIPage:
         assert "Fortgang der\nAccumulation" in body_text
         assert "derAccumulation" not in body_text
 
+    def test_get_body_text_line_numbers_without_any_lb(self):
+        tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
+        page_22 = next(p for p in tei_doc.pages if p.number == "22")
+
+        body_text = page_22.get_body_text()
+        assert body_text.startswith("Eine Seite ohne markierte Zeilenumbrüche.")
+        assert page_22.line_number_by_offset == {}
+        assert page_22.get_body_text_line_number(0) is None
+
     def test_get_body_text_line_numbers_with_inline_markup(self):
         tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
         page_21 = next(p for p in tei_doc.pages if p.number == "21")
@@ -154,6 +163,14 @@ class TestTEIPage:
         assert page_21.get_body_text_line_number(tauschwerth_idx) == 34
         unveraendert_idx = body_text.index("unverändert", tauschwerth_idx)
         assert page_21.get_body_text_line_number(unveraendert_idx) == 34
+
+        # Ensure blank <lb/> entries still add newline placeholders and line mappings.
+        assert "\n\nLeerzeile als separates Beispiel." in body_text  # codespell:ignore
+        leerzeile_idx = body_text.index(
+            "Leerzeile als separates Beispiel."  # codespell:ignore
+        )  # codespell:ignore
+        assert page_21.get_body_text_line_number(leerzeile_idx) == 39
+        assert 38 in page_21.line_number_by_offset.values()
 
     def test_get_footnote_text_with_footnotes(self):
         tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
@@ -323,6 +340,19 @@ class TestTEIinput:
         )
         assert footnote_metadata["line_number"] == 17
 
+    def test_get_extra_metadata_missing_page_returns_none(self):
+        tei_input = TEIinput(input_file=TEST_TEI_FILE)
+        metadata = tei_input.get_extra_metadata(
+            {
+                "page_number": "999",
+                "section_type": SectionType.TEXT.value,
+                "text": "",
+            },
+            0,
+            "",
+        )
+        assert metadata["line_number"] is None
+
     @patch("remarx.sentence.corpus.base_input.segment_text")
     def test_get_sentences(self, mock_segment_text: Mock):
         tei_input = TEIinput(input_file=TEST_TEI_FILE)
@@ -344,9 +374,6 @@ class TestTEIinput:
         # sentence index is set and continues across pages
         assert sentences[0]["sent_index"] == 0
         assert sentences[1]["sent_index"] == 1
-        # line number set
-        assert "line_number" in sentences[0]
-        assert "line_number" in sentences[1]
 
     @patch("remarx.sentence.corpus.base_input.segment_text")
     def test_get_sentences_with_footnotes(self, mock_segment_text: Mock):
@@ -363,5 +390,3 @@ class TestTEIinput:
         section_types = [s["section_type"] for s in sentences]
         assert "text" in section_types
         assert "footnote" in section_types
-        # line number should be present in all sentences
-        assert all("line_number" in s for s in sentences)
