@@ -5,7 +5,7 @@ with the goal of creating a sentence corpus with associated metadata from ALTO.
 
 import logging
 from collections.abc import Generator
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import ClassVar
 from zipfile import ZipFile
 
@@ -59,6 +59,23 @@ class TextBlock(AltoBlock):
 
     lines = xmlmap.NodeListField("alto:TextLine", TextLine)
 
+    @property
+    def sorted_lines(self) -> list[TextLine]:
+        """
+        Returns a list of TextLines for this block, sorted by vertical position.
+        """
+        # there's no guarantee that xml document order follows page order,
+        # so sort by @VPOS (may need further refinement for more complicated layouts)
+        return sorted(self.lines, key=lambda line: line.vertical_position)
+
+    @property
+    def text_content(self) -> str:
+        """
+        Text contents of this block; newline-delimited content of
+        each line within this block, sorted by vertical position.
+        """
+        return "\n".join([line.text_content for line in self.sorted_lines])
+
 
 class AltoDocument(AltoXmlObject):
     """
@@ -79,6 +96,25 @@ class AltoDocument(AltoXmlObject):
             and root_element.localname == "alto"
         )
 
+    @property
+    def sorted_blocks(self) -> list[TextBlock]:
+        """
+        Returns a list of TextBlocks for this page, sorted by vertical position.
+        """
+        # there's no guarantee that xml document order follows page order,
+        # so sort by @VPOS (may need further refinement for more complicated layouts)
+        return sorted(self.blocks, key=lambda block: block.vertical_position)
+
+    def text_chunks(self) -> Generator[dict[str, str]]:
+        """
+        Returns a generator of a dictionary of text content and section type,
+        one dictionary per text block on the page.
+        """
+        # yield by block, since in future we may set section type
+        # based on block-level semantic tagging
+        for block in self.sorted_blocks:
+            yield {"text": block.text_content, "section_type": SectionType.TEXT.value}
+
 
 @dataclass
 class ALTOInput(FileInput):
@@ -87,34 +123,50 @@ class ALTOInput(FileInput):
     Iterates through ALTO XML members and stubs out chunk yielding for future parsing.
     """
 
-    ALTO_NAMESPACE: ClassVar[str] = "http://www.loc.gov/standards/alto/ns-v4#"
-
     field_names: ClassVar[tuple[str, ...]] = (*FileInput.field_names, "section_type")
     "List of field names for sentences originating from ALTO XML content."
 
     file_type: ClassVar[str] = ".zip"
-    "Supported file extension for ALTO zipfiles."
-
-    _validated: bool = field(init=False, default=False)
-    "Flag indicating whether the input archive has already been validated."
-
-    _alto_members: list[str] = field(init=False, default_factory=list)
-    """Sorted list of ALTO XML filenames discovered during validation."""
-
-    _chunk_cache: dict[str, list[dict[str, str]]] = field(
-        init=False, default_factory=dict
-    )
-    """Cached chunk data for validated ALTO XML members."""
+    "Supported file extension for ALTO zipfiles (.zip)"
 
     def get_text(self) -> Generator[dict[str, str], None, None]:
         """
-        Iterate over ALTO XML files contained in the zipfile to get all the text content.
+        Iterate over ALTO XML files contained in the zipfile and return
+        a generator of text content.
         """
-        self.validate_archive()
+        # TODO: we need to associate text content with the
+        # page file name within the archive, not the zipfile name
+        with ZipFile(self.input_file) as archive:
+            # iterate over all files in the zipfile, in order
+            for filename in archive.namelist():
+                # ignore & log non-xml files
+                if not filename.lower().endswith(".xml"):
+                    logger.info(
+                        f"Ignoring non-xml file included in ALTO zipfile: {filename}"
+                    )
+                    continue
+                # if the file is .xml, attempt to open as an ALTO XML
+                with archive.open(filename) as xmlfile:
+                    # zipfile archive open returns a file-like object
+                    try:
+                        alto_xmlobj = xmlmap.load_xmlobject_from_file(
+                            xmlfile, AltoDocument
+                        )
+                    except etree.XMLSyntaxError as err:
+                        logger.warning(f"Skipping XML file {filename} : invalid XML")
+                        logger.debug("Invalid XML error", exc_info=err)
+                        continue
 
-        for member_name in self._alto_members:
-            logger.info("Processing ALTO XML file: %s", member_name)
-            yield from self._chunk_cache.get(member_name, [])
+                if not alto_xmlobj.is_alto():
+                    # TODO: add unit test for this case
+                    logger.warning(
+                        f"Skipping non-ALTO XML file {filename} (root element {alto_xmlobj.node.tag})"
+                    )
+                    continue
+
+                # TODO: patch in xml filename here
+                yield from alto_xmlobj.text_chunks
+                # TODO: where to report / how to check no content?
 
     def validate_archive(self) -> None:
         """
