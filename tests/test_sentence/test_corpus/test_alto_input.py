@@ -5,7 +5,12 @@ from zipfile import ZipFile
 import pytest
 from neuxml import xmlmap
 
-from remarx.sentence.corpus.alto_input import AltoDocument, ALTOInput, TextBlock
+from remarx.sentence.corpus.alto_input import (
+    AltoDocument,
+    ALTOInput,
+    TextBlock,
+    TextLine,
+)
 from remarx.sentence.corpus.base_input import FileInput, SectionType
 
 FIXTURE_DIR = pathlib.Path(__file__).parent / "fixtures"
@@ -26,11 +31,33 @@ def test_alto_document_is_alto():
     # sample page is alto
     altoxml = xmlmap.load_xmlobject_from_file(FIXTURE_ALTO_PAGE, AltoDocument)
     assert altoxml.is_alto()
-    # tei is not alto
+
+    # load tei fixture as alto document to check non-alto content
     teixml = xmlmap.load_xmlobject_from_file(
         FIXTURE_DIR / "sample_tei.xml", AltoDocument
     )
     assert not teixml.is_alto()
+
+
+def test_alto_textblock():
+    altoxml = xmlmap.load_xmlobject_from_file(FIXTURE_ALTO_PAGE, AltoDocument)
+    alto_textblock = altoxml.blocks[0]
+    assert alto_textblock.horizontal_position == 728.0
+    assert alto_textblock.vertical_position == 200.0
+    assert len(alto_textblock.lines) == 1
+    assert isinstance(alto_textblock.lines[0], TextLine)
+
+
+def test_alto_textline():
+    altoxml = xmlmap.load_xmlobject_from_file(FIXTURE_ALTO_PAGE, AltoDocument)
+    alto_textline = altoxml.blocks[0].lines[0]
+    assert alto_textline.horizontal_position == 868.0
+    assert alto_textline.vertical_position == 256.0
+    assert (
+        alto_textline.text_content
+        == "F. A. Sorge: Die Präsidentenwahl in den Vereinigten Staaten."
+    )
+    assert str(alto_textline) == alto_textline.text_content
 
 
 # test file input classes
