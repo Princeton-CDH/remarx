@@ -4,8 +4,10 @@ with the goal of creating a sentence corpus with associated metadata from ALTO.
 """
 
 import logging
+import pathlib
 from collections.abc import Generator
 from dataclasses import dataclass
+from functools import cached_property
 from typing import ClassVar
 from zipfile import ZipFile
 
@@ -59,7 +61,7 @@ class TextBlock(AltoBlock):
 
     lines = xmlmap.NodeListField("alto:TextLine", TextLine)
 
-    @property
+    @cached_property
     def sorted_lines(self) -> list[TextLine]:
         """
         Returns a list of TextLines for this block, sorted by vertical position.
@@ -83,6 +85,7 @@ class AltoDocument(AltoXmlObject):
     """
 
     blocks = xmlmap.NodeListField(".//alto:TextBlock", TextBlock)
+    lines = xmlmap.NodeListField(".//alto:TextLine", TextLine)
 
     def is_alto(self) -> bool:
         """
@@ -102,8 +105,20 @@ class AltoDocument(AltoXmlObject):
         Returns a list of TextBlocks for this page, sorted by vertical position.
         """
         # there's no guarantee that xml document order follows page order,
-        # so sort by @VPOS (may need further refinement for more complicated layouts)
-        return sorted(self.blocks, key=lambda block: block.vertical_position)
+        # so sort by @VPOS (may need further refinement for more complicated layouts).
+        # NOTE: in some cases, a textblock may not have a VPOS attribute;
+        # in that case, use the position for the first line
+        # (text block id = eSc_dummyblock_, but appears to have real content)
+        # if block has no line, sort text block last
+        if not self.blocks:
+            return []
+        return sorted(
+            self.blocks,
+            key=lambda block: block.vertical_position
+            or (
+                block.sorted_lines[0].vertical_position if block.lines else float("inf")
+            ),
+        )
 
     def text_chunks(self) -> Generator[dict[str, str]]:
         """
@@ -134,122 +149,50 @@ class ALTOInput(FileInput):
         Iterate over ALTO XML files contained in the zipfile and return
         a generator of text content.
         """
-        # TODO: we need to associate text content with the
-        # page file name within the archive, not the zipfile name
+        num_valid_files = 0
         with ZipFile(self.input_file) as archive:
-            # iterate over all files in the zipfile, in order
-            for filename in archive.namelist():
+            # iterate over all files in the zipfile; use infolist to get in order
+            for file_zipinfo in archive.infolist():
+                zip_filepath = file_zipinfo.filename
+                base_filename = pathlib.Path(zip_filepath).name
                 # ignore & log non-xml files
-                if not filename.lower().endswith(".xml"):
+                if not base_filename.lower().endswith(".xml"):
                     logger.info(
-                        f"Ignoring non-xml file included in ALTO zipfile: {filename}"
+                        f"Ignoring non-xml file included in ALTO zipfile: {zip_filepath}"
                     )
                     continue
                 # if the file is .xml, attempt to open as an ALTO XML
-                with archive.open(filename) as xmlfile:
+                with archive.open(zip_filepath) as xmlfile:
+                    logger.info(f"Processing XML file {zip_filepath}")
                     # zipfile archive open returns a file-like object
                     try:
                         alto_xmlobj = xmlmap.load_xmlobject_from_file(
                             xmlfile, AltoDocument
                         )
                     except etree.XMLSyntaxError as err:
-                        logger.warning(f"Skipping XML file {filename} : invalid XML")
-                        logger.debug("Invalid XML error", exc_info=err)
+                        logger.warning(f"Skipping {zip_filepath} : invalid XML")
+                        logger.debug(f"XML syntax error: {err}", exc_info=err)
                         continue
 
                 if not alto_xmlobj.is_alto():
                     # TODO: add unit test for this case
                     logger.warning(
-                        f"Skipping non-ALTO XML file {filename} (root element {alto_xmlobj.node.tag})"
+                        f"Skipping non-ALTO XML file {zip_filepath} (root element {alto_xmlobj.node.tag})"
                     )
                     continue
 
-                # TODO: patch in xml filename here
-                yield from alto_xmlobj.text_chunks
-                # TODO: where to report / how to check no content?
-
-    def validate_archive(self) -> None:
-        """
-        Validate the zipfile contents: every member must be an XML file, parse
-        cleanly, and declare an ALTO v4 root element. Caches the confirmed filenames
-        so later `get_text` calls can skip rescanning large zipfiles.
-        """
-
-        if self._validated:
-            return
-
-        member_filenames: list[str] = []
-        chunk_cache: dict[str, list[dict[str, str]]] = {}
-
-        with ZipFile(self.input_file) as archive:
-            # ALTO XML filenames discovered in the zipfile
-            for archive_filename in archive.namelist():
-                # ignore & log non-xml files
-                if not archive_filename.lower().endswith(".xml"):
-                    logger.info(
-                        "Ignoring non-xml file included in ALTO zipfile:  {archive_filename}"
-                    )
-                    continue
-
-                with archive.open(archive_filename) as xmlfile:
-                    try:
-                        alto_xmlobj = xmlmap.load_xmlobject_from_file(
-                            xmlfile, AltoDocument
-                        )
-                    except etree.XMLSyntaxError as err:
-                        logger.warning(
-                            "Skipping ALTO file %s : invalid XML",
-                            archive_filename,
-                        )
-                        logger.debug("Invalid XML error", exc_info=err)
-                        continue
-
-                if not alto_xmlobj.is_alto():
-                    # TODO: add unit test for this case
-                    logger.warning(
-                        "Skipping non-ALTO XML file %s (root element %s)",
-                        archive_filename,
-                        alto_xmlobj.node.tag,
-                    )
-                    continue
-
-                chunks = list(
-                    self._yield_text_for_document(alto_xmlobj, archive_filename)
+                num_valid_files += 1
+                # report total # blocks, lines for each file as processed
+                logger.info(
+                    f"{base_filename}: {len(alto_xmlobj.blocks)} blocks, {len(alto_xmlobj.lines)} lines"
                 )
-                member_filenames.append(archive_filename)
-                chunk_cache[archive_filename] = chunks
+                # use the xml file as filename here, rather than zipfile for all
+                for chunk in alto_xmlobj.text_chunks():
+                    yield chunk | {"file": base_filename}
 
-        if not member_filenames:
-            raise ValueError("ALTO zipfile does not contain any valid ALTO XML files")
+                # TODO: where to report / how to check no content?
+                # is this a real problem?
 
-        self._alto_members = sorted(member_filenames)
-        self._chunk_cache = chunk_cache
-        self._validated = True
-
-    def _yield_text_for_document(
-        self, alto_doc: AltoDocument, member_name: str
-    ) -> Generator[dict[str, str], None, None]:
-        """
-        Hook for future ALTO parsing.
-        """
-
-        def sort_key(block_or_line: AltoBlock) -> float:
-            horizontal_position = block_or_line.horizontal_position
-            return float("inf") if horizontal_position is None else horizontal_position
-
-        sorted_blocks = sorted(alto_doc.blocks, key=sort_key)
-
-        lines: list[str] = []
-        for block in sorted_blocks:
-            sorted_lines = sorted(block.lines, key=sort_key)
-            lines.extend(
-                line.text_content for line in sorted_lines if line.text_content
-            )
-
-        if not lines:
-            logger.warning("No text content found in ALTO XML file: %s", member_name)
-
-        yield {
-            "text": "\n".join(lines),
-            "section_type": SectionType.TEXT.value,
-        }
+        # error if no valid files were found
+        if num_valid_files == 0:
+            raise ValueError(f"No valid ALTO XML files found in {self.input_file}")

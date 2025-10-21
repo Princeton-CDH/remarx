@@ -1,5 +1,6 @@
 import logging
 import pathlib
+from collections import defaultdict
 from collections.abc import Generator
 from zipfile import ZipFile
 
@@ -120,12 +121,15 @@ def test_field_names():
     assert ALTOInput.field_names == (*FileInput.field_names, "section_type")
 
 
-@pytest.mark.skip
-def test_get_text_iterates_xml(caplog):
+def test_altoinput_get_text(caplog):
+    caplog.set_level(logging.INFO, logger="remarx.sentence.corpus.alto_input")
     alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
+    chunks = alto_input.get_text()
 
-    with caplog.at_level(logging.INFO, logger="remarx.sentence.corpus.alto_input"):
-        chunks = list(alto_input.get_text())
+    # confirm generator type, then convert to list to inspect results
+    assert isinstance(chunks, Generator)
+    chunks = list(chunks)
+    assert isinstance(chunks[0], dict)
 
     expected_files = [
         "1896-97a.pdf_page_1.xml",
@@ -137,21 +141,29 @@ def test_get_text_iterates_xml(caplog):
         "unsorted_page.xml",
     ]
 
-    assert alto_input._alto_members == sorted(expected_files)
-    assert len(chunks) == len(expected_files)
-    assert all(chunk["section_type"] == SectionType.TEXT.value for chunk in chunks)
+    # distinct filenames should match expected file list
+    chunks_by_filename = defaultdict(list)
+    for chunk in chunks:
+        chunks_by_filename[chunk["file"]].append(chunk)
 
-    archive_to_chunk = dict(zip(alto_input._alto_members, chunks, strict=False))
-    first_page_text = archive_to_chunk["1896-97a.pdf_page_1.xml"]["text"]
-    assert "Die Neue Zeit." in first_page_text  # codespell:ignore
-    assert "Arbeiter und Gewerbeausstellung." in first_page_text  # codespell:ignore
-    assert "\n" in first_page_text
+    assert set(chunks_by_filename.keys()) == set(expected_files)
+    # all sections are currently text
+    assert {chunk["section_type"] for chunk in chunks} == {SectionType.TEXT.value}
 
+    # inspect text results for a few cases
+    assert (
+        chunks_by_filename["1896-97a.pdf_page_3.xml"][0]["text"]
+        == "Arbeiter und Gewerbeausstellung."
+    )
+    assert chunks_by_filename["1896-97a.pdf_page_3.xml"][2]["text"].endswith(
+        "langsamer und deshalb auch viel häßlicher und viel widerlicher. Und wie die"
+    )
+
+    processing_prefix = "Processing XML file "
     processed_files = [
-        record.getMessage().removeprefix("Processing ALTO XML file: ").strip()
+        record.getMessage().removeprefix(processing_prefix)
         for record in caplog.records
-        if record.name == "remarx.sentence.corpus.alto_input"
-        and record.getMessage().startswith("Processing ALTO XML file: ")
+        if record.getMessage().startswith(processing_prefix)
     ]
     assert sorted(processed_files) == sorted(expected_files)
 
@@ -176,102 +188,95 @@ def test_validate_archive_success():
     )
 
 
+# is this a real problem?
 @pytest.mark.skip
-def test_validate_archive_warns_on_no_text(caplog):
+def test_altoinput_warn_no_text(caplog):
     alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
     with caplog.at_level(logging.WARNING, logger="remarx.sentence.corpus.alto_input"):
-        alto_input.validate_archive()
+        list(alto_input.get_text())
 
-    warning_messages = [
-        record.getMessage()
-        for record in caplog.records
-        if record.name == "remarx.sentence.corpus.alto_input"
-    ]
+    warning_messages = [record.getMessage() for record in caplog.records]
     assert any(
         message == "No text content found in ALTO XML file: empty_page.xml"
         for message in warning_messages
     )
+
     assert alto_input._chunk_cache["empty_page.xml"][0]["text"] == ""
 
 
-@pytest.mark.skip
-def test_validate_archive_rejects_non_xml(tmp_path: pathlib.Path):
+def test_altoinput_error_non_xml(tmp_path: pathlib.Path):
     archive_path = tmp_path / "invalid.zip"
     with ZipFile(archive_path, "w") as archive:
         archive.writestr("page1.txt", "not xml file")
 
     alto_input = ALTOInput(input_file=archive_path)
-    with pytest.raises(ValueError, match="does not contain any valid ALTO XML files"):
-        alto_input.validate_archive()
+    with pytest.raises(
+        ValueError, match=f"No valid ALTO XML files found in {archive_path}"
+    ):
+        list(alto_input.get_text())
 
 
-@pytest.mark.skip
-def test_validate_archive_rejects_non_alto_xml(tmp_path: pathlib.Path):
+def test_altoinput_error_non_alto_xml(tmp_path: pathlib.Path):
     archive_path = tmp_path / "not_alto.zip"
     with ZipFile(archive_path, "w") as archive:
         archive.writestr("page1.xml", "<root></root>")
 
     alto_input = ALTOInput(input_file=archive_path)
-    with pytest.raises(ValueError, match="does not contain any valid ALTO XML files"):
-        alto_input.validate_archive()
+    with pytest.raises(
+        ValueError, match=f"No valid ALTO XML files found in {archive_path}"
+    ):
+        list(alto_input.get_text())
 
 
-@pytest.mark.skip
-def test_validate_archive_rejects_unknown_namespace(tmp_path: pathlib.Path):
+def test_altoinput_error_non_alto_xml_unknown_namespace(tmp_path: pathlib.Path):
     archive_path = tmp_path / "unknown_ns.zip"
     xml_content = '<alto xmlns="http://unknown_namespace.com/alto/ns#"><Description></Description></alto>'
     with ZipFile(archive_path, "w") as archive:
         archive.writestr("page1.xml", xml_content)
 
     alto_input = ALTOInput(input_file=archive_path)
-    with pytest.raises(ValueError, match="does not contain any valid ALTO XML files"):
-        alto_input.validate_archive()
+    with pytest.raises(
+        ValueError, match=f"No valid ALTO XML files found in {archive_path}"
+    ):
+        list(alto_input.get_text())
 
 
-@pytest.mark.skip
-def test_validate_archive_logs_invalid_xml(tmp_path: pathlib.Path, caplog):
+def test_altoinput_warn_invalid_xml(tmp_path: pathlib.Path, caplog):
     archive_path = tmp_path / "invalid_xml.zip"
     with ZipFile(archive_path, "w") as archive:
         archive.writestr("page1.xml", "<alto>")
 
     alto_input = ALTOInput(input_file=archive_path)
-    with (
-        caplog.at_level(logging.WARNING, logger="remarx.sentence.corpus.alto_input"),
-        pytest.raises(ValueError, match="does not contain any valid ALTO XML files"),
+    caplog.set_level(logging.DEBUG, logger="remarx.sentence.corpus.alto_input")
+    with pytest.raises(
+        ValueError, match=f"No valid ALTO XML files found in {archive_path}"
     ):
-        alto_input.validate_archive()
+        list(alto_input.get_text())
 
-    warning_messages = [
-        record.getMessage()
-        for record in caplog.records
-        if record.name == "remarx.sentence.corpus.alto_input"
-    ]
-    assert any(
-        message == "Skipping ALTO file page1.xml : invalid XML"
-        for message in warning_messages
+    # expect one warning message (skipping the file) and one debug (xml syntax error)
+    warning_message = next(
+        rec.getMessage() for rec in caplog.records if rec.levelname == "WARNING"
     )
+    debug_message = next(
+        rec.getMessage() for rec in caplog.records if rec.levelname == "DEBUG"
+    )
+    assert warning_message == "Skipping page1.xml : invalid XML"
+    # debug message includes info about the syntax error
+    assert "XML syntax error" in debug_message
+    assert "Premature end of data in tag alto line 1" in debug_message
 
 
-def test_text_line_str_returns_text():
-    with (
-        ZipFile(FIXTURE_ALTO_ZIPFILE) as archive,
-        archive.open("1896-97a.pdf_page_1.xml") as xmlfile,
+def test_altoinput_error_empty_zip(tmp_path: pathlib.Path):
+    archive_path = tmp_path / "empty.zip"
+    # create an empty but valid zipfile
+    with ZipFile(archive_path, "w"):
+        pass
+
+    alto_input = ALTOInput(input_file=archive_path)
+    with pytest.raises(
+        ValueError, match=f"No valid ALTO XML files found in {archive_path}"
     ):
-        doc = xmlmap.load_xmlobject_from_file(xmlfile, AltoDocument)
-
-    first_line = doc.blocks[0].lines[0]
-    assert str(first_line) == first_line.text_content
-
-
-# def test_get_text_sorts_by_vpos():
-#     # Test chunk text for a single ALTO page is ordered by HPOS
-#     alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
-#     chunks = list(alto_input.get_text())
-
-#     archive_to_chunk = dict(zip(alto_input._alto_members, chunks, strict=False))
-#     unsorted_text = archive_to_chunk["unsorted_page.xml"]["text"]
-
-#     assert unsorted_text.splitlines() == ["First line", "Second line"]
+        list(alto_input.get_text())
 
 
 @pytest.mark.skip
@@ -304,14 +309,3 @@ def test_get_sentences_indexes_sequential(monkeypatch):
     assert sent_indexes == list(range(len(sent_indexes)))
     assert sentences[0]["sent_id"].endswith(":0")
     assert sentences[-1]["sent_index"] == len(sent_indexes) - 1
-
-
-@pytest.mark.skip
-def test_validate_archive_rejects_empty_zip(tmp_path: pathlib.Path):
-    archive_path = tmp_path / "empty.zip"
-    with ZipFile(archive_path, "w"):
-        pass
-
-    alto_input = ALTOInput(input_file=archive_path)
-    with pytest.raises(ValueError, match="does not contain any valid ALTO XML files"):
-        alto_input.validate_archive()
