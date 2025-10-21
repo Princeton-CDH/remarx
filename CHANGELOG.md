@@ -4,8 +4,9 @@
 
 ### Sentence corpus creation
 
-- Preliminary support for ALTO XML input as a zipfile of multiple pages
-- Refine ALTO ZIP handling: one-pass validation now skips non-ALTO files, warns on invalid pages, caches parsed text, and yields newline-joined page content for downstream segmentation
+- Support for ALTO XML input as a zipfile with multiple pages
+    - Skips non-ALTO files, logs warnings for invalid or empty xml
+    - Yields sentence corpora indexed across pages; ordering based on natural sort of filenames
 
 ## [0.2.0] - 2025-10-15
 
