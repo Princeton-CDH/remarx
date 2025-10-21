@@ -168,26 +168,6 @@ def test_altoinput_get_text(caplog):
     assert sorted(processed_files) == sorted(expected_files)
 
 
-@pytest.mark.skip
-def test_validate_archive_success():
-    alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
-    # Should not raise
-    alto_input.validate_archive()
-    # Second call should reuse cached validation flag without error
-    alto_input.validate_archive()
-    assert alto_input._alto_members == sorted(
-        [
-            "1896-97a.pdf_page_1.xml",
-            "1896-97a.pdf_page_2.xml",
-            "1896-97a.pdf_page_3.xml",
-            "1896-97a.pdf_page_4.xml",
-            "1896-97a.pdf_page_5.xml",
-            "empty_page.xml",
-            "unsorted_page.xml",
-        ]
-    )
-
-
 # is this a real problem?
 @pytest.mark.skip
 def test_altoinput_warn_no_text(caplog):

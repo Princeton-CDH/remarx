@@ -8,6 +8,7 @@ import pathlib
 from collections.abc import Generator
 from dataclasses import dataclass
 from functools import cached_property
+from timeit import default_timer as time
 from typing import ClassVar
 from zipfile import ZipFile
 
@@ -149,10 +150,14 @@ class ALTOInput(FileInput):
         Iterate over ALTO XML files contained in the zipfile and return
         a generator of text content.
         """
+        num_files = 0
         num_valid_files = 0
+
+        start = time()
         with ZipFile(self.input_file) as archive:
             # iterate over all files in the zipfile; use infolist to get in order
             for file_zipinfo in archive.infolist():
+                num_files += 1
                 zip_filepath = file_zipinfo.filename
                 base_filename = pathlib.Path(zip_filepath).name
                 # ignore & log non-xml files
@@ -183,7 +188,7 @@ class ALTOInput(FileInput):
 
                 num_valid_files += 1
                 # report total # blocks, lines for each file as processed
-                logger.info(
+                logger.debug(
                     f"{base_filename}: {len(alto_xmlobj.blocks)} blocks, {len(alto_xmlobj.lines)} lines"
                 )
                 # use the xml file as filename here, rather than zipfile for all
@@ -192,6 +197,11 @@ class ALTOInput(FileInput):
 
                 # TODO: where to report / how to check no content?
                 # is this a real problem?
+
+        elapsed_time = time() - start
+        logger.info(
+            f"Processed {self.filename_override} with {num_files} files ({num_valid_files} valid ALTO) in {elapsed_time:.1f} seconds"
+        )
 
         # error if no valid files were found
         if num_valid_files == 0:
