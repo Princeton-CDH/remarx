@@ -138,15 +138,22 @@ class TestTEIPage:
         assert "Fortgang der\nAccumulation" in body_text
         assert "derAccumulation" not in body_text
 
-    def test_get_body_text_line_number_with_inline_markup_after_lb(self):
+    def test_get_body_text_line_numbers_with_inline_markup(self):
         tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
         page_21 = next(p for p in tei_doc.pages if p.number == "21")
 
         body_text = page_21.get_body_text()
-        inline_start = body_text.index("Schiedensten Proportionen")
 
+        inline_start = body_text.index("Schiedensten Proportionen")
         assert body_text[:inline_start].endswith("\n")
         assert page_21.get_body_text_line_number(inline_start) == 31
+
+        assert "Dennoch bleibt sein\nTauschwerth" in body_text
+        second_block_start = body_text.index("Dennoch bleibt sein\nTauschwerth")
+        tauschwerth_idx = second_block_start + len("Dennoch bleibt sein\n")
+        assert page_21.get_body_text_line_number(tauschwerth_idx) == 34
+        unveraendert_idx = body_text.index("unverändert", tauschwerth_idx)
+        assert page_21.get_body_text_line_number(unveraendert_idx) == 34
 
     def test_get_footnote_text_with_footnotes(self):
         tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)

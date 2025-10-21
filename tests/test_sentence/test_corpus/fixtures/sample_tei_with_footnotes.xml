@@ -91,7 +91,7 @@
                     </ab>
                 </figure>
 
-                <!-- A example where we have multiple line breaks on the same line -->
+                <!-- An example where we have multiple line breaks on the same line -->
                 <pb n="21"/>
                 <p>
                     <lb n="27"/>Zur Vorbereitung auf die folgenden Abschnitte fasse ich den bisherigen Gang:
@@ -101,6 +101,15 @@
                 <p>
                     <lb n="31"/><hi rendition="i">Schiedensten Proportionen</hi> mit andern Artikeln aus.
                     <lb n="32"/>Ihr Tauschwerth bleibt unverändert, egal in welchen Kombinationen er erscheint.
+                </p>
+
+                <!-- Mixed inline/tail <lb/> tags example (continuing same page) -->
+                <p>
+                    <lb n="33"/>
+                    <hi rendition="i">Schiedensten Proportionen</hi> mit andern Artikeln aus. Dennoch bleibt sein
+                    <lb n="34"/>Tauschwerth <hi rendition="i">unverändert</hi>, ob in x Stiefelwichse, y Seide, z Gold u. s. w.
+                    <lb n="35"/>ausgedrückt. Er muß also von diesen seinen verschiedenen <hi rendition="i">Ausdrucks-
+                    <lb n="36"/>weisen</hi> unterscheidbar sein.
                 </p>
             </text>
         </group>
