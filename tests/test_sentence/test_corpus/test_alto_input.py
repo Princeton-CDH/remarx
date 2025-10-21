@@ -55,6 +55,10 @@ def test_alto_document_sorted_blocks():
     min_vpos = min(tb.vertical_position for tb in altoxml.blocks)
     assert altoxml.sorted_blocks[0].vertical_position == min_vpos
 
+    # sorted logic when no text blocks
+    empty_alto = xmlmap.load_xmlobject_from_string("<root/>", AltoDocument)
+    assert empty_alto.sorted_blocks == []
+
 
 def test_alto_document_text_chunks():
     altoxml = xmlmap.load_xmlobject_from_file(FIXTURE_ALTO_PAGE, AltoDocument)
