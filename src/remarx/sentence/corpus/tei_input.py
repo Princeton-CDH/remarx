@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from functools import cached_property
 from typing import Any, ClassVar, NamedTuple, Self
 
-from lxml.etree import XMLSyntaxError, _Element
+from lxml.etree import XMLSyntaxError, _Element, _ElementUnicodeResult
 from neuxml import xmlmap
 
 from remarx.sentence.corpus.base_input import FileInput, SectionType
@@ -125,6 +125,27 @@ class TEIPage(BaseTEIXmlObject):
             line_number = ln
         return line_number
 
+    @staticmethod
+    def find_associated_lb(text_node: _ElementUnicodeResult) -> _Element | None:
+        """
+        Find the closest preceding <lb> element for a given text node, if any.
+        Handles two tricky newline cases:
+        1. Back-to-back <lb/> tags on the same line.
+        2. Text immediately after an <lb/> nested inside inline markup.
+        """
+        parent = text_node.getparent()
+        if parent is None or not hasattr(parent, "tag"):
+            return None
+
+        # Iterate over the parent and all its ancestors to find the closest preceding <lb> element
+        for element in (parent, *parent.iterancestors()):
+            if getattr(element, "tag", None) == TEI_TAG.lb:
+                return element
+            for sibling in element.itersiblings(preceding=True):
+                if getattr(sibling, "tag", None) == TEI_TAG.lb:
+                    return sibling
+        return None
+
     def get_body_text(self) -> str:
         """
         Extract body text content for this page, excluding footnotes and editorial content.
@@ -133,6 +154,7 @@ class TEIPage(BaseTEIXmlObject):
         body_text_parts: list[str] = []
         self.line_number_by_offset: dict[int, int] = {}
         char_offset = 0
+        last_handled_lb: _Element | None = None
 
         for text in self.text_nodes:
             # text here is an lxml smart string, which preserves context
@@ -165,26 +187,22 @@ class TEIPage(BaseTEIXmlObject):
             if not body_text_parts:
                 cleaned_text = cleaned_text.lstrip()
 
-            is_line_break = parent.tag == TEI_TAG.lb
-
-            if is_line_break:
-                previous_text = body_text_parts[-1] if body_text_parts else ""
-                # If the current text is not empty, add a newline if the previous text is not a line break
+            lb_element = self.find_associated_lb(text)
+            if lb_element is not None and lb_element is not last_handled_lb:
                 if cleaned_text:
-                    if body_text_parts and not previous_text.endswith("\n"):
+                    if body_text_parts and not body_text_parts[-1].endswith("\n"):
                         cleaned_text = f"\n{cleaned_text}"
                 elif char_offset > 0:
                     # Preserve explicit blank lines introduced by <lb/> elements.
                     cleaned_text = "\n"
 
-            if not cleaned_text:
-                continue
-
-            # If the current text is a line break, add the line number to the offset
-            if is_line_break:
-                line_attr = parent.get("n")
+                line_attr = lb_element.get("n")
                 if line_attr is not None:
                     self.line_number_by_offset[char_offset] = int(line_attr)
+                last_handled_lb = lb_element
+
+            if not cleaned_text:
+                continue
 
             body_text_parts.append(cleaned_text)
             char_offset += len(cleaned_text)
