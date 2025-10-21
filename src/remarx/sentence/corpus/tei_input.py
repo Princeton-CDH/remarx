@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from functools import cached_property
 from typing import Any, ClassVar, NamedTuple, Self
 
-from lxml.etree import XMLSyntaxError, _Element, _ElementUnicodeResult
+from lxml.etree import XMLSyntaxError, _Element
 from neuxml import xmlmap
 
 from remarx.sentence.corpus.base_input import FileInput, SectionType
@@ -22,7 +22,7 @@ TEI_NAMESPACE = "http://www.tei-c.org/ns/1.0"
 # namespaced tags look like {http://www.tei-c.org/ns/1.0}tagname
 # create a named tuple of short tag name -> namespaced tag name
 TagNames: NamedTuple = namedtuple(
-    "TagNames", ("pb", "lb", "note", "add", "label", "ref", "div3")
+    "TagNames", ("pb", "lb", "note", "add", "label", "ref", "div3", "text", "p")
 )
 TEI_TAG = TagNames(**{tag: f"{{{TEI_NAMESPACE}}}{tag}" for tag in TagNames._fields})
 "Convenience access to namespaced TEI tag names"
@@ -126,25 +126,28 @@ class TEIPage(BaseTEIXmlObject):
         return line_number
 
     @staticmethod
-    def find_associated_lb(text_node: _ElementUnicodeResult) -> _Element | None:
+    def find_preceding_lb(element: _Element) -> _Element | None:
         """
-        Find the closest preceding <lb> element for a given text node, if any.
-        Handles two tricky newline cases:
-        1. Back-to-back <lb/> tags on the same line.
-        2. Text immediately after an <lb/> nested inside inline markup.
+        Find the closest preceding <lb> element for an element.
+        Needed to find the <lb/> relative to immediately following
+        inline markup, e.g. <lb n="31"/><hi>text ...</hi>
         """
-        parent = text_node.getparent()
-        if parent is None or not hasattr(parent, "tag"):
-            return None
 
-        # Iterate over the parent and all its ancestors to find the closest preceding <lb> element
-        for element in (parent, *parent.iterancestors()):
-            if getattr(element, "tag", None) == TEI_TAG.lb:
-                return element
-            for sibling in element.itersiblings(preceding=True):
-                if getattr(sibling, "tag", None) == TEI_TAG.lb:
-                    return sibling
-        return None
+        # First, iterate over preceding siblings;
+        # Limit to TEI nodes to avoid iterating over non-tag nodes like comments
+        for sibling in element.itersiblings(f"{{{TEI_NAMESPACE}}}*", preceding=True):
+            if sibling.tag == TEI_TAG.lb:
+                return sibling
+            # if we hit a preceding paragraph, stop iterating (beyond inline text)
+            if sibling.tag == TEI_TAG.p:
+                break
+
+        # if not found, try on the parent element
+        parent = element.getparent()
+        # if no parent, or hit a text element, we've gone too far; bail out
+        if parent is None or parent.tag == TEI_TAG.text:
+            return None
+        return TEIPage.find_preceding_lb(element.getparent())
 
     def get_body_text(self) -> str:
         """
@@ -154,7 +157,8 @@ class TEIPage(BaseTEIXmlObject):
         body_text_parts: list[str] = []
         self.line_number_by_offset: dict[int, int] = {}
         char_offset = 0
-        last_handled_lb: _Element | None = None
+
+        last_lb_el = None
 
         for text in self.text_nodes:
             # text here is an lxml smart string, which preserves context
@@ -178,8 +182,7 @@ class TEIPage(BaseTEIXmlObject):
                 # OR if text comes immediately after (is_tail) and is whitespace only
                 continue
 
-            raw_text = str(text)
-            cleaned_text = re.sub(r"\s*\n\s*", "\n", raw_text)
+            cleaned_text = re.sub(r"\s*\n\s*", "\n", str(text))
 
             # Use lstrip() to strip leading whitespace from the very first text fragment
             # before concatenation to avoid counting leading newlines toward `char_offset`,
@@ -187,19 +190,29 @@ class TEIPage(BaseTEIXmlObject):
             if not body_text_parts:
                 cleaned_text = cleaned_text.lstrip()
 
-            lb_element = self.find_associated_lb(text)
-            if lb_element is not None and lb_element is not last_handled_lb:
-                if cleaned_text:
-                    if body_text_parts and not body_text_parts[-1].endswith("\n"):
-                        cleaned_text = f"\n{cleaned_text}"
-                elif char_offset > 0:
-                    # Preserve explicit blank lines introduced by <lb/> elements.
-                    cleaned_text = "\n"
+            # check for line begin tag; could be direct parent
+            # but in cases where <lb> is immediately followed by inline markup,
+            # it may be skipped due to having no tail text
+            preceding_lb = None
+            if parent.tag == TEI_TAG.lb:
+                preceding_lb = parent
+            else:
+                preceding_lb = self.find_preceding_lb(parent)
 
-                line_attr = lb_element.get("n")
-                if line_attr is not None:
-                    self.line_number_by_offset[char_offset] = int(line_attr)
-                last_handled_lb = lb_element
+            if preceding_lb is not None and preceding_lb is not last_lb_el:
+                # store the line number and character offset
+                line_number = preceding_lb.get("n")
+                self.line_number_by_offset[char_offset] = (
+                    int(line_number) if line_number else None
+                )
+                # ensure text separated by <lb\> has a newline
+                # if there is a preceding text segment and it does not end
+                # with a newline, add one to the current text
+                if body_text_parts and not body_text_parts[-1].endswith("\n"):
+                    cleaned_text = f"\n{cleaned_text}"
+
+                # set this element as the last lb handled, so we don't duplicate
+                last_lb_el = preceding_lb
 
             if not cleaned_text:
                 continue
@@ -212,20 +225,11 @@ class TEIPage(BaseTEIXmlObject):
 
         return body_text
 
-    def get_individual_footnotes(self) -> Generator[tuple[str, int | None]]:
-        """
-        Get individual footnote content as a generator.
-        Yields tuples of (footnote_text, line_number) for each footnote.
-        Each yielded element corresponds to one complete footnote from the page.
-        """
-        for footnote in self.get_page_footnotes():
-            yield (footnote.text, footnote.line_number)
-
     def get_footnote_text(self) -> str:
         """
         Get all footnote content as a single string, with footnotes separated by double newlines.
         """
-        return "\n\n".join(text for text, _ in self.get_individual_footnotes())
+        return "\n\n".join(fn.text for fn in self.get_page_footnotes())
 
     def __str__(self) -> str:
         """
@@ -317,13 +321,13 @@ class TEIinput(FileInput):
                 }
 
             # Yield each footnote individually to enforce separate sentence segmentation
-            # so that separate footnotes cannot be combined into a single sentence by segmentation.
-            for footnote_text, line_number in page.get_individual_footnotes():
+            # so that separate footnotes cannot be combined into a single sentence
+            for footnote in page.get_page_footnotes():
                 yield {
-                    "text": footnote_text,
+                    "text": footnote.text,
                     "page_number": page.number,
                     "section_type": SectionType.FOOTNOTE.value,
-                    "line_number": line_number,
+                    "line_number": footnote.line_number,
                 }
 
     def get_extra_metadata(

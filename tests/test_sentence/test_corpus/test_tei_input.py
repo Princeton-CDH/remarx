@@ -187,11 +187,10 @@ class TestTEIPage:
         tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
         page_17 = next(p for p in tei_doc.pages if p.number == "17")
 
-        footnotes = list(page_17.get_individual_footnotes())
-        assert footnotes  # sanity check
-        # tuples of (text, line_number)
-        assert footnotes[0][1] == 17
-        assert footnotes[1][1] == 18
+        footnotes = list(page_17.get_page_footnotes())
+        # returns footnote xmlobject, which has a line number attribute
+        assert footnotes[0].line_number == 17
+        assert footnotes[1].line_number == 18
 
     def test_get_footnote_text_delimiter(self):
         # Test that footnotes are properly separated by double newlines
@@ -201,10 +200,7 @@ class TestTEIPage:
         footnote_text = page_17.get_footnote_text()
         # Check that double newlines are present between footnotes
         # The fixture should have multiple footnotes to test this properly
-        assert (
-            "\n\n" in footnote_text
-            or len(list(page_17.get_individual_footnotes())) <= 1
-        )
+        assert "\n\n" in footnote_text
 
     def test_is_footnote_content(self):
         # Test direct footnote elements
