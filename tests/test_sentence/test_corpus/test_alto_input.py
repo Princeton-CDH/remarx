@@ -2,6 +2,7 @@ import logging
 import pathlib
 from collections import defaultdict
 from collections.abc import Generator
+from unittest.mock import Mock, patch
 from zipfile import ZipFile
 
 import pytest
@@ -14,6 +15,7 @@ from remarx.sentence.corpus.alto_input import (
     TextLine,
 )
 from remarx.sentence.corpus.base_input import FileInput, SectionType
+from test_sentence.test_corpus.test_text_input import simple_segmenter
 
 FIXTURE_DIR = pathlib.Path(__file__).parent / "fixtures"
 FIXTURE_ALTO_ZIPFILE = FIXTURE_DIR / "alto_sample.zip"
@@ -167,9 +169,13 @@ def test_altoinput_get_text(caplog):
     ]
     assert sorted(processed_files) == sorted(expected_files)
 
+    # last log entry should report time to process, # of files
+    summary_log_message = caplog.records[-1].getMessage()
+    assert summary_log_message.startswith(
+        f"Processed {FIXTURE_ALTO_ZIPFILE.name} with 7 files (7 valid ALTO)"
+    )
 
-# is this a real problem?
-@pytest.mark.skip
+
 def test_altoinput_warn_no_text(caplog):
     alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
     with caplog.at_level(logging.WARNING, logger="remarx.sentence.corpus.alto_input"):
@@ -177,11 +183,9 @@ def test_altoinput_warn_no_text(caplog):
 
     warning_messages = [record.getMessage() for record in caplog.records]
     assert any(
-        message == "No text content found in ALTO XML file: empty_page.xml"
+        message == "No text lines found in ALTO XML file: empty_page.xml"
         for message in warning_messages
     )
-
-    assert alto_input._chunk_cache["empty_page.xml"][0]["text"] == ""
 
 
 def test_altoinput_error_non_xml(tmp_path: pathlib.Path):
@@ -191,7 +195,7 @@ def test_altoinput_error_non_xml(tmp_path: pathlib.Path):
 
     alto_input = ALTOInput(input_file=archive_path)
     with pytest.raises(
-        ValueError, match=f"No valid ALTO XML files found in {archive_path}"
+        ValueError, match=f"No valid ALTO XML files found in {archive_path.name}"
     ):
         list(alto_input.get_text())
 
@@ -203,7 +207,7 @@ def test_altoinput_error_non_alto_xml(tmp_path: pathlib.Path):
 
     alto_input = ALTOInput(input_file=archive_path)
     with pytest.raises(
-        ValueError, match=f"No valid ALTO XML files found in {archive_path}"
+        ValueError, match=f"No valid ALTO XML files found in {archive_path.name}"
     ):
         list(alto_input.get_text())
 
@@ -216,7 +220,7 @@ def test_altoinput_error_non_alto_xml_unknown_namespace(tmp_path: pathlib.Path):
 
     alto_input = ALTOInput(input_file=archive_path)
     with pytest.raises(
-        ValueError, match=f"No valid ALTO XML files found in {archive_path}"
+        ValueError, match=f"No valid ALTO XML files found in {archive_path.name}"
     ):
         list(alto_input.get_text())
 
@@ -229,7 +233,7 @@ def test_altoinput_warn_invalid_xml(tmp_path: pathlib.Path, caplog):
     alto_input = ALTOInput(input_file=archive_path)
     caplog.set_level(logging.DEBUG, logger="remarx.sentence.corpus.alto_input")
     with pytest.raises(
-        ValueError, match=f"No valid ALTO XML files found in {archive_path}"
+        ValueError, match=f"No valid ALTO XML files found in {archive_path.name}"
     ):
         list(alto_input.get_text())
 
@@ -254,38 +258,22 @@ def test_altoinput_error_empty_zip(tmp_path: pathlib.Path):
 
     alto_input = ALTOInput(input_file=archive_path)
     with pytest.raises(
-        ValueError, match=f"No valid ALTO XML files found in {archive_path}"
+        ValueError, match=f"No valid ALTO XML files found in {archive_path.name}"
     ):
         list(alto_input.get_text())
 
 
-@pytest.mark.skip
-def test_get_sentences_indexes_sequential(monkeypatch):
-    # Test cross-file sentence numbering also remains sequential once chunks
-    # are converted into sentences.
-    def simple_segmenter(text: str, language: str = "de"):
-        sentences = []
-        start_idx = 0
-        for part in text.splitlines():
-            part = part.strip()
-            if not part:
-                continue
-            sentences.append((start_idx, part))
-            start_idx += len(part) + 1
-        if not sentences and text.strip():
-            sentences.append((0, text.strip()))
-        return sentences
-
-    monkeypatch.setattr(
-        "remarx.sentence.corpus.base_input.segment_text",
-        simple_segmenter,
-        raising=True,
-    )
+@patch("remarx.sentence.corpus.base_input.segment_text")
+def test_get_sentences_sequntial(mock_segment_text: Mock):
+    # patch in simple segmenter to split each input text in two
+    mock_segment_text.side_effect = simple_segmenter
 
     alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
     sentences = list(alto_input.get_sentences())
+    num_sentences = len(sentences)
+    # currently with this fixture data and simple segmenter,  expect 40 sentences
+    assert num_sentences == 40
 
-    sent_indexes = [sentence["sent_index"] for sentence in sentences]
-    assert sent_indexes == list(range(len(sent_indexes)))
-    assert sentences[0]["sent_id"].endswith(":0")
-    assert sentences[-1]["sent_index"] == len(sent_indexes) - 1
+    # sentence indexes should start at 0 and continue across all sentences
+    indexes = [sentence["sent_index"] for sentence in sentences]
+    assert indexes == list(range(num_sentences))

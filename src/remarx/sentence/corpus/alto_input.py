@@ -191,18 +191,22 @@ class ALTOInput(FileInput):
                 logger.debug(
                     f"{base_filename}: {len(alto_xmlobj.blocks)} blocks, {len(alto_xmlobj.lines)} lines"
                 )
-                # use the xml file as filename here, rather than zipfile for all
+
+                # use the base xml file as filename here, rather than zipfile for all
                 for chunk in alto_xmlobj.text_chunks():
                     yield chunk | {"file": base_filename}
 
-                # TODO: where to report / how to check no content?
-                # is this a real problem?
+                # warn if a document has no lines
+                if len(alto_xmlobj.lines) == 0:
+                    logger.warning(
+                        f"No text lines found in ALTO XML file: {base_filename}"
+                    )
 
         elapsed_time = time() - start
         logger.info(
-            f"Processed {self.filename_override} with {num_files} files ({num_valid_files} valid ALTO) in {elapsed_time:.1f} seconds"
+            f"Processed {self.file_name} with {num_files} files ({num_valid_files} valid ALTO) in {elapsed_time:.1f} seconds"
         )
 
         # error if no valid files were found
         if num_valid_files == 0:
-            raise ValueError(f"No valid ALTO XML files found in {self.input_file}")
+            raise ValueError(f"No valid ALTO XML files found in {self.file_name}")
