@@ -251,6 +251,28 @@ class TestTEIPage:
         second_line_idx = body_text.index("Second line with an explicit line number.")
         assert page_20.get_body_text_line_number(second_line_idx) == 2
 
+    def test_find_preceding_lb(self):
+        tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
+        # use xpath to get known elements from fixture doc for testing
+        # all xpaths need tei namespace declared so we can use t: prefix
+        tei_ns = {"namespaces": TEIDocument.ROOT_NAMESPACES}
+
+        # lb 31 has an immediately preceding hi tag
+        linebegin31 = tei_doc.node.xpath('.//t:lb[@n="31"]', **tei_ns)[0]
+        inline_el = tei_doc.node.xpath(
+            './/t:hi[preceding-sibling::t:lb[@n="31"]]', **tei_ns
+        )[0]
+        assert TEIPage.find_preceding_lb(inline_el) == linebegin31
+        # test nested inline el
+        linebegin2 = tei_doc.node.xpath('.//t:lb[@n="2"]', **tei_ns)[0]
+        nested_inline_el = tei_doc.node.xpath(
+            './/t:ref[@target="fn1-1"]/t:hi', **tei_ns
+        )[0]
+        assert TEIPage.find_preceding_lb(nested_inline_el) == linebegin2
+        # no preceding lb should return none
+        pagebegin2 = tei_doc.node.xpath('.//t:pb[@n="17"]', **tei_ns)[0]
+        assert TEIPage.find_preceding_lb(pagebegin2) is None
+
 
 class TestTEIinput:
     def test_init(self):
