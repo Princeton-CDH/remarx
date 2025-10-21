@@ -35,6 +35,7 @@ dependencies = [
   "voyager>=2.1.0",
   "fastapi",
   "uvicorn",
+  "natsort>=8.4.0",
 ]
 
 [project.optional-dependencies]

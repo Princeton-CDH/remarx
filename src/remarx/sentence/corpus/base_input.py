@@ -90,23 +90,22 @@ class FileInput:
                 # for each sentence, yield text, filename, and sentence index
                 # with any other metadata included in chunk_info
 
-                # Get extra metadata from subclass hook if available
-                extra_metadata = self.get_extra_metadata(
-                    chunk_info, _char_idx, sentence
-                )
+                # character index is not included in output,
+                # but may be useful for sub-chunk metadata (e.g., line number)
 
-                result = (
-                    chunk_info
+                # specify input file name first;
+                # chunk-specific filename take precedence (e.g. alto file within zip)
+                yield (
+                    {"file": self.file_name}
+                    | chunk_info
                     | {
                         "text": sentence,
-                        "file": self.file_name,
                         "sent_index": sentence_index,
                         "sent_id": f"{self.file_name}:{sentence_index}",
                     }
-                    | extra_metadata
+                    # Include any extra metadata (subclass specific)
+                    | self.get_extra_metadata(chunk_info, _char_idx, sentence)
                 )
-
-                yield result
 
                 # increment sentence index
                 sentence_index += 1
