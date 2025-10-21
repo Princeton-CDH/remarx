@@ -73,6 +73,23 @@ def test_get_sentences(mock_text, mock_segment, tmp_path: pathlib.Path):
         }
 
 
+@patch("remarx.sentence.corpus.base_input.segment_text")
+@patch.object(FileInput, "get_text")
+def test_get_sentences_chunk_filename(mock_text, mock_segment, tmp_path: pathlib.Path):
+    mock_segment.side_effect = lambda x: [(0, x)]
+
+    mock_text.return_value = [
+        {"id": i, "text": f"s{i}", "file": f"page_{i}.txt"} for i in range(3)
+    ]
+    txt_file = tmp_path / "test.txt"
+    base_input = FileInput(input_file=txt_file)
+
+    results = list(base_input.get_sentences())
+    for i in range(3):
+        # chunk info filename should take precedence if specified
+        assert results[i]["file"] == f"page_{i}.txt"
+
+
 def test_create_txt(tmp_path: pathlib.Path):
     from remarx.sentence.corpus.text_input import TextInput
 

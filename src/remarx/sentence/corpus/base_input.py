@@ -82,12 +82,18 @@ class FileInput:
 
                 # character index is not included in output,
                 # but may be useful for sub-chunk metadata (e.g., line number)
-                yield chunk_info | {
-                    "text": sentence,
-                    "file": self.file_name,
-                    "sent_index": sentence_index,
-                    "sent_id": f"{self.file_name}:{sentence_index}",
-                }
+
+                # specify input file name first;
+                # chunk-specific filename take precedence (e.g. alto file within zip)
+                yield (
+                    {"file": self.file_name}
+                    | chunk_info
+                    | {
+                        "text": sentence,
+                        "sent_index": sentence_index,
+                        "sent_id": f"{self.file_name}:{sentence_index}",
+                    }
+                )
 
                 # increment sentence index
                 sentence_index += 1
