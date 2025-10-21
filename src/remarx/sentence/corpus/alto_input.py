@@ -9,12 +9,15 @@ from dataclasses import dataclass, field
 from typing import ClassVar
 from zipfile import ZipFile
 
-from lxml.etree import XMLSyntaxError
+from lxml import etree
 from neuxml import xmlmap
 
 from remarx.sentence.corpus.base_input import FileInput, SectionType
 
 logger = logging.getLogger(__name__)
+
+
+ALTO_NAMESPACE_V4: str = "http://www.loc.gov/standards/alto/ns-v4#"
 
 
 class AltoXmlObject(xmlmap.XmlObject):
@@ -23,9 +26,7 @@ class AltoXmlObject(xmlmap.XmlObject):
     """
 
     # alto namespace v4; we may eventually need to support other versions
-    ROOT_NAMESPACES: ClassVar[dict[str, str]] = {
-        "alto": "http://www.loc.gov/standards/alto/ns-v4#"
-    }
+    ROOT_NAMESPACES: ClassVar[dict[str, str]] = {"alto": ALTO_NAMESPACE_V4}
 
 
 class AltoBlock(AltoXmlObject):
@@ -65,6 +66,18 @@ class AltoDocument(AltoXmlObject):
     """
 
     blocks = xmlmap.NodeListField(".//alto:TextBlock", TextBlock)
+
+    def is_alto(self) -> bool:
+        """
+        Check if this is an ALTO-XML document, based on the root element
+        """
+        # parse with QName to access namespace and tag name without namespace
+        root_element = etree.QName(self.node.tag)
+        # both must match
+        return (
+            root_element.namespace == ALTO_NAMESPACE_V4
+            and root_element.localname == "alto"
+        )
 
 
 @dataclass
@@ -131,27 +144,20 @@ class ALTOInput(FileInput):
                         alto_xmlobj = xmlmap.load_xmlobject_from_file(
                             xmlfile, AltoDocument
                         )
-                    except XMLSyntaxError as err:
+                    except etree.XMLSyntaxError as err:
                         logger.warning(
-                            "Skipping ALTO zipfile member with invalid XML: %s",
+                            "Skipping ALTO file %s : invalid XML",
                             archive_filename,
                         )
                         logger.debug("Invalid XML error", exc_info=err)
                         continue
 
-                namespace, local_tag = self._split_tag(alto_xmlobj.node.tag)
-                if local_tag.lower() != "alto":
+                if not alto_xmlobj.is_alto():
+                    # TODO: add unit test for this case
                     logger.warning(
-                        "Skipping non-ALTO XML file in zip: %s (root tag %s)",
+                        "Skipping non-ALTO XML file %s (root element %s)",
                         archive_filename,
                         alto_xmlobj.node.tag,
-                    )
-                    continue
-                if namespace and namespace != self.ALTO_NAMESPACE:
-                    logger.warning(
-                        "Skipping ALTO XML file with unsupported namespace in %s: %s",
-                        archive_filename,
-                        namespace,
                     )
                     continue
 
@@ -195,13 +201,3 @@ class ALTOInput(FileInput):
             "text": "\n".join(lines),
             "section_type": SectionType.TEXT.value,
         }
-
-    @staticmethod
-    def _split_tag(tag: str) -> tuple[str | None, str]:
-        """
-        Split a potentially namespaced XML tag into (namespace, local_tag).
-        """
-        if tag.startswith("{"):
-            namespace, _, local = tag[1:].partition("}")
-            return namespace, local
-        return None, tag

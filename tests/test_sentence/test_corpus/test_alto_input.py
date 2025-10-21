@@ -1,30 +1,47 @@
 import logging
-import shutil
-from pathlib import Path
+import pathlib
 from zipfile import ZipFile
 
 import pytest
 from neuxml import xmlmap
 
-from remarx.sentence.corpus.alto_input import AltoDocument, ALTOInput
+from remarx.sentence.corpus.alto_input import AltoDocument, ALTOInput, TextBlock
 from remarx.sentence.corpus.base_input import FileInput, SectionType
 
+FIXTURE_DIR = pathlib.Path(__file__).parent / "fixtures"
+FIXTURE_ALTO_ZIPFILE = FIXTURE_DIR / "alto_sample.zip"
+FIXTURE_ALTO_PAGE = FIXTURE_DIR / "alto_page.xml"
 
-@pytest.fixture
-def alto_sample_zip(tmp_path: Path) -> Path:
-    fixtures_dir = Path(__file__).parent / "fixtures"
-    source_zip = fixtures_dir / "alto_sample.zip"
-    destination = tmp_path / source_zip.name
-    shutil.copy(source_zip, destination)
-    return destination
+# text xmlmap classes
+
+
+def test_alto_document():
+    altoxml = xmlmap.load_xmlobject_from_file(FIXTURE_ALTO_PAGE, AltoDocument)
+    # sample page has 4 text blocks
+    assert len(altoxml.blocks) == 4
+    assert isinstance(altoxml.blocks[0], TextBlock)
+
+
+def test_alto_document_is_alto():
+    # sample page is alto
+    altoxml = xmlmap.load_xmlobject_from_file(FIXTURE_ALTO_PAGE, AltoDocument)
+    assert altoxml.is_alto()
+    # tei is not alto
+    teixml = xmlmap.load_xmlobject_from_file(
+        FIXTURE_DIR / "sample_tei.xml", AltoDocument
+    )
+    assert not teixml.is_alto()
+
+
+# test file input classes
 
 
 def test_field_names():
     assert ALTOInput.field_names == (*FileInput.field_names, "section_type")
 
 
-def test_get_text_iterates_xml(alto_sample_zip, caplog):
-    alto_input = ALTOInput(input_file=alto_sample_zip)
+def test_get_text_iterates_xml(caplog):
+    alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
 
     with caplog.at_level(logging.INFO, logger="remarx.sentence.corpus.alto_input"):
         chunks = list(alto_input.get_text())
@@ -58,8 +75,8 @@ def test_get_text_iterates_xml(alto_sample_zip, caplog):
     assert sorted(processed_files) == sorted(expected_files)
 
 
-def test_validate_archive_success(alto_sample_zip):
-    alto_input = ALTOInput(input_file=alto_sample_zip)
+def test_validate_archive_success():
+    alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
     # Should not raise
     alto_input.validate_archive()
     # Second call should reuse cached validation flag without error
@@ -77,8 +94,8 @@ def test_validate_archive_success(alto_sample_zip):
     )
 
 
-def test_validate_archive_warns_on_no_text(alto_sample_zip, caplog):
-    alto_input = ALTOInput(input_file=alto_sample_zip)
+def test_validate_archive_warns_on_no_text(caplog):
+    alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
     with caplog.at_level(logging.WARNING, logger="remarx.sentence.corpus.alto_input"):
         alto_input.validate_archive()
 
@@ -94,7 +111,7 @@ def test_validate_archive_warns_on_no_text(alto_sample_zip, caplog):
     assert alto_input._chunk_cache["empty_page.xml"][0]["text"] == ""
 
 
-def test_validate_archive_rejects_non_xml(tmp_path: Path):
+def test_validate_archive_rejects_non_xml(tmp_path: pathlib.Path):
     archive_path = tmp_path / "invalid.zip"
     with ZipFile(archive_path, "w") as archive:
         archive.writestr("page1.txt", "not xml file")
@@ -104,7 +121,7 @@ def test_validate_archive_rejects_non_xml(tmp_path: Path):
         alto_input.validate_archive()
 
 
-def test_validate_archive_rejects_non_alto_xml(tmp_path: Path):
+def test_validate_archive_rejects_non_alto_xml(tmp_path: pathlib.Path):
     archive_path = tmp_path / "not_alto.zip"
     with ZipFile(archive_path, "w") as archive:
         archive.writestr("page1.xml", "<root></root>")
@@ -114,7 +131,7 @@ def test_validate_archive_rejects_non_alto_xml(tmp_path: Path):
         alto_input.validate_archive()
 
 
-def test_validate_archive_rejects_unknown_namespace(tmp_path: Path):
+def test_validate_archive_rejects_unknown_namespace(tmp_path: pathlib.Path):
     archive_path = tmp_path / "unknown_ns.zip"
     xml_content = '<alto xmlns="http://unknown_namespace.com/alto/ns#"><Description></Description></alto>'
     with ZipFile(archive_path, "w") as archive:
@@ -125,7 +142,7 @@ def test_validate_archive_rejects_unknown_namespace(tmp_path: Path):
         alto_input.validate_archive()
 
 
-def test_validate_archive_logs_invalid_xml(tmp_path: Path, caplog):
+def test_validate_archive_logs_invalid_xml(tmp_path: pathlib.Path, caplog):
     archive_path = tmp_path / "invalid_xml.zip"
     with ZipFile(archive_path, "w") as archive:
         archive.writestr("page1.xml", "<alto>")
@@ -143,14 +160,14 @@ def test_validate_archive_logs_invalid_xml(tmp_path: Path, caplog):
         if record.name == "remarx.sentence.corpus.alto_input"
     ]
     assert any(
-        message == "Skipping ALTO zipfile member with invalid XML: page1.xml"
+        message == "Skipping ALTO file page1.xml : invalid XML"
         for message in warning_messages
     )
 
 
-def test_text_line_str_returns_text(alto_sample_zip):
+def test_text_line_str_returns_text():
     with (
-        ZipFile(alto_sample_zip) as archive,
+        ZipFile(FIXTURE_ALTO_ZIPFILE) as archive,
         archive.open("1896-97a.pdf_page_1.xml") as xmlfile,
     ):
         doc = xmlmap.load_xmlobject_from_file(xmlfile, AltoDocument)
@@ -159,9 +176,9 @@ def test_text_line_str_returns_text(alto_sample_zip):
     assert str(first_line) == first_line.text_content
 
 
-def test_get_text_sorts_by_vpos(alto_sample_zip):
+def test_get_text_sorts_by_vpos():
     # Test chunk text for a single ALTO page is ordered by HPOS
-    alto_input = ALTOInput(input_file=alto_sample_zip)
+    alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
     chunks = list(alto_input.get_text())
 
     archive_to_chunk = dict(zip(alto_input._alto_members, chunks, strict=False))
@@ -170,7 +187,7 @@ def test_get_text_sorts_by_vpos(alto_sample_zip):
     assert unsorted_text.splitlines() == ["First line", "Second line"]
 
 
-def test_get_sentences_indexes_sequential(alto_sample_zip, monkeypatch):
+def test_get_sentences_indexes_sequential(monkeypatch):
     # Test cross-file sentence numbering also remains sequential once chunks
     # are converted into sentences.
     def simple_segmenter(text: str, language: str = "de"):
@@ -192,7 +209,7 @@ def test_get_sentences_indexes_sequential(alto_sample_zip, monkeypatch):
         raising=True,
     )
 
-    alto_input = ALTOInput(input_file=alto_sample_zip)
+    alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
     sentences = list(alto_input.get_sentences())
 
     sent_indexes = [sentence["sent_index"] for sentence in sentences]
@@ -201,7 +218,7 @@ def test_get_sentences_indexes_sequential(alto_sample_zip, monkeypatch):
     assert sentences[-1]["sent_index"] == len(sent_indexes) - 1
 
 
-def test_validate_archive_rejects_empty_zip(tmp_path: Path):
+def test_validate_archive_rejects_empty_zip(tmp_path: pathlib.Path):
     archive_path = tmp_path / "empty.zip"
     with ZipFile(archive_path, "w"):
         pass
