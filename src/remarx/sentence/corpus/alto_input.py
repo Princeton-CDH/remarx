@@ -174,9 +174,19 @@ class ALTOInput(FileInput):
         """
         Hook for future ALTO parsing.
         """
+
+        def sort_key(block_or_line: AltoBlock) -> float:
+            horizontal_position = block_or_line.horizontal_position
+            return float("inf") if horizontal_position is None else horizontal_position
+
+        sorted_blocks = sorted(alto_doc.blocks, key=sort_key)
+
         lines: list[str] = []
-        for block in alto_doc.blocks:
-            lines.extend(line.text_content for line in block.lines if line.text_content)
+        for block in sorted_blocks:
+            sorted_lines = sorted(block.lines, key=sort_key)
+            lines.extend(
+                line.text_content for line in sorted_lines if line.text_content
+            )
 
         if not lines:
             logger.warning("No text content found in ALTO XML file: %s", member_name)

@@ -36,6 +36,7 @@ def test_get_text_iterates_xml(alto_sample_zip, caplog):
         "1896-97a.pdf_page_4.xml",
         "1896-97a.pdf_page_5.xml",
         "empty_page.xml",
+        "unsorted_page.xml",
     ]
 
     assert alto_input._alto_members == sorted(expected_files)
@@ -71,6 +72,7 @@ def test_validate_archive_success(alto_sample_zip):
             "1896-97a.pdf_page_4.xml",
             "1896-97a.pdf_page_5.xml",
             "empty_page.xml",
+            "unsorted_page.xml",
         ]
     )
 
@@ -155,6 +157,48 @@ def test_text_line_str_returns_text(alto_sample_zip):
 
     first_line = doc.blocks[0].lines[0]
     assert str(first_line) == first_line.text_content
+
+
+def test_get_text_sorts_by_vpos(alto_sample_zip):
+    # Test chunk text for a single ALTO page is ordered by HPOS
+    alto_input = ALTOInput(input_file=alto_sample_zip)
+    chunks = list(alto_input.get_text())
+
+    archive_to_chunk = dict(zip(alto_input._alto_members, chunks, strict=False))
+    unsorted_text = archive_to_chunk["unsorted_page.xml"]["text"]
+
+    assert unsorted_text.splitlines() == ["First line", "Second line"]
+
+
+def test_get_sentences_indexes_sequential(alto_sample_zip, monkeypatch):
+    # Test cross-file sentence numbering also remains sequential once chunks
+    # are converted into sentences.
+    def simple_segmenter(text: str, language: str = "de"):
+        sentences = []
+        start_idx = 0
+        for part in text.splitlines():
+            part = part.strip()
+            if not part:
+                continue
+            sentences.append((start_idx, part))
+            start_idx += len(part) + 1
+        if not sentences and text.strip():
+            sentences.append((0, text.strip()))
+        return sentences
+
+    monkeypatch.setattr(
+        "remarx.sentence.corpus.base_input.segment_text",
+        simple_segmenter,
+        raising=True,
+    )
+
+    alto_input = ALTOInput(input_file=alto_sample_zip)
+    sentences = list(alto_input.get_sentences())
+
+    sent_indexes = [sentence["sent_index"] for sentence in sentences]
+    assert sent_indexes == list(range(len(sent_indexes)))
+    assert sentences[0]["sent_id"].endswith(":0")
+    assert sentences[-1]["sent_index"] == len(sent_indexes) - 1
 
 
 def test_validate_archive_rejects_empty_zip(tmp_path: Path):
