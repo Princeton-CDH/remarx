@@ -13,6 +13,7 @@ from typing import ClassVar
 from zipfile import ZipFile
 
 from lxml import etree
+from natsort import natsorted
 from neuxml import xmlmap
 
 from remarx.sentence.corpus.base_input import FileInput, SectionType
@@ -155,10 +156,10 @@ class ALTOInput(FileInput):
 
         start = time()
         with ZipFile(self.input_file) as archive:
-            # iterate over all files in the zipfile; use infolist to get in order
-            for file_zipinfo in archive.infolist():
+            # iterate over all files in the zipfile;
+            # use natural sorting to process in logical order
+            for zip_filepath in natsorted(archive.namelist()):
                 num_files += 1
-                zip_filepath = file_zipinfo.filename
                 base_filename = pathlib.Path(zip_filepath).name
                 # ignore & log non-xml files
                 if not base_filename.lower().endswith(".xml"):

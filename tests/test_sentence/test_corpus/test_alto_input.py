@@ -6,6 +6,7 @@ from unittest.mock import Mock, patch
 from zipfile import ZipFile
 
 import pytest
+from natsort import natsorted
 from neuxml import xmlmap
 
 from remarx.sentence.corpus.alto_input import (
@@ -167,7 +168,7 @@ def test_altoinput_get_text(caplog):
         for record in caplog.records
         if record.getMessage().startswith(processing_prefix)
     ]
-    assert sorted(processed_files) == sorted(expected_files)
+    assert processed_files == natsorted(expected_files)
 
     # last log entry should report time to process, # of files
     summary_log_message = caplog.records[-1].getMessage()
