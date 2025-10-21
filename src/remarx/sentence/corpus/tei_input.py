@@ -159,7 +159,9 @@ class TEIPage(BaseTEIXmlObject):
             raw_text = str(text)
             cleaned_text = re.sub(r"\s*\n\s*", "\n", raw_text)
 
-            # Strip leading whitespace only from the very first text fragment
+            # Use lstrip() to strip leading whitespace from the very first text fragment
+            # before concatenation to avoid counting leading newlines toward `char_offset`,
+            # skewing line lookups.
             if not body_text_parts:
                 cleaned_text = cleaned_text.lstrip()
 
