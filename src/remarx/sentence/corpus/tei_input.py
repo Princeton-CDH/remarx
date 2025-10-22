@@ -338,7 +338,7 @@ class TEIinput(FileInput):
 
         elapsed_time = time() - start
         logger.info(
-            f"Processed {self.file_name} with {len(self.xml_doc.pages)} in {elapsed_time:.1f} seconds"
+            f"Processed {self.file_name} with {len(self.xml_doc.pages)} pages in {elapsed_time:.1f} seconds"
         )
 
     def get_extra_metadata(
