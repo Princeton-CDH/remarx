@@ -4,6 +4,7 @@
 
 ### Sentence corpus creation
 
+- Sentence corpora generated from TEI now include line number field (`line_number`) based on line begin tag (`<lb>` n attribute
 - Support for ALTO XML input as a zipfile with multiple pages
     - Skips non-ALTO files, logs warnings for invalid or empty xml
     - Yields sentence corpora indexed across pages; ordering based on natural sort of filenames
