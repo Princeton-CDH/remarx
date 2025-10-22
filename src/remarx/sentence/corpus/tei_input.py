@@ -263,6 +263,11 @@ class TEIDocument(BaseTEIXmlObject):
         # it's more efficient to filter in python than in xpath
         return [page for page in self.all_pages if page.edition != "manuscript"]
 
+    @cached_property
+    def pages_by_number(self) -> dict[str, TEIPage]:
+        """Dictionary lookup of standard pages by page number."""
+        return {page.number: page for page in self.pages}
+
     @classmethod
     def init_from_file(cls, path: pathlib.Path) -> Self:
         """
@@ -317,7 +322,9 @@ class TEIinput(FileInput):
         """
         # yield body text and footnotes content chunked by page with page number
         start = time()
-        for page in self.xml_doc.pages:
+        for page in self.xml_doc.pages_by_number.values():
+            page_start = time()
+
             body_text = page.get_body_text()
             if body_text:
                 yield {
@@ -336,9 +343,14 @@ class TEIinput(FileInput):
                     "line_number": footnote.line_number,
                 }
 
+            page_elapsed_time = time() - page_start
+            logger.debug(
+                f"Processing page {page.number} in {page_elapsed_time:.2f} seconds"
+            )
+
         elapsed_time = time() - start
         logger.info(
-            f"Processed {self.file_name} with {len(self.xml_doc.pages)} in {elapsed_time:.1f} seconds"
+            f"Processed {self.file_name} with {len(self.xml_doc.pages)} pages in {elapsed_time:.1f} seconds"
         )
 
     def get_extra_metadata(
@@ -356,7 +368,7 @@ class TEIinput(FileInput):
 
         # Otherwise, calculate it for body text based on character position
         page_number = chunk_info["page_number"]
-        page = next((p for p in self.xml_doc.pages if p.number == page_number), None)
+        page = self.xml_doc.pages_by_number.get(page_number)
 
         if page:
             line_number = page.get_body_text_line_number(char_idx)

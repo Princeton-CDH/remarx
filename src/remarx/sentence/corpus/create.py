@@ -12,9 +12,12 @@ Example Usage:
 
 import argparse
 import csv
+import logging
 import pathlib
+import sys
 
 from remarx.sentence.corpus.base_input import FileInput
+from remarx.utils import configure_logging
 
 
 def create_corpus(
@@ -56,9 +59,19 @@ def main() -> None:
     parser.add_argument(
         "output_csv", type=pathlib.Path, help="Path to output sentence corpus (CSV)"
     )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Verbose output (debug logging)",
+        default=False,
+    )
 
     args = parser.parse_args()
 
+    log_level = logging.DEBUG if args.verbose else logging.INFO
+
+    configure_logging(sys.stdout, log_level=log_level)
     create_corpus(
         args.input_file,
         args.output_csv,

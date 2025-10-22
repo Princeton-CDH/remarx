@@ -1,4 +1,6 @@
+import logging
 import pathlib
+import sys
 from unittest.mock import Mock, patch
 
 import pytest
@@ -53,10 +55,18 @@ def test_create_corpus_filename_override(mock_file_input, tmp_path: pathlib.Path
     )
 
 
+@patch("remarx.sentence.corpus.create.configure_logging")
 @patch("remarx.sentence.corpus.create.create_corpus", spec=create_corpus)
-def test_main(mock_create_corpus):
+def test_main(mock_create_corpus, mock_config_logging):
     with patch("sys.argv", ["create_corpus.py", "input", "output"]):
         main()
         mock_create_corpus.assert_called_once_with(
             pathlib.Path("input"), pathlib.Path("output")
         )
+        mock_config_logging.assert_called_once_with(sys.stdout, log_level=logging.INFO)
+
+    mock_config_logging.reset_mock()
+    # test verbose arg
+    with patch("sys.argv", ["create_corpus.py", "input", "output", "-v"]):
+        main()
+        mock_config_logging.assert_called_once_with(sys.stdout, log_level=logging.DEBUG)
