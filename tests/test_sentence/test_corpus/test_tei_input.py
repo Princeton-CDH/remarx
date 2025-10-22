@@ -41,6 +41,14 @@ class TestTEIDocument:
         # for these pages, edition attribute is not present
         assert all(p.edition is None for p in tei_doc.pages)
 
+    def test_pages_by_number(self):
+        tei_doc = TEIDocument.init_from_file(TEST_TEI_FILE)
+        assert isinstance(tei_doc.pages_by_number, dict)
+        assert list(tei_doc.pages_by_number.values()) == tei_doc.pages
+        assert list(tei_doc.pages_by_number.keys()) == [p.number for p in tei_doc.pages]
+        first_page = tei_doc.pages[0]
+        assert tei_doc.pages_by_number[first_page.number] == first_page
+
 
 class TestTEIPage:
     def test_attributes(self):
