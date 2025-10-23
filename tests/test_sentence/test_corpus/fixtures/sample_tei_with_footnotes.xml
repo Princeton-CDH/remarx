@@ -87,7 +87,6 @@
                     <graphic url="facsimiles/sample-caption-page.jpg" mimeType="image/jpeg"/>
                     <ab type="caption">
                         <lb/>Erste Umschlagseite der Erstausgabe
-                        <lb n="2"/>Second line with an explicit line number.
                     </ab>
                 </figure>
 
