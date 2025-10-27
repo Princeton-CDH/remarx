@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 0.3.0
+## [0.3.0] - 2025-10-27
 
 ### Sentence corpus creation
 
@@ -70,3 +70,4 @@ _Initial release._
 
 [0.1.0]: https://github.com/Princeton-CDH/remarx/tree/0.1
 [0.2.0]: https://github.com/Princeton-CDH/remarx/tree/0.2
+[0.3.0]: https://github.com/Princeton-CDH/remarx/tree/0.3
