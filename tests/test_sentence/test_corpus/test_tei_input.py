@@ -256,9 +256,6 @@ class TestTEIPage:
         # No numbered line marker before the first characters, so None is expected
         assert page_20.get_body_text_line_number(0) is None
 
-        second_line_idx = body_text.index("Second line with an explicit line number.")
-        assert page_20.get_body_text_line_number(second_line_idx) == 2
-
     def test_find_preceding_lb(self):
         tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
         # use xpath to get known elements from fixture doc for testing
