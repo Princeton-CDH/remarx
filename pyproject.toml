@@ -35,6 +35,7 @@ dependencies = [
   "voyager>=2.1.0",
   "fastapi",
   "uvicorn",
+  "natsort>=8.4.0",
 ]
 
 [project.optional-dependencies]
@@ -81,6 +82,11 @@ omit = [
 
 [tool.coverage.report]
 show_missing = true   # Helpful for debugging
+exclude_lines = [
+    "# pragma: no cover",
+    # skip command-line configuration for main method on scripts
+    "if __name__ == .__main__.:"
+]
 
 [tool.coverage.html]
 directory = "coverage_html_report"

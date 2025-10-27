@@ -60,6 +60,16 @@ class FileInput:
         """
         raise NotImplementedError
 
+    def get_extra_metadata(
+        self, chunk_info: dict[str, Any], _char_idx: int, sentence: str
+    ) -> dict[str, Any]:
+        """
+        Hook method for subclasses to override to provide extra metadata for a sentence (e.g. line number).
+
+        :returns: Dictionary of additional metadata fields to include, or empty dict
+        """
+        return {}
+
     def get_sentences(self) -> Generator[dict[str, Any]]:
         """
         Get sentences for this file, with associated metadata.
@@ -82,12 +92,20 @@ class FileInput:
 
                 # character index is not included in output,
                 # but may be useful for sub-chunk metadata (e.g., line number)
-                yield chunk_info | {
-                    "text": sentence,
-                    "file": self.file_name,
-                    "sent_index": sentence_index,
-                    "sent_id": f"{self.file_name}:{sentence_index}",
-                }
+
+                # specify input file name first;
+                # chunk-specific filename take precedence (e.g. alto file within zip)
+                yield (
+                    {"file": self.file_name}
+                    | chunk_info
+                    | {
+                        "text": sentence,
+                        "sent_index": sentence_index,
+                        "sent_id": f"{self.file_name}:{sentence_index}",
+                    }
+                    # Include any extra metadata (subclass specific)
+                    | self.get_extra_metadata(chunk_info, _char_idx, sentence)
+                )
 
                 # increment sentence index
                 sentence_index += 1

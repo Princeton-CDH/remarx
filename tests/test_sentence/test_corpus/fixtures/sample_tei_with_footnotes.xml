@@ -80,6 +80,43 @@
                     <label type="footnote">
                         <hi rendition="sup">5</hi>)</label> Erste Anmerkung auf Seite 19.
                 </note>
+
+                <!-- A real example from Das Kapital where <lb/> tag has no line number -->
+                <pb n="20"/>
+                <figure type="facsimile">
+                    <graphic url="facsimiles/sample-caption-page.jpg" mimeType="image/jpeg"/>
+                    <ab type="caption">
+                        <lb/>Erste Umschlagseite der Erstausgabe
+                    </ab>
+                </figure>
+
+                <!-- An example where we have multiple line breaks on the same line -->
+                <pb n="21"/>
+                <p>
+                    <lb n="27"/>Zur Vorbereitung auf die folgenden Abschnitte fasse ich den bisherigen Gang:
+                    <lb n="28"/>Das bisher Entwickelte gilt unter der Voraussetzung, daß im Fortgang der<lb n="29"/>Accumulation <hi rendition="i">das Verhältniß zwischen der Masse der Produktionsmittel und</hi>
+                    <lb n="30"/>der Beschäftigten stets neu austariert werden muß.
+                </p>
+                <p>
+                    <lb n="31"/><hi rendition="i">Schiedensten Proportionen</hi> mit andern Artikeln aus.
+                    <lb n="32"/>Ihr Tauschwerth bleibt unverändert, egal in welchen Kombinationen er erscheint.
+                </p>
+
+                <!-- Mixed inline/tail <lb/> tags example (continuing same page) -->
+                <p>
+                    <lb n="33"/>
+                    <hi rendition="i">Schiedensten Proportionen</hi> mit andern Artikeln aus. Dennoch bleibt sein
+                    <lb n="34"/>Tauschwerth <hi rendition="i">unverändert</hi>, ob in x Stiefelwichse, y Seide, z Gold u. s. w.
+                    <lb n="35"/>ausgedrückt. Er muß also von diesen seinen verschiedenen <hi rendition="i">Ausdrucks-
+                    <lb n="36"/>weisen</hi> unterscheidbar sein.
+                </p>
+                <p>
+                    <lb n="37"/><lb n="38"/>
+                    <lb n="39"/>Leerzeile als separates Beispiel.
+                </p>
+
+                <pb n="22"/>
+                <p>Eine Seite ohne markierte Zeilenumbrüche.</p>
             </text>
         </group>
     </text>

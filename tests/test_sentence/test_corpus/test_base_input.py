@@ -11,7 +11,7 @@ def test_subclasses():
     subclass_names = [cls.__name__ for cls in FileInput.subclasses()]
     # NOTE: that we use names here rather than importing, to
     # confirm subclasses are found without a direct import
-    for input_cls_name in ["TextInput", "TEIinput"]:
+    for input_cls_name in ["TextInput", "TEIinput", "ALTOInput"]:
         assert input_cls_name in subclass_names
 
 
@@ -42,7 +42,7 @@ def test_field_names(tmp_path: pathlib.Path):
 def test_supported_types():
     # check for expected supported types
     # NOTE: checking directly to avoid importing input classes
-    assert set(FileInput.supported_types()) == {".txt", ".xml"}
+    assert set(FileInput.supported_types()) == {".txt", ".xml", ".zip"}
 
 
 def test_get_text(tmp_path: pathlib.Path):
@@ -71,6 +71,23 @@ def test_get_sentences(mock_text, mock_segment, tmp_path: pathlib.Path):
             "sent_index": i,
             "sent_id": f"test.txt:{i}",
         }
+
+
+@patch("remarx.sentence.corpus.base_input.segment_text")
+@patch.object(FileInput, "get_text")
+def test_get_sentences_chunk_filename(mock_text, mock_segment, tmp_path: pathlib.Path):
+    mock_segment.side_effect = lambda x: [(0, x)]
+
+    mock_text.return_value = [
+        {"id": i, "text": f"s{i}", "file": f"page_{i}.txt"} for i in range(3)
+    ]
+    txt_file = tmp_path / "test.txt"
+    base_input = FileInput(input_file=txt_file)
+
+    results = list(base_input.get_sentences())
+    for i in range(3):
+        # chunk info filename should take precedence if specified
+        assert results[i]["file"] == f"page_{i}.txt"
 
 
 def test_create_txt(tmp_path: pathlib.Path):
@@ -113,10 +130,19 @@ def test_create_tei(mock_tei_doc, tmp_path: pathlib.Path):
     mock_tei_doc.init_from_file.assert_called_with(xml_input_file)
 
 
+def test_create_alto(tmp_path: pathlib.Path):
+    from remarx.sentence.corpus.alto_input import ALTOInput
+
+    zip_input_file = tmp_path / "input.zip"
+    zip_input_file.touch()
+    zip_input = FileInput.create(input_file=zip_input_file)
+    assert isinstance(zip_input, ALTOInput)
+
+
 def test_create_unsupported(tmp_path: pathlib.Path):
     test_file = tmp_path / "input.test"
     with pytest.raises(
         ValueError,
-        match="\\.test is not a supported input type \\(must be one of \\.txt, \\.xml\\)",
+        match="\\.test is not a supported input type \\(must be one of \\.txt, \\.xml, \\.zip\\)",
     ):
         FileInput.create(input_file=test_file)

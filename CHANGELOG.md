@@ -1,6 +1,16 @@
 # CHANGELOG
 
-## 0.2.0
+## 0.3.0
+
+### Sentence corpus creation
+
+- Sentence corpora generated from TEI now include line number field (`line_number`) based on line begin tag (`<lb>` n attribute)
+- Support for ALTO XML input as a zipfile with multiple pages
+    - Skips non-ALTO files, logs warnings for invalid or empty xml
+    - Yields sentence corpora indexed across pages; ordering based on natural sort of filenames
+- Improved logging output for `remarx-create-corpus` script, with optional verbose mode
+
+## [0.2.0] - 2025-10-15
 
 ### Application
 
@@ -59,3 +69,4 @@ _Initial release._
 - Add GitHub Actions workflow to build and publish python package on PyPI when a new GitHub release created
 
 [0.1.0]: https://github.com/Princeton-CDH/remarx/tree/0.1
+[0.2.0]: https://github.com/Princeton-CDH/remarx/tree/0.2
