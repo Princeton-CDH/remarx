@@ -4,18 +4,22 @@ goal of creating a sentence corpora with associated metadata
 from the TEI.
 """
 
+import logging
 import pathlib
 import re
 from collections import namedtuple
 from collections.abc import Generator
 from dataclasses import dataclass, field
 from functools import cached_property
+from timeit import default_timer as time
 from typing import ClassVar, NamedTuple, Self
 
 from lxml.etree import XMLSyntaxError, _Element
 from neuxml import xmlmap
 
 from remarx.sentence.corpus.base_input import FileInput, SectionType
+
+logger = logging.getLogger(__name__)
 
 TEI_NAMESPACE = "http://www.tei-c.org/ns/1.0"
 
@@ -225,6 +229,7 @@ class TEIinput(FileInput):
         :returns: Generator with dictionaries of text content, with page number and section_type ("text" or "footnote").
         """
         # yield body text and footnotes content chunked by page with page number
+        start = time()
         for page in self.xml_doc.pages:
             body_text = page.get_body_text()
             if body_text:
@@ -242,3 +247,7 @@ class TEIinput(FileInput):
                     "page_number": page.number,
                     "section_type": SectionType.FOOTNOTE.value,
                 }
+        elapsed_time = time() - start
+        logger.info(
+            f"Processed {self.file_name} with {len(self.xml_doc.pages)} pages in {elapsed_time:.1f} seconds"
+        )
