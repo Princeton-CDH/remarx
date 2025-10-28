@@ -1,0 +1,10 @@
+remaex_version,notes,machine,interface,dataset,format,scope,duration_seconds,duration_minutes
+0.3,Tested on rc1,Rebecca,Marimo(?),DNZ 1896-97a,ALTO XML,836 files (835 valid),155.6,2.59
+0.3,Tested on rc1,Hao,Marimo,DNZ 1896-97a,ALTO XML,836 files (835 valid),157.5,2.63
+0.3,Marimo baseline before dictionary lookup for TEI,Hao,Marimo,Das Kapital vol. 1,MEGA/TEI XML,655 pages,223.2,3.72
+0.3,CLI baseline before dictionary lookup for TEI,Hao,Command Line,Das Kapital vol. 1,MEGA/TEI XML,655 pages,220,3.67
+0.3,CLI after dictionary lookup improvement for TEI,Hao,Command Line,Das Kapital vol. 1,MEGA/TEI XML,655 pages,207.4,3.46
+0.3,Tested on rc1,Ed,Marimo,DNZ 1896-97a,ALTO XML,836 files (835 valid),141,2.35
+0.3,Tested on rc1,Ed,Marimo,Das Kapital vol. 1,MEGA/TEI XML,655 pages,230.3,3.84
+0.3,Tested on rc1,Ben,Marimo,DNZ 1896-97a,ALTO XML,1674 files (835 valid),156,2.6
+0.3,Tested on rc1,Ben,Marimo,Das Kapital vol. 1,MEGA/TEI XML,655 pages,314.6,5.24
