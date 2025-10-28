@@ -33,6 +33,17 @@ class AltoXmlObject(xmlmap.XmlObject):
     ROOT_NAMESPACES: ClassVar[dict[str, str]] = {"alto": ALTO_NAMESPACE_V4}
 
 
+class AltoTag(AltoXmlObject):
+    """
+    Class to for Alto tags. Used to map tag id to tag label.
+    """
+
+    id = xmlmap.StringField("@ID")
+    "tag id (`@ID` attribute)"
+    label = xmlmap.StringField("@LABEL")
+    "tag label (`@LABEL` attribute)"
+
+
 class AltoBlock(AltoXmlObject):
     """
     Base class for an ALTO element with position information.
@@ -62,6 +73,7 @@ class TextBlock(AltoBlock):
     """
 
     lines = xmlmap.NodeListField("alto:TextLine", TextLine)
+    tag_id = xmlmap.StringField("@TAGREFS")
 
     @cached_property
     def sorted_lines(self) -> list[TextLine]:
@@ -88,6 +100,7 @@ class AltoDocument(AltoXmlObject):
 
     blocks = xmlmap.NodeListField(".//alto:TextBlock", TextBlock)
     lines = xmlmap.NodeListField(".//alto:TextLine", TextLine)
+    _tags = xmlmap.NodeListField("alto:Tags/alto:OtherTag", AltoTag)
 
     def is_alto(self) -> bool:
         """
@@ -100,6 +113,13 @@ class AltoDocument(AltoXmlObject):
             root_element.namespace == ALTO_NAMESPACE_V4
             and root_element.localname == "alto"
         )
+
+    @cached_property
+    def tags(self) -> dict[str, str]:
+        """
+        Dictionary of block-level tags; key is id, value is label.
+        """
+        return {tag.id: tag.label for tag in self._tags}
 
     @property
     def sorted_blocks(self) -> list[TextBlock]:
@@ -130,7 +150,9 @@ class AltoDocument(AltoXmlObject):
         # yield by block, since in future we may set section type
         # based on block-level semantic tagging
         for block in self.sorted_blocks:
-            yield {"text": block.text_content, "section_type": SectionType.TEXT.value}
+            # use tag for section type, if set; if unset, assume text
+            section = self.tags.get(block.tag_id) or SectionType.TEXT.value
+            yield {"text": block.text_content, "section_type": section}
 
 
 @dataclass

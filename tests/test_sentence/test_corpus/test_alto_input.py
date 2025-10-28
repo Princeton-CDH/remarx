@@ -12,10 +12,11 @@ from neuxml import xmlmap
 from remarx.sentence.corpus.alto_input import (
     AltoDocument,
     ALTOInput,
+    AltoTag,
     TextBlock,
     TextLine,
 )
-from remarx.sentence.corpus.base_input import FileInput, SectionType
+from remarx.sentence.corpus.base_input import FileInput
 from test_sentence.test_corpus.test_text_input import simple_segmenter
 
 FIXTURE_DIR = pathlib.Path(__file__).parent / "fixtures"
@@ -71,8 +72,42 @@ def test_alto_document_text_chunks():
     # should be one dict per text block
     assert len(chunks) == len(altoxml.blocks)
     assert chunks[0]["text"] == altoxml.sorted_blocks[0].text_content
-    # for now, everything is text
-    assert chunks[0]["section_type"] == SectionType.TEXT.value
+    # section type is based on block tag labels in the alto
+    assert [c["section_type"] for c in chunks] == [
+        "Header",
+        "page number",
+        "text",
+        "footnote",
+    ]
+
+
+def test_alto_document_tags():
+    altoxml = xmlmap.load_xmlobject_from_file(FIXTURE_ALTO_PAGE, AltoDocument)
+    # xmlobject list mapped to _tags
+    assert isinstance(altoxml._tags[0], AltoTag)
+    # dict property at named tags
+    assert isinstance(altoxml.tags, dict)
+
+    # fixture page has 13 tags
+    assert len(altoxml.tags) == 13
+    assert list(altoxml.tags.values()) == [
+        "Title",
+        "Main",
+        "Commentary",
+        "Illustration",
+        "text",
+        "Issue details",
+        "Header",
+        "page number",
+        "section title",
+        "Table",
+        "footnote",
+        "author",
+        "default",
+    ]
+    # lookup tag label by id
+    assert altoxml.tags["BT1"] == "Title"
+    assert altoxml.tags["BT255"] == "footnote"
 
 
 def test_alto_textblock():
@@ -154,8 +189,11 @@ def test_altoinput_get_text(caplog):
         chunks_by_filename[chunk["file"]].append(chunk)
 
     assert set(chunks_by_filename.keys()) == set(expected_files)
-    # all sections are currently text
-    assert {chunk["section_type"] for chunk in chunks} == {SectionType.TEXT.value}
+
+    # check block tag section types for one file
+    assert [
+        chunk["section_type"] for chunk in chunks_by_filename["1896-97a.pdf_page_1.xml"]
+    ] == ["Issue details", "Title", "text"]
 
     # inspect text results for a few cases
     assert (
