@@ -142,7 +142,7 @@ class AltoDocument(AltoXmlObject):
             ),
         )
 
-    def text_chunks(self) -> Generator[dict[str, str]]:
+    def text_chunks(self, include: set[str] | None = None) -> Generator[dict[str, str]]:
         """
         Returns a generator of a dictionary of text content and section type,
         one dictionary per text block on the page.
@@ -152,6 +152,10 @@ class AltoDocument(AltoXmlObject):
         for block in self.sorted_blocks:
             # use tag for section type, if set; if unset, assume text
             section = self.tags.get(block.tag_id) or SectionType.TEXT.value
+            # if include list is specified and section is not in it, skip;
+            # currently includes if section type is unset
+            if include is not None and section is not None and section not in include:
+                continue
             yield {"text": block.text_content, "section_type": section}
 
 
@@ -167,6 +171,13 @@ class ALTOInput(FileInput):
 
     file_type: ClassVar[str] = ".zip"
     "Supported file extension for ALTO zipfiles (.zip)"
+
+    default_include: ClassVar[set[str]] = {"text", "footnote"}
+    "Default content sections to include"
+
+    filter_sections: bool = True
+    "Whether to filter text sections by block type"
+    # do we need a way to specify custom includes?
 
     def get_text(self) -> Generator[dict[str, str], None, None]:
         """
@@ -215,8 +226,12 @@ class ALTOInput(FileInput):
                     f"{base_filename}: {len(alto_xmlobj.blocks)} blocks, {len(alto_xmlobj.lines)} lines"
                 )
 
-                # use the base xml file as filename here, rather than zipfile for all
-                for chunk in alto_xmlobj.text_chunks():
+                # filter by section type when configured to do so
+                text_kwargs = {}
+                if self.filter_sections:
+                    text_kwargs["include"] = self.default_include
+                for chunk in alto_xmlobj.text_chunks(**text_kwargs):
+                    # use the base xml file as filename here, rather than zipfile for all
                     yield chunk | {"file": base_filename}
 
                 # warn if a document has no lines
