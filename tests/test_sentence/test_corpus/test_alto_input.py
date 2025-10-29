@@ -12,10 +12,11 @@ from neuxml import xmlmap
 from remarx.sentence.corpus.alto_input import (
     AltoDocument,
     ALTOInput,
+    AltoTag,
     TextBlock,
     TextLine,
 )
-from remarx.sentence.corpus.base_input import FileInput, SectionType
+from remarx.sentence.corpus.base_input import FileInput
 from test_sentence.test_corpus.test_text_input import simple_segmenter
 
 FIXTURE_DIR = pathlib.Path(__file__).parent / "fixtures"
@@ -71,8 +72,53 @@ def test_alto_document_text_chunks():
     # should be one dict per text block
     assert len(chunks) == len(altoxml.blocks)
     assert chunks[0]["text"] == altoxml.sorted_blocks[0].text_content
-    # for now, everything is text
-    assert chunks[0]["section_type"] == SectionType.TEXT.value
+    # section type is based on block tag labels in the alto
+    assert [c["section_type"] for c in chunks] == [
+        "Header",
+        "page number",
+        "text",
+        "footnote",
+    ]
+
+    # optionally filter by type/block tag
+    content_chunks = list(altoxml.text_chunks(include={"text", "footnote"}))
+    assert len(content_chunks) == 2
+    assert content_chunks[0]["section_type"] == "text"
+    assert content_chunks[1]["section_type"] == "footnote"
+
+    # ignores irrelevant tag
+    other_chunks = list(altoxml.text_chunks(include={"Header", "foo"}))
+    assert len(other_chunks) == 1
+    assert other_chunks[0]["section_type"] == "Header"
+
+
+def test_alto_document_tags():
+    altoxml = xmlmap.load_xmlobject_from_file(FIXTURE_ALTO_PAGE, AltoDocument)
+    # xmlobject list mapped to _tags
+    assert isinstance(altoxml._tags[0], AltoTag)
+    # dict property at named tags
+    assert isinstance(altoxml.tags, dict)
+
+    # fixture page has 13 tags
+    assert len(altoxml.tags) == 13
+    assert list(altoxml.tags.values()) == [
+        "Title",
+        "Main",
+        "Commentary",
+        "Illustration",
+        "text",
+        "Issue details",
+        "Header",
+        "page number",
+        "section title",
+        "Table",
+        "footnote",
+        "author",
+        "default",
+    ]
+    # lookup tag label by id
+    assert altoxml.tags["BT1"] == "Title"
+    assert altoxml.tags["BT255"] == "footnote"
 
 
 def test_alto_textblock():
@@ -130,7 +176,8 @@ def test_field_names():
 
 def test_altoinput_get_text(caplog):
     caplog.set_level(logging.INFO, logger="remarx.sentence.corpus.alto_input")
-    alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
+    # don't filter out by section label, for initial test
+    alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE, filter_sections=False)
     chunks = alto_input.get_text()
 
     # confirm generator type, then convert to list to inspect results
@@ -154,8 +201,11 @@ def test_altoinput_get_text(caplog):
         chunks_by_filename[chunk["file"]].append(chunk)
 
     assert set(chunks_by_filename.keys()) == set(expected_files)
-    # all sections are currently text
-    assert {chunk["section_type"] for chunk in chunks} == {SectionType.TEXT.value}
+
+    # check block tag section types for one file
+    assert [
+        chunk["section_type"] for chunk in chunks_by_filename["1896-97a.pdf_page_1.xml"]
+    ] == ["Issue details", "Title", "text"]
 
     # inspect text results for a few cases
     assert (
@@ -179,6 +229,14 @@ def test_altoinput_get_text(caplog):
     assert summary_log_message.startswith(
         f"Processed {FIXTURE_ALTO_ZIPFILE.name} with 7 files (7 valid ALTO)"
     )
+
+
+def test_altoinput_get_text_filtered(caplog):
+    # test filtering to only include text and footnotes
+    alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
+    filtered_chunks = alto_input.get_text()
+    # this sample does not include any footnote blocks; only text + Title
+    assert {chunk["section_type"] for chunk in filtered_chunks} == {"text", "Title"}
 
 
 def test_altoinput_warn_no_text(caplog):
@@ -269,15 +327,16 @@ def test_altoinput_error_empty_zip(tmp_path: pathlib.Path):
 
 
 @patch("remarx.sentence.corpus.base_input.segment_text")
-def test_get_sentences_sequntial(mock_segment_text: Mock):
+def test_get_sentences_sequential(mock_segment_text: Mock):
     # patch in simple segmenter to split each input text in two
     mock_segment_text.side_effect = simple_segmenter
 
     alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
     sentences = list(alto_input.get_sentences())
     num_sentences = len(sentences)
-    # currently with this fixture data and simple segmenter,  expect 40 sentences
-    assert num_sentences == 40
+    # currently with this fixture data and simple segmenter,
+    # and filtering by section type expect 16 sentences
+    assert num_sentences == 20
 
     # sentence indexes should start at 0 and continue across all sentences
     indexes = [sentence["sent_index"] for sentence in sentences]

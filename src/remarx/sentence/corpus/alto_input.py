@@ -33,6 +33,17 @@ class AltoXmlObject(xmlmap.XmlObject):
     ROOT_NAMESPACES: ClassVar[dict[str, str]] = {"alto": ALTO_NAMESPACE_V4}
 
 
+class AltoTag(AltoXmlObject):
+    """
+    Class to for Alto tags. Used to map tag id to tag label.
+    """
+
+    id = xmlmap.StringField("@ID")
+    "tag id (`@ID` attribute)"
+    label = xmlmap.StringField("@LABEL")
+    "tag label (`@LABEL` attribute)"
+
+
 class AltoBlock(AltoXmlObject):
     """
     Base class for an ALTO element with position information.
@@ -62,6 +73,7 @@ class TextBlock(AltoBlock):
     """
 
     lines = xmlmap.NodeListField("alto:TextLine", TextLine)
+    tag_id = xmlmap.StringField("@TAGREFS")
 
     @cached_property
     def sorted_lines(self) -> list[TextLine]:
@@ -88,6 +100,7 @@ class AltoDocument(AltoXmlObject):
 
     blocks = xmlmap.NodeListField(".//alto:TextBlock", TextBlock)
     lines = xmlmap.NodeListField(".//alto:TextLine", TextLine)
+    _tags = xmlmap.NodeListField("alto:Tags/alto:OtherTag", AltoTag)
 
     def is_alto(self) -> bool:
         """
@@ -100,6 +113,13 @@ class AltoDocument(AltoXmlObject):
             root_element.namespace == ALTO_NAMESPACE_V4
             and root_element.localname == "alto"
         )
+
+    @cached_property
+    def tags(self) -> dict[str, str]:
+        """
+        Dictionary of block-level tags; key is id, value is label.
+        """
+        return {tag.id: tag.label for tag in self._tags}
 
     @property
     def sorted_blocks(self) -> list[TextBlock]:
@@ -122,7 +142,7 @@ class AltoDocument(AltoXmlObject):
             ),
         )
 
-    def text_chunks(self) -> Generator[dict[str, str]]:
+    def text_chunks(self, include: set[str] | None = None) -> Generator[dict[str, str]]:
         """
         Returns a generator of a dictionary of text content and section type,
         one dictionary per text block on the page.
@@ -130,7 +150,13 @@ class AltoDocument(AltoXmlObject):
         # yield by block, since in future we may set section type
         # based on block-level semantic tagging
         for block in self.sorted_blocks:
-            yield {"text": block.text_content, "section_type": SectionType.TEXT.value}
+            # use tag for section type, if set; if unset, assume text
+            section = self.tags.get(block.tag_id) or SectionType.TEXT.value
+            # if include list is specified and section is not in it, skip;
+            # currently includes if section type is unset
+            if include is not None and section is not None and section not in include:
+                continue
+            yield {"text": block.text_content, "section_type": section}
 
 
 @dataclass
@@ -145,6 +171,13 @@ class ALTOInput(FileInput):
 
     file_type: ClassVar[str] = ".zip"
     "Supported file extension for ALTO zipfiles (.zip)"
+
+    default_include: ClassVar[set[str]] = {"text", "footnote", "Title"}
+    "Default content sections to include"
+
+    filter_sections: bool = True
+    "Whether to filter text sections by block type"
+    # do we need a way to specify custom includes?
 
     def get_text(self) -> Generator[dict[str, str], None, None]:
         """
@@ -193,8 +226,12 @@ class ALTOInput(FileInput):
                     f"{base_filename}: {len(alto_xmlobj.blocks)} blocks, {len(alto_xmlobj.lines)} lines"
                 )
 
-                # use the base xml file as filename here, rather than zipfile for all
-                for chunk in alto_xmlobj.text_chunks():
+                # filter by section type when configured to do so
+                text_kwargs = {}
+                if self.filter_sections:
+                    text_kwargs["include"] = self.default_include
+                for chunk in alto_xmlobj.text_chunks(**text_kwargs):
+                    # use the base xml file as filename here, rather than zipfile for all
                     yield chunk | {"file": base_filename}
 
                 # warn if a document has no lines
