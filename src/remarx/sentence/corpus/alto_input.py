@@ -172,7 +172,7 @@ class ALTOInput(FileInput):
     file_type: ClassVar[str] = ".zip"
     "Supported file extension for ALTO zipfiles (.zip)"
 
-    default_include: ClassVar[set[str]] = {"text", "footnote"}
+    default_include: ClassVar[set[str]] = {"text", "footnote", "Title"}
     "Default content sections to include"
 
     filter_sections: bool = True

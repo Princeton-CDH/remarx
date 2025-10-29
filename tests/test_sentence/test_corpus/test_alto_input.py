@@ -235,8 +235,8 @@ def test_altoinput_get_text_filtered(caplog):
     # test filtering to only include text and footnotes
     alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
     filtered_chunks = alto_input.get_text()
-    # this sample does not include any footnote blocks, so only type should be text
-    assert {chunk["section_type"] for chunk in filtered_chunks} == {"text"}
+    # this sample does not include any footnote blocks; only text + Title
+    assert {chunk["section_type"] for chunk in filtered_chunks} == {"text", "Title"}
 
 
 def test_altoinput_warn_no_text(caplog):
@@ -336,7 +336,7 @@ def test_get_sentences_sequential(mock_segment_text: Mock):
     num_sentences = len(sentences)
     # currently with this fixture data and simple segmenter,
     # and filtering by section type expect 16 sentences
-    assert num_sentences == 16
+    assert num_sentences == 20
 
     # sentence indexes should start at 0 and continue across all sentences
     indexes = [sentence["sent_index"] for sentence in sentences]
