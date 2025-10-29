@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.2.1
+
+Backport v0.3 logging improvements to sentence corpus creation script
+and add time-logging to TEI file input handling, for performance metrics.
+
 ## 0.2.0
 
 ### Application
