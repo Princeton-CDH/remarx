@@ -257,6 +257,17 @@ class TEIPage(BaseTEIXmlObject):
                 break
 
             if self.is_footnote_content(parent):
+                # Skip the reference itself, but keep any punctuation/tail text that follows it.
+                # Example: … "ungeheure Waarensammlung"<ref …>…</ref>, — the comma lives in ref.tail.
+                if (
+                    parent.tag == TEI_TAG.ref
+                    and parent.get("type") == "footnote"
+                    and parent.tail
+                ):
+                    tail_text = re.sub(r"\s*\n\s*", "\n", parent.tail).lstrip()
+                    if tail_text:
+                        paragraph_parts.append(tail_text)
+                        char_offset += len(tail_text)
                 continue
 
             if self.is_structural_content(parent):
@@ -305,14 +316,6 @@ class TEIPage(BaseTEIXmlObject):
 
             paragraph_parts.append(cleaned_text)
             char_offset += len(cleaned_text)
-
-            # Preserve tail text that follows skipped inline footnote references
-            if parent.tag == TEI_TAG.ref and parent.get("type") == "footnote":
-                tail = parent.tail or ""
-                tail = re.sub(r"\s+", " ", tail)
-                if tail:
-                    paragraph_parts.append(tail)
-                    char_offset += len(tail)
 
         chunk = flush()
         if chunk:

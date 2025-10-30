@@ -191,6 +191,7 @@ class TestTEIPage:
         page_17 = next(p for p in tei_doc.all_pages if p.number == "17")
 
         footnote_text = page_17.get_footnote_text()
+        # assert we no longer have numbering like "1)" at the beginning of the footnote text
         assert footnote_text.startswith("Karl Marx:")
         assert "Nicholas Barbon" in footnote_text
         assert (
@@ -205,7 +206,9 @@ class TestTEIPage:
         # returns footnote xmlobject, which has a line number attribute
         assert footnotes[0].line_number == 17
         assert footnotes[1].line_number == 18
+        # the footnote label still includes the "1)" prefix
         assert footnotes[0].label.strip().startswith("1")
+        # but the footnote text itself no longer includes the "1)" prefix from the label
         assert footnotes[0].text.startswith("Karl Marx:")
 
     def test_get_footnote_text_delimiter(self):
