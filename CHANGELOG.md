@@ -6,6 +6,11 @@
 
 - ALTO input now uses block-level tags for filtering and section type in sentence corpus
     - By default, only includes blocks tagged as text, footnote, Title, or untagged
+- Refactored TEI input handling logic:
+    - Body text is now yield at the paragraph level
+    - Structural content (tables, math formulas, editorial divs) is filtered out in both body text and footnote text.
+    - Footnote labels (e.g., "1)", "2)") are removed from note text (but stored separately in case we still need them).
+    - Bug Fix: Inline footnote references now preserve trailing punctuation that follows `<ref type="footnote">`.
 
 ## [0.3.0] - 2025-10-27
 
