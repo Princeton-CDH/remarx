@@ -66,9 +66,31 @@ class TEIFootnote(BaseTEIXmlObject):
     line_number = xmlmap.IntegerField("./t:lb[1]/@n")
     "Line number where this footnote begins, based on first TEI line beginning (`lb`) within this note"
 
-    # use xmlmap StringField method with normalize=True to collapse whitespace in the footnote text
-    text = xmlmap.StringField(".", normalize=True)
-    "Normalized text content for the footnote (collapses whitespace)"
+    label = xmlmap.StringField("./t:label", normalize=True)
+    "Label marker (e.g. superscript number) for this footnote."
+
+    @property
+    def text(self) -> str:
+        """
+        Return normalized text content for the footnote, excluding label markers and
+        structural/layout descendants (tables, figures, MathML).
+        """
+        parts: list[str] = []
+        for node in self.node.xpath(".//text()"):
+            parent = node.getparent()
+            if parent is None:
+                continue
+            if any(
+                ancestor.tag == TEI_TAG.label and ancestor.get("type") == "footnote"
+                for ancestor in (parent, *parent.iterancestors())
+            ):
+                continue
+            if TEIPage.is_structural_content(parent):
+                continue
+            text = str(node).strip()
+            if text:
+                parts.append(text)
+        return " ".join(parts)
 
 
 @dataclass(slots=True)
