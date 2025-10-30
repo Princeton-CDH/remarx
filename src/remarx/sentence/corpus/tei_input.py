@@ -17,7 +17,7 @@ from typing import Any, ClassVar, NamedTuple, Self
 from lxml.etree import XMLSyntaxError, _Element
 from neuxml import xmlmap
 
-from remarx.sentence.corpus.base_input import FileInput, SectionType
+from remarx.sentence.corpus.base_input import FileInput, SectionType, segment_text
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,24 @@ TEI_NAMESPACE = "http://www.tei-c.org/ns/1.0"
 # namespaced tags look like {http://www.tei-c.org/ns/1.0}tagname
 # create a named tuple of short tag name -> namespaced tag name
 TagNames: NamedTuple = namedtuple(
-    "TagNames", ("pb", "lb", "note", "add", "label", "ref", "div3", "text", "p")
+    "TagNames",
+    (
+        "pb",
+        "lb",
+        "note",
+        "add",
+        "label",
+        "ref",
+        "div3",
+        "div",
+        "div2",
+        "text",
+        "p",
+        "ab",
+        "head",
+        "figure",
+        "table",
+    ),
 )
 TEI_TAG = TagNames(**{tag: f"{{{TEI_NAMESPACE}}}{tag}" for tag in TagNames._fields})
 "Convenience access to namespaced TEI tag names"
@@ -53,6 +70,21 @@ class TEIFootnote(BaseTEIXmlObject):
     "Normalized text content for the footnote (collapses whitespace)"
 
 
+@dataclass(slots=True)
+class ParagraphChunk:  # is there a better name for this?
+    """
+    Chunk of paragraph text extracted from a TEI page. The text may not come from a
+    full TEI <p> element; it may be just the slice that appears on a single page when the
+    paragraph spans a page break. When `continued` is True, the remainder will appear in
+    a later chunk.
+    """
+
+    element: _Element
+    text: str
+    line_number_map: list[tuple[int, int | None]]
+    continued: bool
+
+
 class TEIPage(BaseTEIXmlObject):
     """
     Custom :class:`neuxml.xmlmap.XmlObject` instance for a page
@@ -63,6 +95,17 @@ class TEIPage(BaseTEIXmlObject):
     "page number"
     edition = xmlmap.StringField("@ed")
     "page edition, if any"
+
+    paragraph_container_tags: ClassVar[tuple[str, ...]] = (
+        TEI_TAG.p,
+        TEI_TAG.ab,
+        TEI_TAG.head,
+    )
+    structural_tags: ClassVar[tuple[str, ...]] = (
+        TEI_TAG.table,
+        TEI_TAG.figure,
+    )
+    skip_div_types: ClassVar[frozenset[str]] = frozenset({"editorialHead", "inhaltsVZ"})
 
     # page beginning tags delimit content instead of containing it;
     # use following axis to find all text nodes following this page beginning
@@ -96,6 +139,24 @@ class TEIPage(BaseTEIXmlObject):
             TEIPage.is_footnote_content(ancestor) for ancestor in el.iterancestors()
         )
 
+    @staticmethod
+    def is_structural_content(el: _Element) -> bool:
+        """
+        Determine if *el* belongs to structural (layout) content—tables, figures, MathML, or editorial wrappers.
+        These blocks describe presentation rather than body prose, so we skip them when building paragraph text.
+        """
+        math_ns = "http://www.w3.org/1998/Math/MathML"
+        for candidate in (el, *el.iterancestors()):
+            if candidate.tag in TEIPage.structural_tags:
+                return True
+            if candidate.tag == f"{{{math_ns}}}math":
+                return True
+            if candidate.tag in (TEI_TAG.div, TEI_TAG.div2, TEI_TAG.div3):
+                div_type = candidate.attrib.get("type")
+                if div_type in TEIPage.skip_div_types:
+                    return True
+        return False
+
     def get_page_footnotes(self) -> list[TEIFootnote]:
         """
         Filters footnotes to keep only the footnotes that belong to this page.
@@ -110,6 +171,122 @@ class TEIPage(BaseTEIXmlObject):
             page_footnotes.append(footnote)
 
         return page_footnotes
+
+    @classmethod
+    def _paragraph_container(cls, el: _Element) -> _Element | None:
+        """
+        Find the closest ancestor that is treated as a paragraph container.
+        """
+        for candidate in (el, *el.iterancestors()):
+            if candidate.tag in cls.paragraph_container_tags:
+                return candidate
+            if candidate.tag in (TEI_TAG.pb, TEI_TAG.text):
+                break
+        return None
+
+    def iter_body_paragraphs(
+        self, seen_containers: set[_Element] | None = None
+    ) -> Generator[ParagraphChunk, None, None]:
+        """
+        Yield paragraph-level body text chunks for this page.
+        """
+        current_container: _Element | None = None
+        paragraph_parts: list[str] = []
+        line_number_map: list[tuple[int, int | None]] = []
+        char_offset = 0
+        last_lb_el: _Element | None = None
+
+        def flush() -> ParagraphChunk | None:
+            nonlocal \
+                current_container, \
+                paragraph_parts, \
+                line_number_map, \
+                char_offset, \
+                last_lb_el
+            if current_container is None:
+                return None
+            combined = "".join(paragraph_parts).rstrip()
+            chunk: ParagraphChunk | None = None
+            if combined:
+                continued = bool(
+                    seen_containers is not None and current_container in seen_containers
+                )
+                if seen_containers is not None:
+                    seen_containers.add(current_container)
+                chunk = ParagraphChunk(
+                    element=current_container,
+                    text=combined,
+                    line_number_map=line_number_map.copy(),
+                    continued=continued,
+                )
+            current_container = None
+            paragraph_parts = []
+            line_number_map = []
+            char_offset = 0
+            last_lb_el = None
+            return chunk
+
+        for text_node in self.text_nodes:
+            parent = text_node.getparent()
+            if parent is None:
+                continue
+
+            if self.next_page and parent == self.next_page.node:
+                break
+
+            if self.is_footnote_content(parent):
+                continue
+
+            if self.is_structural_content(parent):
+                continue
+
+            if (
+                parent.tag == TEI_TAG.add
+                or (parent.tag == TEI_TAG.label and parent.get("type") == "mpb")
+            ) and (
+                text_node.is_text or (text_node.is_tail and text_node.strip() == "")
+            ):
+                continue
+
+            container = self._paragraph_container(parent)
+            if container is None:
+                continue
+
+            if container != current_container:
+                chunk = flush()
+                if chunk:
+                    yield chunk
+                current_container = container
+
+            cleaned_text = re.sub(r"\s*\n\s*", "\n", str(text_node))
+            if not paragraph_parts:
+                cleaned_text = cleaned_text.lstrip()
+
+            preceding_lb: _Element | None = None
+            if parent.tag == TEI_TAG.lb:
+                preceding_lb = parent
+            else:
+                preceding_lb = self.find_preceding_lb(parent)
+
+            if preceding_lb is not None and preceding_lb is not last_lb_el:
+                line_attr = preceding_lb.get("n")
+                line_number = (
+                    int(line_attr) if line_attr and line_attr.isdigit() else None
+                )
+                line_number_map.append((char_offset, line_number))
+                if paragraph_parts and not paragraph_parts[-1].endswith("\n"):
+                    cleaned_text = f"\n{cleaned_text}"
+                last_lb_el = preceding_lb
+
+            if not cleaned_text:
+                continue
+
+            paragraph_parts.append(cleaned_text)
+            char_offset += len(cleaned_text)
+
+        chunk = flush()
+        if chunk:
+            yield chunk
 
     def get_body_text_line_number(self, char_pos: int) -> int | None:
         """
@@ -296,6 +473,7 @@ class TEIinput(FileInput):
         "page_number",
         "section_type",
         "line_number",
+        "continued",
     )
     "List of field names for sentences from TEI XML input files"
 
@@ -310,28 +488,35 @@ class TEIinput(FileInput):
         """
         # parse the input file as xml and save the result
         self.xml_doc = TEIDocument.init_from_file(self.input_file)
+        self._seen_paragraphs: set[_Element] = set()
+        self._chunk_line_maps: dict[int, tuple[tuple[int, int | None], ...]] = {}
+        self._chunk_counter = 0
 
-    def get_text(self) -> Generator[dict[str, str]]:
+    def get_text(self) -> Generator[dict[str, Any]]:
         """
         Get document content as plain text. The document's content is yielded in segments
-        with each segment corresponding to a dictionary of containing its text content,
+        with each segment corresponding to a dictionary containing its text content,
         page number and section type ("text" or "footnote").
-        Body text is yielded once per page, while each footnote is yielded individually.
+        Body text is yielded once per paragraph, while each footnote is yielded individually.
 
         :returns: Generator with dictionaries of text content, with page number and section_type ("text" or "footnote").
         """
-        # yield body text and footnotes content chunked by page with page number
         start = time()
-        for page in self.xml_doc.pages_by_number.values():
+        for page in self.xml_doc.pages:
             page_start = time()
 
-            body_text = page.get_body_text()
-            if body_text:
-                yield {
-                    "text": body_text,
-                    "page_number": page.number,
-                    "section_type": SectionType.TEXT.value,
-                }
+            for chunk in page.iter_body_paragraphs(self._seen_paragraphs):
+                if chunk.text:
+                    chunk_id = self._chunk_counter
+                    self._chunk_counter += 1
+                    self._chunk_line_maps[chunk_id] = chunk.line_number_map
+                    yield {
+                        "text": chunk.text,
+                        "page_number": page.number,
+                        "section_type": SectionType.TEXT.value,
+                        "continued": chunk.continued,
+                        "_chunk_id": chunk_id,
+                    }
 
             # Yield each footnote individually to enforce separate sentence segmentation
             # so that separate footnotes cannot be combined into a single sentence
@@ -341,6 +526,7 @@ class TEIinput(FileInput):
                     "page_number": page.number,
                     "section_type": SectionType.FOOTNOTE.value,
                     "line_number": footnote.line_number,
+                    "continued": False,
                 }
 
             page_elapsed_time = time() - page_start
@@ -352,6 +538,28 @@ class TEIinput(FileInput):
         logger.info(
             f"Processed {self.file_name} with {len(self.xml_doc.pages)} pages in {elapsed_time:.1f} seconds"
         )
+
+    def get_sentences(self) -> Generator[dict[str, Any], None, None]:
+        """
+        Yield sentences with metadata, excluding internal bookkeeping keys.
+        """
+        sentence_index = 0
+        for chunk_info in self.get_text():
+            chunk_text = chunk_info["text"]
+            for char_idx, sentence in segment_text(chunk_text):
+                record: dict[str, Any] = {
+                    "file": self.file_name,
+                    "text": sentence,
+                    "sent_index": sentence_index,
+                    "sent_id": f"{self.file_name}:{sentence_index}",
+                }
+                for key, value in chunk_info.items():
+                    if key == "text" or key.startswith("_"):
+                        continue
+                    record[key] = value
+                record.update(self.get_extra_metadata(chunk_info, char_idx, sentence))
+                yield record
+                sentence_index += 1
 
     def get_extra_metadata(
         self, chunk_info: dict[str, Any], char_idx: int, sentence: str
@@ -366,12 +574,12 @@ class TEIinput(FileInput):
         if "line_number" in chunk_info:
             return {"line_number": chunk_info["line_number"]}
 
-        # Otherwise, calculate it for body text based on character position
-        page_number = chunk_info["page_number"]
-        page = self.xml_doc.pages_by_number.get(page_number)
-
-        if page:
-            line_number = page.get_body_text_line_number(char_idx)
+        chunk_id = chunk_info.get("_chunk_id")
+        if chunk_id is not None:
+            line_map = self._chunk_line_maps.get(chunk_id, ())
+            line_number = next(
+                (ln for offset, ln in reversed(line_map) if offset <= char_idx), None
+            )
             return {"line_number": line_number}
 
         return {"line_number": None}
