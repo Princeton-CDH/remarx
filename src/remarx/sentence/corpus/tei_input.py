@@ -306,6 +306,14 @@ class TEIPage(BaseTEIXmlObject):
             paragraph_parts.append(cleaned_text)
             char_offset += len(cleaned_text)
 
+            # Preserve tail text that follows skipped inline footnote references
+            if parent.tag == TEI_TAG.ref and parent.get("type") == "footnote":
+                tail = parent.tail or ""
+                tail = re.sub(r"\s+", " ", tail)
+                if tail:
+                    paragraph_parts.append(tail)
+                    char_offset += len(tail)
+
         chunk = flush()
         if chunk:
             yield chunk
