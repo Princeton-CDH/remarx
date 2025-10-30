@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 TEI_NAMESPACE = "http://www.tei-c.org/ns/1.0"
 MATHML_NAMESPACE = "http://www.w3.org/1998/Math/MathML"  # Mathematical Markup Language (formulas in TEI)
+MATHML_MATH_TAG = f"{{{MATHML_NAMESPACE}}}math"
 
 # namespaced tags look like {http://www.tei-c.org/ns/1.0}tagname
 # create a named tuple of short tag name -> namespaced tag name
@@ -78,8 +79,6 @@ class TEIFootnote(BaseTEIXmlObject):
         parts: list[str] = []
         for node in self.node.xpath(".//text()"):
             parent = node.getparent()
-            if parent is None:
-                continue
             if any(
                 ancestor.tag == TEI_TAG.label and ancestor.get("type") == "footnote"
                 for ancestor in (parent, *parent.iterancestors())
@@ -171,7 +170,7 @@ class TEIPage(BaseTEIXmlObject):
         for candidate in (el, *el.iterancestors()):
             if candidate.tag in TEIPage.structural_tags:
                 return True
-            if candidate.tag == f"{{{MATHML_NAMESPACE}}}math":
+            if candidate.tag == MATHML_MATH_TAG:
                 return True
             if candidate.tag in (TEI_TAG.div, TEI_TAG.div2, TEI_TAG.div3):
                 div_type = candidate.attrib.get("type")
@@ -250,9 +249,6 @@ class TEIPage(BaseTEIXmlObject):
 
         for text_node in self.text_nodes:
             parent = text_node.getparent()
-            if parent is None:
-                continue
-
             if self.next_page and parent == self.next_page.node:
                 break
 

@@ -255,6 +255,17 @@ class TestTEIPage:
         standalone_p = Element("p")
         assert not TEIPage.is_footnote_content(standalone_p)
 
+    def test_is_structural_content_mathml(self):
+        # Add this test to pass coverage check
+        math_node = Element("{http://www.w3.org/1998/Math/MathML}math")
+        assert TEIPage.is_structural_content(math_node)
+
+    def test_is_structural_content_skip_div_type(self):
+        div = Element(TEI_TAG.div, type="editorialHead")
+        inner = Element(TEI_TAG.p)
+        div.append(inner)
+        assert TEIPage.is_structural_content(inner)
+
     def test_get_body_text_line_numbers_missing_lb_number(self):
         tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
         page_20 = next(p for p in tei_doc.pages if p.number == "20")
