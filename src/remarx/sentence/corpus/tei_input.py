@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 TEI_NAMESPACE = "http://www.tei-c.org/ns/1.0"
+MATHML_NAMESPACE = "http://www.w3.org/1998/Math/MathML"  # Mathematical Markup Language (formulas in TEI)
 
 # namespaced tags look like {http://www.tei-c.org/ns/1.0}tagname
 # create a named tuple of short tag name -> namespaced tag name
@@ -145,11 +146,10 @@ class TEIPage(BaseTEIXmlObject):
         Determine if *el* belongs to structural (layout) content—tables, figures, MathML, or editorial wrappers.
         These blocks describe presentation rather than body prose, so we skip them when building paragraph text.
         """
-        math_ns = "http://www.w3.org/1998/Math/MathML"
         for candidate in (el, *el.iterancestors()):
             if candidate.tag in TEIPage.structural_tags:
                 return True
-            if candidate.tag == f"{{{math_ns}}}math":
+            if candidate.tag == f"{{{MATHML_NAMESPACE}}}math":
                 return True
             if candidate.tag in (TEI_TAG.div, TEI_TAG.div2, TEI_TAG.div3):
                 div_type = candidate.attrib.get("type")
