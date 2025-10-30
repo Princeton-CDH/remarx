@@ -6,7 +6,13 @@ import pytest
 from lxml.etree import Element
 
 from remarx.sentence.corpus.base_input import FileInput, SectionType
-from remarx.sentence.corpus.tei_input import TEI_TAG, TEIDocument, TEIinput, TEIPage
+from remarx.sentence.corpus.tei_input import (
+    TEI_TAG,
+    ParagraphChunk,
+    TEIDocument,
+    TEIinput,
+    TEIPage,
+)
 
 FIXTURE_DIR = pathlib.Path(__file__).parent / "fixtures"
 TEST_TEI_FILE = FIXTURE_DIR / "sample_tei.xml"
@@ -185,7 +191,7 @@ class TestTEIPage:
         page_17 = next(p for p in tei_doc.all_pages if p.number == "17")
 
         footnote_text = page_17.get_footnote_text()
-        assert footnote_text.startswith("1) Karl Marx:")
+        assert footnote_text.startswith("Karl Marx:")
         assert "Nicholas Barbon" in footnote_text
         assert (
             "Der Reichthum der Gesellschaften" not in footnote_text
@@ -199,6 +205,8 @@ class TestTEIPage:
         # returns footnote xmlobject, which has a line number attribute
         assert footnotes[0].line_number == 17
         assert footnotes[1].line_number == 18
+        assert footnotes[0].label.strip().startswith("1")
+        assert footnotes[0].text.startswith("Karl Marx:")
 
     def test_get_footnote_text_delimiter(self):
         # Test that footnotes are properly separated by double newlines
@@ -256,6 +264,20 @@ class TestTEIPage:
         # No numbered line marker before the first characters, so None is expected
         assert page_20.get_body_text_line_number(0) is None
 
+    def test_iter_body_paragraphs_groups_text(self):
+        tei_doc = TEIDocument.init_from_file(TEST_TEI_FILE)
+        page = tei_doc.pages[0]
+
+        chunks = list(page.iter_body_paragraphs())
+        assert len(chunks) == 5
+        assert all(isinstance(chunk, ParagraphChunk) for chunk in chunks)
+        assert chunks[0].text.startswith(
+            "als in der ersten Darstellung."  # codespell:ignore
+        )  # codespell:ignore
+        # Ensure editorial markers are skipped
+        assert all("|" not in chunk.text for chunk in chunks)
+        assert all(chunk.continued is False for chunk in chunks)
+
     def test_find_preceding_lb(self):
         tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
         # use xpath to get known elements from fixture doc for testing
@@ -293,6 +315,7 @@ class TestTEIinput:
             "page_number",
             "section_type",
             "line_number",
+            "continued",
         )
 
     def test_get_text(self):
@@ -301,24 +324,23 @@ class TestTEIinput:
         # should be a generator
         assert isinstance(text_result, Generator)
         text_result = list(text_result)
-        # expect two pages
-        assert len(text_result) == 2
-        # result type is dictionary
         assert all(isinstance(txt, dict) for txt in text_result)
-        # check for expected contents
-        # - page text
-        assert (
-            text_result[0]["text"]
-            .strip()
-            .startswith("als in der ersten")  # codespell:ignore
-        )
-        assert text_result[1]["text"].strip().startswith("Aber abgesehn hiervon")
-        # - page number
-        assert text_result[0]["page_number"] == "12"
-        assert text_result[1]["page_number"] == "13"
-        # - section type
-        assert text_result[0]["section_type"] == "text"
-        assert text_result[1]["section_type"] == "text"
+        first_chunk = text_result[0]
+        assert first_chunk["section_type"] == SectionType.TEXT.value
+        assert first_chunk["page_number"] == "12"
+        assert first_chunk["text"].startswith(
+            "als in der ersten Darstellung."  # codespell:ignore
+        )  # codespell:ignore
+        assert "continued" in first_chunk
+        text_chunks = [
+            chunk
+            for chunk in text_result
+            if chunk["section_type"] == SectionType.TEXT.value
+        ]
+        assert text_chunks[-1]["page_number"] == "13"
+        assert text_chunks[-1]["text"].startswith(
+            "Aber abgesehn hiervon"
+        )  # codespell:ignore
 
     def test_get_text_with_footnotes(self):
         tei_input = TEIinput(input_file=TEST_TEI_WITH_FOOTNOTES_FILE)
@@ -328,10 +350,23 @@ class TestTEIinput:
         section_types = [chunk["section_type"] for chunk in text_chunks]
         assert "text" in section_types
         assert "footnote" in section_types
+        assert all("continued" in chunk for chunk in text_chunks)
 
         # Check page numbers are set correctly
         assert all("page_number" in chunk for chunk in text_chunks)
         assert all(isinstance(chunk["text"], str) for chunk in text_chunks)
+        footnote_ref_chunk = next(
+            chunk
+            for chunk in text_chunks
+            if chunk["section_type"] == SectionType.TEXT.value
+            and chunk["page_number"] == "17"
+        )
+        assert (
+            "ungeheure Waarensammlung" in footnote_ref_chunk["text"]
+        )  # codespell:ignore
+        assert (
+            'ungeheure Waarensammlung"' in footnote_ref_chunk["text"]
+        )  # codespell:ignore
 
     def test_get_extra_metadata_line_numbers(self):
         tei_input = TEIinput(input_file=TEST_TEI_WITH_FOOTNOTES_FILE)
@@ -342,6 +377,7 @@ class TestTEIinput:
             for chunk in text_chunks
             if chunk["section_type"] == SectionType.TEXT.value
             and chunk["page_number"] == "17"
+            and "Die Waare ist zunächst" in chunk["text"]  # codespell:ignore
         )
         body_idx = body_chunk["text"].index(
             "Die Waare ist zunächst"  # codespell:ignore
@@ -356,7 +392,7 @@ class TestTEIinput:
             for chunk in text_chunks
             if chunk["section_type"] == SectionType.FOOTNOTE.value
             and chunk["page_number"] == "17"
-            and chunk["text"].startswith("1) Karl Marx:")
+            and chunk["text"].startswith("Karl Marx:")
         )
         footnote_metadata = tei_input.get_extra_metadata(
             footnote_chunk, 4, footnote_chunk["text"]
@@ -376,29 +412,22 @@ class TestTEIinput:
         )
         assert metadata["line_number"] is None
 
-    @patch("remarx.sentence.corpus.base_input.segment_text")
+    @patch("remarx.sentence.corpus.tei_input.segment_text")
     def test_get_sentences(self, mock_segment_text: Mock):
-        tei_input = TEIinput(input_file=TEST_TEI_FILE)
-        # segment text returns a tuple of character index, sentence text
-        mock_segment_text.return_value = [(0, "Aber abgesehn hiervon")]
-        sentences = tei_input.get_sentences()
-        # expect a generator with one item, with the content added to the file
-        assert isinstance(sentences, Generator)
-        sentences = list(sentences)
-        assert len(sentences) == 2  # 2 pages, one mock sentence each
-        # method called once for each page of text
-        assert mock_segment_text.call_count == 2
-        assert all(isinstance(sentence, dict) for sentence in sentences)
-        # file id set (handled by base input class)
-        assert sentences[0]["file"] == TEST_TEI_FILE.name
-        # page number set
-        assert sentences[0]["page_number"] == "12"
-        assert sentences[1]["page_number"] == "13"
-        # sentence index is set and continues across pages
-        assert sentences[0]["sent_index"] == 0
-        assert sentences[1]["sent_index"] == 1
+        chunk_counter_input = TEIinput(input_file=TEST_TEI_FILE)
+        chunk_count = len(list(chunk_counter_input.get_text()))
 
-    @patch("remarx.sentence.corpus.base_input.segment_text")
+        tei_input = TEIinput(input_file=TEST_TEI_FILE)
+        mock_segment_text.return_value = [(0, "Aber abgesehn hiervon")]
+        sentences = list(tei_input.get_sentences())
+
+        assert mock_segment_text.call_count == chunk_count
+        assert all(isinstance(sentence, dict) for sentence in sentences)
+        assert sentences[0]["file"] == TEST_TEI_FILE.name
+        assert sentences[0]["page_number"] == "12"
+        assert sentences[0]["sent_index"] == 0
+
+    @patch("remarx.sentence.corpus.tei_input.segment_text")
     def test_get_sentences_with_footnotes(self, mock_segment_text: Mock):
         tei_input = TEIinput(input_file=TEST_TEI_WITH_FOOTNOTES_FILE)
         # segment text returns a tuple of character index, sentence text
