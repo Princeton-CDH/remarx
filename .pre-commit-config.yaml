@@ -28,13 +28,15 @@ repos:
           - mdformat-pyproject # support configuration in pyproject.toml
         args: [--wrap, keep]
         # Temporarily exclude docs/api/index.md due because it messes up the formatting
-        exclude: ^docs/api/index\.md$
+        # Exclude profiling directory
+        exclude: ^(docs/api/index\.md|profiling/.*\.md)$
   # Codespell for spell checking
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
     hooks:
       - id: codespell
         exclude_types: ["xml"] # ignore sample xml file
+        exclude: ^profiling/ # ignore profiling directory
         args: [--uri-ignore-words-list=archiv] # ignore German "archiv" in URLs
   # Common file checks (no dependencies)
   - repo: https://github.com/pre-commit/pre-commit-hooks

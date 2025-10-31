@@ -16,6 +16,7 @@ import logging
 import pathlib
 import sys
 
+from remarx.sentence import segment as sentence_segment
 from remarx.sentence.corpus.base_input import FileInput
 from remarx.utils import configure_logging
 
@@ -60,6 +61,15 @@ def main() -> None:
         "output_csv", type=pathlib.Path, help="Path to output sentence corpus (CSV)"
     )
     parser.add_argument(
+        "--segmenter",
+        choices=[
+            "stanza",
+            "stanza_optimized",
+            "flair_spacy_de",
+        ],
+        default=None,
+    )
+    parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
@@ -72,6 +82,9 @@ def main() -> None:
     log_level = logging.DEBUG if args.verbose else logging.INFO
 
     configure_logging(sys.stdout, log_level=log_level)
+
+    if args.segmenter:
+        sentence_segment.set_segmenter_backend(args.segmenter)
     create_corpus(
         args.input_file,
         args.output_csv,

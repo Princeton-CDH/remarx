@@ -36,6 +36,10 @@ dependencies = [
   "fastapi",
   "uvicorn",
   "natsort>=8.4.0",
+  "spacy>=3.8.7",
+  "flair>=0.15.1",
+  "pyinstrument>=5.1.1",
+  "snakeviz>=2.2.2",
 ]
 
 [project.optional-dependencies]
@@ -60,7 +64,6 @@ docs = [
 html = [ "bs4" ]
 
 [dependency-groups]
-dev = [ "remarx[dev]" ]
 
 [project.scripts]
 remarx-app = "remarx.app.utils:launch_app"
