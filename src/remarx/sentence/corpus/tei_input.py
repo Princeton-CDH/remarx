@@ -260,7 +260,7 @@ class TEIPage(BaseTEIXmlObject):
                     and parent.get("type") == "footnote"
                     and parent.tail
                 ):
-                    tail_text = re.sub(r"\s*\n\s*", "\n", parent.tail).lstrip()
+                    tail_text = re.sub(r"\s+", " ", parent.tail).strip()
                     if tail_text:
                         paragraph_parts.append(tail_text)
                         char_offset += len(tail_text)
