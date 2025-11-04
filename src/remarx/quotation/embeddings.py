@@ -2,6 +2,7 @@
 Library for generating sentence embeddings from pretrained Sentence Transformer models.
 """
 
+import json
 import logging
 import pathlib
 import zlib
@@ -32,14 +33,15 @@ def get_sentence_embeddings(
     :param model_name: Name of the pretrained sentence transformer model to use (default: paraphrase-multilingual-mpnet-base-v2)
     :return: 2-dimensional numpy array of normalized sentence embeddings with shape [# sents, # dims]
     """
-    # Generate cache key
-    content = "\n".join(sentences) + f"\n{model_name}"
+    # Generate cache key from JSON serialization to avoid newline collisions
+    content = json.dumps(sentences)
     cache_key = f"{zlib.crc32(content.encode('utf-8')):08x}"
     cache_file = _CACHE_DIR / f"{cache_key}.npz"
 
     # Check cache first
     if cache_file.exists():
-        embeddings = np.load(cache_file)["embeddings"]
+        with np.load(cache_file) as cached:
+            embeddings = cached["embeddings"]
         logger.info(f"Loaded {len(embeddings):,} embeddings from cache")
         return embeddings
 
