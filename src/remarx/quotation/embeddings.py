@@ -14,8 +14,9 @@ from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
 
-# Cache directory
-_CACHE_DIR = pathlib.Path.home() / ".remarx_cache" / "embeddings"
+# Cache directory (stored within the project directory)
+_PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[3]
+_CACHE_DIR = _PROJECT_ROOT / ".remarx_cache" / "embeddings"
 _CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -34,7 +35,10 @@ def get_sentence_embeddings(
     :return: 2-dimensional numpy array of normalized sentence embeddings with shape [# sents, # dims]
     """
     # Generate cache key from JSON serialization to avoid newline collisions
-    content = json.dumps(sentences)
+    content = json.dumps(
+        {"model_name": model_name, "sentences": sentences},
+        sort_keys=True,
+    )
     cache_key = f"{zlib.crc32(content.encode('utf-8')):08x}"
     cache_file = _CACHE_DIR / f"{cache_key}.npz"
 
@@ -42,7 +46,7 @@ def get_sentence_embeddings(
     if cache_file.exists():
         with np.load(cache_file) as cached:
             embeddings = cached["embeddings"]
-        logger.info(f"Loaded {len(embeddings):,} embeddings from cache")
+        logger.info("Loaded embeddings from cache file %s", cache_file)
         return embeddings
 
     # Generate embeddings using the specified model
@@ -59,5 +63,6 @@ def get_sentence_embeddings(
 
     # Cache for next time
     np.savez_compressed(cache_file, embeddings=embeddings)
+    logger.info("Saved embeddings to cache file %s", cache_file)
 
     return embeddings
