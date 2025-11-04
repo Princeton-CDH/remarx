@@ -7,6 +7,10 @@
 - ALTO input now uses block-level tags for filtering and section type in sentence corpus
     - By default, only includes blocks tagged as text, footnote, Title, or untagged
 
+### Quotation detection
+
+- Embeddings now are cached locally in `.remarx_cache/embeddings/` directory to improve performance.
+
 ## [0.3.0] - 2025-10-27
 
 ### Sentence corpus creation
