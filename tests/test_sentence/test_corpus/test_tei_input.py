@@ -28,11 +28,11 @@ class TestTEIDocument:
     def test_init_from_file(self):
         tei_doc = TEIDocument.init_from_file(TEST_TEI_FILE)
         assert isinstance(tei_doc, TEIDocument)
-        # sample tei has 6 paragraphs
-        assert len(tei_doc.text_blocks) == 6
+        # sample tei has 2 head & 6 paragraphs
+        assert len(tei_doc.text_blocks) == 8
         assert isinstance(tei_doc.text_blocks[0], TEIParagraph)
         # first paragraph is on page 12
-        assert tei_doc.text_blocks[0].page_number == "12"
+        assert tei_doc.text_blocks[2].page_number == "12"
         # and zero footnotes
         assert len(tei_doc.footnotes) == 0
 
@@ -51,21 +51,21 @@ class TestTEIDocument:
 class TestTEIParagraph:
     def test_attributes(self):
         tei_doc = TEIDocument.init_from_file(TEST_TEI_FILE)
-        # sample tei has 6 paragraphs
-        assert len(tei_doc.text_blocks) == 6
-        assert isinstance(tei_doc.text_blocks[0], TEIParagraph)
-        # first 5 on page 12, last on page 13
-        assert tei_doc.text_blocks[0].page_number == "12"
-        assert tei_doc.text_blocks[4].page_number == "12"
-        assert tei_doc.text_blocks[5].page_number == "13"
+        # first 5 paragraphs are on page 12, last on page 13
+        # (skip two head elements)
+        assert tei_doc.text_blocks[2].page_number == "12"
+        assert tei_doc.text_blocks[6].page_number == "12"
+        assert tei_doc.text_blocks[7].page_number == "13"
         # none of these have a continuing page
-        assert tei_doc.text_blocks[0].continuing_page is None
+        assert tei_doc.text_blocks[2].continuing_page is None
 
     def test_get_text(self):
         tei_doc = TEIDocument.init_from_file(TEST_TEI_FILE)
-        para = tei_doc.text_blocks[0]
-        para_text = para.get_text()
+        head = tei_doc.text_blocks[0]
+        assert head.get_text() == "ERSTES BUCH."
 
+        para = tei_doc.text_blocks[2]
+        para_text = para.get_text()
         assert para_text.startswith(
             "als in der ersten Darstellung. Ich rathe daher dem nicht durchaus in dia-"
         )
@@ -74,7 +74,7 @@ class TestTEIParagraph:
         assert para_text.endswith(" Leser dann im Text wieder fortfahren mit p. 35.")
 
         # second paragraph includes editorial content, which should be skipped
-        para = tei_doc.text_blocks[1]
+        para = tei_doc.text_blocks[3]
         para_text = para.get_text()
         assert para_text.startswith("Die Werthform, deren fertige")
         assert para_text.endswith("darum handelt.")
@@ -165,31 +165,31 @@ class TestTEIinput:
         # should be a generator
         assert isinstance(text_result, Generator)
         text_result = list(text_result)
-        # expect six paragraphs
-        assert len(text_result) == 6
+        # expect two heads & six paragraphs
+        assert len(text_result) == 8
         # result type is dictionary
         assert all(isinstance(txt, dict) for txt in text_result)
         # check for expected contents
         # - paragraph text
-        assert text_result[0]["text"].startswith("als in der ersten")
-        assert text_result[1]["text"].strip().startswith("Die Werthform, deren ")
+        assert text_result[2]["text"].startswith("als in der ersten")
+        assert text_result[3]["text"].strip().startswith("Die Werthform, deren ")
         # - page number
-        assert text_result[0]["page_number"] == "12"
-        assert text_result[1]["page_number"] == "12"
-        assert text_result[5]["page_number"] == "13"
+        assert text_result[2]["page_number"] == "12"
+        assert text_result[3]["page_number"] == "12"
+        assert text_result[7]["page_number"] == "13"
         # - section type = text for all
         section_type = {t["section_type"] for t in text_result}
         assert section_type == {"text"}
 
     def test_get_text_skip_empty(self):
         tei_input = TEIinput(input_file=TEST_TEI_FILE)
-        # remove everything under the third paragraph, resulting in empty text
+        # remove everything under the third paragraph block, resulting in empty text
         third_para = tei_input.xml_doc.text_blocks[2]
         for child in third_para.node:
             third_para.node.remove(child)
         text_result = list(tei_input.get_text())
         # paragraph with empty text should be omitted
-        assert len(text_result) == 5
+        assert len(text_result) == 7
         # line numbers not preserved for block with no text
         assert 2 not in tei_input.text_line_numbers
 
@@ -250,18 +250,18 @@ class TestTEIinput:
         # expect a generator with one item, with the content added to the file
         assert isinstance(sentences, Generator)
         sentences = list(sentences)
-        assert len(sentences) == 6  # 6 paragraphs, one mock sentence each
+        assert len(sentences) == 8  # 6 paragraphs + 2 heads, one mock sentence each
         # method called once for each page of text
-        assert mock_segment_text.call_count == 6
+        assert mock_segment_text.call_count == 8
         assert all(isinstance(sentence, dict) for sentence in sentences)
         # file id set (handled by base input class)
         assert sentences[0]["file"] == TEST_TEI_FILE.name
         # page number set
-        assert sentences[0]["page_number"] == "12"
-        assert sentences[5]["page_number"] == "13"
+        assert sentences[2]["page_number"] == "12"
+        assert sentences[7]["page_number"] == "13"
         # sentence index is set and continues across pages
         sent_indices = [s["sent_index"] for s in sentences]
-        assert sent_indices == list(range(6))
+        assert sent_indices == list(range(8))
 
     @patch("remarx.sentence.corpus.base_input.segment_text")
     def test_get_sentences_with_footnotes(self, mock_segment_text: Mock):
