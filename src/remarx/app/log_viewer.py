@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import html
 import pathlib
+from collections.abc import Sequence
 from typing import Protocol, runtime_checkable
 
 import marimo as mo
 
 DEFAULT_LOG_LINES = 10
+REFRESH_OPTIONS = ["1s", "5s", "10s", "30s"]
+DEFAULT_REFRESH_INTERVAL = "1s"
 
 
 @runtime_checkable
@@ -56,29 +59,82 @@ def read_log_tail(
     return "\n".join(tail)
 
 
+def create_log_refresh_control(
+    *,
+    key: str = "default",
+    options: Sequence[str] = REFRESH_OPTIONS,
+    default_interval: str = DEFAULT_REFRESH_INTERVAL,
+) -> mo.ui.refresh:
+    """Create or reuse the refresh control used to trigger log polling."""
+
+    return mo.ui.refresh(
+        options=list(options),
+        default_interval=default_interval,
+    )
+
+
 def render_log_panel(
     log_file_path: pathlib.Path | None,
     max_lines: int = DEFAULT_LOG_LINES,
     *,
     panel_title: str = "Live remarx logs",
+    refresh_control: mo.ui.refresh | None = None,
+    refresh_ticks: int | None = None,
 ) -> mo.Html:
     """Render a reactive log viewer for the current marimo session."""
 
+    refresh_ui = (
+        refresh_control
+        if refresh_control is not None
+        else create_log_refresh_control(key="default")
+    )
+    hidden_refresh_ui = refresh_ui.style(display="none")
+
+    if refresh_ticks is not None:
+        _ = refresh_ticks
+    elif refresh_control is not None:
+        try:
+            _ = refresh_control.value
+        except RuntimeError:
+            _ = None
+    else:
+        _ = None
+
+    guidance_md = None
+
     if log_file_path is None:
-        return mo.callout(
-            mo.md(
-                "Logging is configured to stdout for this session; "
-                "no log file is available to preview."
-            ),
-            kind="info",
+        return mo.vstack(
+            [
+                guidance_md,
+                hidden_refresh_ui,
+                mo.callout(
+                    mo.md(
+                        "Logging is configured to stdout for this session; "
+                        "no log file is available to preview."
+                    ),
+                    kind="info",
+                ),
+            ],
+            align="stretch",
+            gap="0.5em",
         )
 
     watched_log = mo.watch.file(log_file_path)
     log_tail = read_log_tail(watched_log, max_lines=max_lines)
     if log_tail is None:
-        return mo.callout(
-            mo.md(f"Waiting for log file `{log_file_path.name}` to be created..."),
-            kind="info",
+        return mo.vstack(
+            [
+                guidance_md,
+                hidden_refresh_ui,
+                mo.callout(
+                    mo.md(
+                        f"Waiting for log file `{log_file_path.name}` to be created..."
+                    ),
+                    kind="info",
+                ),
+            ],
+            align="stretch",
+            gap="0.5em",
         )
 
     display_text = log_tail or "[no log messages yet]"
@@ -95,11 +151,8 @@ def render_log_panel(
 
     return mo.vstack(
         [
-            mo.md(
-                f"#### {panel_title}\n"
-                f"Showing last {max_lines} lines from `{log_file_path.name}`\n\n"
-                f"Log file path: `{log_file_path}`"
-            ),
+            guidance_md,
+            hidden_refresh_ui,
             log_panel,
         ],
         align="stretch",
@@ -109,6 +162,7 @@ def render_log_panel(
 
 __all__ = [
     "DEFAULT_LOG_LINES",
+    "create_log_refresh_control",
     "read_log_tail",
     "render_log_panel",
 ]

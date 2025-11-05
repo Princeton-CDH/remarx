@@ -25,7 +25,7 @@ def _():
     import logging
     import remarx
     from remarx.app.utils import create_header, create_temp_input, get_current_log_file
-    from remarx.app.log_viewer import render_log_panel
+
     from remarx.sentence.corpus import FileInput
     from remarx.quotation.pairs import find_quote_pairs
     return (
@@ -35,7 +35,7 @@ def _():
         find_quote_pairs,
         get_current_log_file,
         logging,
-        render_log_panel,
+
         mo,
         pathlib,
         remarx,
@@ -289,15 +289,8 @@ def _(button, find_quote_pairs, mo, original_file, reuse_file, output_csv):
 
 
 @app.cell
-def _(log_file_path, mo, render_log_panel):
-    mo.vstack(
-        [
-            mo.md("### Monitor Logs"),
-            render_log_panel(log_file_path),
-        ],
-        align="stretch",
-        gap="0.75em",
-    )
+def _(mo, log_file_path):
+    mo.md(f"Logs are being written to: {log_file_path}")
     return
 
 

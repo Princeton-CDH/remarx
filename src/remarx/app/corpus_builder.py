@@ -24,8 +24,12 @@ def _():
 
     import logging
     import remarx
-    from remarx.app.utils import create_header, create_temp_input, get_current_log_file
-    from remarx.app.log_viewer import render_log_panel
+    from remarx.app.utils import (
+        create_header,
+        create_temp_input,
+        get_current_log_file,
+    )
+    from remarx.app.log_viewer import create_log_refresh_control, render_log_panel
     from remarx.sentence.corpus.create import create_corpus
     from remarx.sentence.corpus import FileInput
     return (
@@ -38,6 +42,7 @@ def _():
         pathlib,
         remarx,
         logging,
+        create_log_refresh_control,
         render_log_panel,
     )
 
@@ -170,6 +175,12 @@ def _(mo):
 
 
 @app.cell
+def _(create_log_refresh_control):
+    log_refresh = create_log_refresh_control()
+    return (log_refresh,)
+
+
+@app.cell
 def _(input_file, mo, output_dir):
     # Determine inputs based on file & folder selections
 
@@ -214,7 +225,7 @@ def _(input_file, mo, output_dir):
 @app.cell
 def _(button, create_corpus, create_temp_input, input_file, mo, output_csv):
     # Build Sentence Corpus
-    building_msg = f'Click "Build Corpus" button to start'
+    building_msg = 'Click "Build Corpus" button to start, and then **refresh the page** to see the real-time process logging below'
 
     if button.value:
         spinner_msg = f"Building sentence corpus for {input_file.name}"
@@ -230,15 +241,25 @@ def _(button, create_corpus, create_temp_input, input_file, mo, output_csv):
 
 
 @app.cell
-def _(log_file_path, mo, render_log_panel):
+def _(log_file_path, log_refresh, mo, render_log_panel):
     mo.vstack(
         [
-            mo.md("### 4. Monitor Logs"),
-            render_log_panel(log_file_path),
+            mo.md("### Live remarx logs"),
+            render_log_panel(
+                log_file_path,
+                refresh_control=log_refresh,
+                refresh_ticks=log_refresh.value,
+            ),
         ],
         align="stretch",
         gap="0.75em",
     )
+    return
+
+
+@app.cell
+def _(mo, log_file_path):
+    mo.md(f"Logs are being written to: {log_file_path}")
     return
 
 
