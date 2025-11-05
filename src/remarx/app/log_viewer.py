@@ -7,9 +7,6 @@ from typing import Protocol, runtime_checkable
 
 import marimo as mo
 
-DEFAULT_LOG_LINES = 10
-DEFAULT_REFRESH_INTERVAL = "1s"
-
 
 @runtime_checkable
 class _ReadablePath(Protocol):
@@ -27,14 +24,13 @@ class _ReadablePath(Protocol):
 
 def read_log_tail(
     file_path: _ReadablePath,
-    max_lines: int = DEFAULT_LOG_LINES,
+    max_lines: int = 10,
     *,
     encoding: str = "utf-8",
 ) -> str | None:
     """
-    Return the last ``max_lines`` from ``file_path``.
-
-    ``None`` is returned when the underlying file does not yet exist.
+    Return the last max_lines from file_path.
+    None is returned when the underlying file does not yet exist.
     """
 
     max_lines = max(0, max_lines)
@@ -63,14 +59,13 @@ def create_log_refresh_control(
     """Create or reuse the refresh control used to trigger log polling."""
 
     return mo.ui.refresh(
-        options=[DEFAULT_REFRESH_INTERVAL],
-        default_interval=DEFAULT_REFRESH_INTERVAL,
+        options=["1s"],
+        default_interval="1s",
     )
 
 
 def render_log_panel(
     log_file_path: pathlib.Path | None,
-    max_lines: int = DEFAULT_LOG_LINES,
     *,
     panel_title: str = "Live remarx logs",
     refresh_control: mo.ui.refresh | None = None,
@@ -112,7 +107,7 @@ def render_log_panel(
         )
 
     watched_log = mo.watch.file(log_file_path)
-    log_tail = read_log_tail(watched_log, max_lines=max_lines)
+    log_tail = read_log_tail(watched_log)
     if log_tail is None:
         return mo.vstack(
             [
@@ -142,7 +137,6 @@ def render_log_panel(
 
 
 __all__ = [
-    "DEFAULT_LOG_LINES",
     "create_log_refresh_control",
     "read_log_tail",
     "render_log_panel",
