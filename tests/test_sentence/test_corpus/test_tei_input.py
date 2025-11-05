@@ -48,6 +48,13 @@ class TestTEIDocument:
             TEIDocument.init_from_file(txtfile)
 
 
+cross_page_para = """<p xmlns="http://www.tei-c.org/ns/1.0">
+    <lb n="41"/> und es ist <hi rendition="i">der letzte Endzweck dieses Werks das ökonomische Be-
+    <pb n="14"/>
+    <lb n="1"/>wegungsgesetz der modernen Gesellschaft zu enthüllen</hi> kann sie na
+ </p>"""
+
+
 class TestTEIParagraph:
     def test_attributes(self):
         tei_doc = TEIDocument.init_from_file(TEST_TEI_FILE)
@@ -80,6 +87,8 @@ class TestTEIParagraph:
         assert para_text.endswith("darum handelt.")
         # editorial content is skipped and doesn't introduce blank lines
         assert "Es handelt sich dabei  in der That" in para_text
+        # does not set page begin offset because paragraph does not cross pages
+        assert not para.page_begin_offset
 
     def test_get_text_skip_footnote_ref(self):
         tei_doc = TEIDocument.init_from_file(TEST_TEI_WITH_FOOTNOTES_FILE)
@@ -115,20 +124,19 @@ class TestTEIParagraph:
         assert "Fortgang der Accumulation" in para_text
         assert "derAccumulation" not in para_text
 
-    cross_page_para = """<p xmlns="http://www.tei-c.org/ns/1.0">
-    <lb n="41"/> und es ist <hi rendition="i">der letzte Endzweck dieses Werks das ökonomische Be-
-    <pb n="14"/>
-    <lb n="1"/>wegungsgesetz der modernen Gesellschaft zu enthüllen</hi> kann sie na
- </p>"""
-
     def test_cross_page_paragraph(self):
-        para = xmlmap.load_xmlobject_from_string(self.cross_page_para, TEIParagraph)
+        para = xmlmap.load_xmlobject_from_string(cross_page_para, TEIParagraph)
         assert para.continuing_page == "14"
+        para_text = para.get_text()
         assert (
-            para.get_text()
+            para_text
             == "und es ist der letzte Endzweck dieses Werks das ökonomische Be- "
             + "wegungsgesetz der modernen Gesellschaft zu enthüllen kann sie na"
         )
+        page_begin_offset = para_text.index("wegungsgesetz")
+        assert para.line_number_by_offset[page_begin_offset] == 1
+        # sets page begin offset for continuing page
+        assert para.page_begin_offset[page_begin_offset] == "14"
 
 
 class TestTEIFootnote:
@@ -255,6 +263,31 @@ class TestTEIinput:
 
         # if text index is not present, returns empty dict
         assert tei_input.get_extra_metadata({}, 20, "text") == {}
+
+    def test_get_extra_metadata_page_boundary(self):
+        tei_input = TEIinput(input_file=TEST_TEI_FILE)
+        # append cross-page paragraph fixture to fixture document
+        continuing_para = xmlmap.load_xmlobject_from_string(
+            cross_page_para, TEIParagraph
+        )
+        tei_input.xml_doc.text_blocks[0].node.getparent().append(continuing_para.node)
+        # line numbers populated on tei_input by get_text
+        # _AND_ page number, but only for continuing page
+        text_chunks = list(tei_input.get_text())
+        continue_para_index = len(text_chunks) - 1
+
+        # there should only be one continuing page number,
+        # since only one paragraph crosses a page boundary
+        assert list(tei_input.continuing_page_numbers.keys()) == [continue_para_index]
+
+        # extra metadata should include page number override
+        crosspage_text = text_chunks[-1]
+        page_begin_offset = continuing_para.get_text().index("wegungsgesetz")
+        extra_meta = tei_input.get_extra_metadata(
+            crosspage_text, page_begin_offset, crosspage_text["text"]
+        )
+        # metadata should include line number AND page number
+        assert extra_meta == {"page_number": "14", "line_number": 1}
 
     @patch("remarx.sentence.corpus.base_input.segment_text")
     def test_get_sentences(self, mock_segment_text: Mock):

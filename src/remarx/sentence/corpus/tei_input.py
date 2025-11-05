@@ -63,7 +63,7 @@ class TEIParagraph(BaseTEIXmlObject):
 
     page_number = xmlmap.StringField("preceding::t:pb[not(@ed='manuscript')][1]/@n")
     continuing_page = xmlmap.StringField(".//t:pb[not(@ed='manuscript')]/@n")
-    # pb within this paragraph; not used yet
+    # page number within this paragraph, for paragraphs that cross page boundary
 
     text_nodes = xmlmap.StringListField(
         ".//text()[not(ancestor::t:label[@type='mpb']|ancestor::t:formula|ancestor::t:add|ancestor::t:table|ancestor::t:ref[@type='footnote'])]",
@@ -71,6 +71,7 @@ class TEIParagraph(BaseTEIXmlObject):
     "list of text nodes in this paragraph; excludes manuscript edition content, formulas, tables, and footnote references"
 
     line_number_by_offset: dict[int, int] = None
+    page_begin_offset: dict[int, int] = None
 
     def get_text(self) -> (str, dict[int, int]):
         """
@@ -79,6 +80,7 @@ class TEIParagraph(BaseTEIXmlObject):
         """
         text_contents: list[str] = []
         self.line_number_by_offset: dict[int, int] = {}
+        self.page_begin_offset: dict[int, str] = {}
         char_offset = 0
 
         for el in self.text_nodes:
@@ -121,6 +123,24 @@ class TEIParagraph(BaseTEIXmlObject):
                     # with a newline, add one to the current text
                     if text_contents and not text_contents[-1].endswith(" "):
                         cleaned_text = f" {cleaned_text}"
+
+            # if this paragraph wraps a page boundary, check for page begin
+            # and store character offset
+            if self.continuing_page:
+                page_begin = None
+                # look for parent of tail text or previous sibling of
+                # line break previously identified
+                if parent.tag == TEI_TAG.pb:
+                    page_begin = parent
+                elif line_begin is not None:
+                    prev = line_begin.getprevious()
+                    if prev is not None and prev.tag == TEI_TAG.pb:
+                        page_begin = prev
+
+                # if a non-manuscript edition page begin is found, store the offset
+                if page_begin is not None and page_begin.get("ed") != "manuscript":
+                    page_number = page_begin.get("n")
+                    self.page_begin_offset[char_offset] = page_number
 
             # if cleaning resulted in empty string or whitespace only, omit
             if cleaned_text.strip() == "":
@@ -215,6 +235,7 @@ class TEIinput(FileInput):
         # yield body text and footnotes content chunked by page with page number
         start = time()
         self.text_line_numbers = {}
+        self.continuing_page_numbers = {}
         total_text_blocks = 0
         for i, text_block in enumerate(self.xml_doc.text_blocks):
             para_start = time()
@@ -223,6 +244,9 @@ class TEIinput(FileInput):
                 # store the line number offsets on the input class, since
                 # xmlobject nodelist does NOT preserve non-xml object modifications
                 self.text_line_numbers[i] = text_block.line_number_by_offset
+                # for continuing pages, store offset of new page number
+                if text_block.page_begin_offset:
+                    self.continuing_page_numbers[i] = text_block.page_begin_offset
 
                 yield {
                     "text": text,
@@ -286,13 +310,25 @@ class TEIinput(FileInput):
         :returns: Dictionary with line_number for the sentence or empty dict
         """
         # If line_number is already present, no additional information is needed
+        extra_info = {}
         if "line_number" in chunk_info:
-            return {}
+            return extra_info
 
         # Check for text index;
         #  if available, get line number by offset within text
         i = chunk_info.get("text_index")
         if i is not None:
-            return {"line_number": self.get_line_number(i, char_idx)}
+            extra_info["line_number"] = self.get_line_number(i, char_idx)
 
-        return {}
+            # check for continuing page number
+            if i in self.continuing_page_numbers:
+                page_number = None
+                for offset, page in self.continuing_page_numbers[i].items():
+                    if offset > char_idx:
+                        break
+                    page_number = page
+                # if found, override page number
+                if page_number is not None:
+                    extra_info["page_number"] = page_number
+
+        return extra_info
