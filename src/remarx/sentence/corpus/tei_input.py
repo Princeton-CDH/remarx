@@ -291,11 +291,8 @@ class TEIinput(FileInput):
 
         # Check for text index;
         #  if available, get line number by offset within text
-        try:
-            i = chunk_info.get("text_index")
-            if i is not None:
-                return {"line_number": self.get_line_number(i, char_idx)}
-        except KeyError:
-            pass
+        i = chunk_info.get("text_index")
+        if i is not None:
+            return {"line_number": self.get_line_number(i, char_idx)}
 
         return {}
