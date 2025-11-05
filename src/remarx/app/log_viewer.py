@@ -28,10 +28,7 @@ def read_log_tail(
     *,
     encoding: str = "utf-8",
 ) -> str | None:
-    """
-    Return the last max_lines from file_path.
-    None is returned when the underlying file does not yet exist.
-    """
+    """Return the last max_lines lines from file_path."""
 
     max_lines = max(0, max_lines)
     try:
@@ -39,7 +36,6 @@ def read_log_tail(
     except FileNotFoundError:
         return None
     except TypeError:
-        # marimo's FileState.read_text does not accept encoding/errors
         text = file_path.read_text()
 
     if not text:
@@ -48,28 +44,24 @@ def read_log_tail(
     lines = text.splitlines()
     if max_lines == 0:
         return ""
-    tail = lines[-max_lines:]
-    return "\n".join(tail)
+    return "\n".join(lines[-max_lines:])
 
 
 def render_log_panel(
     log_file_path: pathlib.Path | None,
     *,
-    refresh_control: mo.ui.refresh | None = None,
-    refresh_ticks: int | None = None,
+    refresh_control: mo.ui.refresh,
+    refresh_ticks: int,
 ) -> mo.Html:
     """Render a reactive log viewer for the current marimo session."""
 
-    if refresh_control is None:
-        refresh_control = mo.ui.refresh(options=["1s"], default_interval="1s")
-    hidden_refresh_ui = refresh_control.style(display="none")
-
-    _ = refresh_ticks if refresh_ticks is not None else refresh_control.value
+    hidden_refresh = refresh_control.style(display="none")
+    _ = refresh_ticks
 
     if log_file_path is None:
         return mo.vstack(
             [
-                hidden_refresh_ui,
+                hidden_refresh,
                 mo.callout(
                     mo.md(
                         "Logging is configured to stdout for this session; "
@@ -85,7 +77,7 @@ def render_log_panel(
     if log_tail is None:
         return mo.vstack(
             [
-                hidden_refresh_ui,
+                hidden_refresh,
                 mo.callout(
                     mo.md(
                         f"Waiting for log file `{log_file_path.name}` to be created..."
@@ -96,12 +88,10 @@ def render_log_panel(
         )
 
     display_text = log_tail or "[no log messages yet]"
-    log_panel = mo.md(f"```text\n{display_text}\n```")
-
     return mo.vstack(
         [
-            hidden_refresh_ui,
-            log_panel,
+            hidden_refresh,
+            mo.md(f"```text\n{display_text}\n```"),
         ],
     )
 
