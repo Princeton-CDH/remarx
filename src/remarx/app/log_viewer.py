@@ -102,8 +102,6 @@ def render_log_panel(
                     kind="info",
                 ),
             ],
-            align="stretch",
-            gap="0.5em",
         )
 
     watched_log = mo.watch.file(log_file_path)
@@ -119,8 +117,6 @@ def render_log_panel(
                     kind="info",
                 ),
             ],
-            align="stretch",
-            gap="0.5em",
         )
 
     display_text = log_tail or "[no log messages yet]"
@@ -131,8 +127,6 @@ def render_log_panel(
             hidden_refresh_ui,
             log_panel,
         ],
-        align="stretch",
-        gap="0.5em",
     )
 
 
