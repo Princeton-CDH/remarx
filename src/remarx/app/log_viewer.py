@@ -55,28 +55,16 @@ def read_log_tail(
 def render_log_panel(
     log_file_path: pathlib.Path | None,
     *,
-    panel_title: str = "Live remarx logs",
     refresh_control: mo.ui.refresh | None = None,
     refresh_ticks: int | None = None,
 ) -> mo.Html:
     """Render a reactive log viewer for the current marimo session."""
 
-    refresh_ui = (
-        refresh_control
-        if refresh_control is not None
-        else mo.ui.refresh(options=["1s"], default_interval="1s")
-    )
-    hidden_refresh_ui = refresh_ui.style(display="none")
+    if refresh_control is None:
+        refresh_control = mo.ui.refresh(options=["1s"], default_interval="1s")
+    hidden_refresh_ui = refresh_control.style(display="none")
 
-    if refresh_ticks is not None:
-        _ = refresh_ticks
-    elif refresh_control is not None:
-        try:
-            _ = refresh_control.value
-        except RuntimeError:
-            _ = None
-    else:
-        _ = None
+    _ = refresh_ticks if refresh_ticks is not None else refresh_control.value
 
     if log_file_path is None:
         return mo.vstack(
