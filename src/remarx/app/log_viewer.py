@@ -36,7 +36,10 @@ def read_log_tail(
     except FileNotFoundError:
         return None
     except TypeError:
-        text = file_path.read_text()
+        try:
+            text = file_path.read_text()
+        except FileNotFoundError:
+            return None
 
     if not text:
         return ""

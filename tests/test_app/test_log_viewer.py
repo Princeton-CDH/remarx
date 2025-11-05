@@ -65,3 +65,27 @@ def test_render_log_panel_accepts_refresh(tmp_path: pathlib.Path) -> None:
     )
 
     assert "line two" in panel._repr_html_()
+
+
+def test_render_log_panel_waits_for_file(tmp_path: pathlib.Path) -> None:
+    control = marimo.ui.refresh(options=["1s"], default_interval="1s")
+
+    panel = render_log_panel(
+        tmp_path / "missing.log",
+        refresh_control=control,
+        refresh_ticks=0,
+    )
+
+    assert "Waiting for log file" in panel._repr_html_()
+
+
+def test_render_log_panel_handles_stdout_configuration() -> None:
+    control = marimo.ui.refresh(options=["1s"], default_interval="1s")
+
+    panel = render_log_panel(
+        None,
+        refresh_control=control,
+        refresh_ticks=0,
+    )
+
+    assert "Logging is configured to stdout" in panel._repr_html_()
