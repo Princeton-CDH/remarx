@@ -4,13 +4,11 @@ from __future__ import annotations
 
 import html
 import pathlib
-from collections.abc import Sequence
 from typing import Protocol, runtime_checkable
 
 import marimo as mo
 
 DEFAULT_LOG_LINES = 10
-REFRESH_OPTIONS = ["1s", "5s", "10s", "30s"]
 DEFAULT_REFRESH_INTERVAL = "1s"
 
 
@@ -62,14 +60,12 @@ def read_log_tail(
 def create_log_refresh_control(
     *,
     key: str = "default",
-    options: Sequence[str] = REFRESH_OPTIONS,
-    default_interval: str = DEFAULT_REFRESH_INTERVAL,
 ) -> mo.ui.refresh:
     """Create or reuse the refresh control used to trigger log polling."""
 
     return mo.ui.refresh(
-        options=list(options),
-        default_interval=default_interval,
+        options=[DEFAULT_REFRESH_INTERVAL],
+        default_interval=DEFAULT_REFRESH_INTERVAL,
     )
 
 
@@ -100,12 +96,9 @@ def render_log_panel(
     else:
         _ = None
 
-    guidance_md = None
-
     if log_file_path is None:
         return mo.vstack(
             [
-                guidance_md,
                 hidden_refresh_ui,
                 mo.callout(
                     mo.md(
@@ -124,7 +117,6 @@ def render_log_panel(
     if log_tail is None:
         return mo.vstack(
             [
-                guidance_md,
                 hidden_refresh_ui,
                 mo.callout(
                     mo.md(
@@ -151,7 +143,6 @@ def render_log_panel(
 
     return mo.vstack(
         [
-            guidance_md,
             hidden_refresh_ui,
             log_panel,
         ],
