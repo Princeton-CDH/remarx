@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import html
 import pathlib
 from typing import Protocol, runtime_checkable
 
@@ -130,16 +129,7 @@ def render_log_panel(
         )
 
     display_text = log_tail or "[no log messages yet]"
-    escaped_text = html.escape(display_text)
-    log_panel = mo.Html(
-        '<div style="background-color:#111827;border:1px solid #1d4ed8;'
-        'border-radius:10px;padding:0.85em;box-shadow:0 2px 6px rgba(0,0,0,0.25);">'
-        '<pre style="margin:0;font-family:var(--marimo-font-mono,monospace);'
-        "font-size:0.9rem;line-height:1.4;color:#f8fafc;white-space:pre-wrap;"
-        'overflow:auto;tab-size:4;max-height:24rem;">'
-        f"{escaped_text}"
-        "</pre></div>"
-    )
+    log_panel = mo.md(f"```text\n{display_text}\n```")
 
     return mo.vstack(
         [
