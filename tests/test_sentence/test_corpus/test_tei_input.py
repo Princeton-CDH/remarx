@@ -181,6 +181,18 @@ class TestTEIinput:
         section_type = {t["section_type"] for t in text_result}
         assert section_type == {"text"}
 
+    def test_get_text_skip_empty(self):
+        tei_input = TEIinput(input_file=TEST_TEI_FILE)
+        # remove everything under the third paragraph, resulting in empty text
+        third_para = tei_input.xml_doc.text_blocks[2]
+        for child in third_para.node:
+            third_para.node.remove(child)
+        text_result = list(tei_input.get_text())
+        # paragraph with empty text should be omitted
+        assert len(text_result) == 5
+        # line numbers not preserved for block with no text
+        assert 2 not in tei_input.text_line_numbers
+
     def test_get_text_with_footnotes(self):
         tei_input = TEIinput(input_file=TEST_TEI_WITH_FOOTNOTES_FILE)
         text_chunks = list(tei_input.get_text())
