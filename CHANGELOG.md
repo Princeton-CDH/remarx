@@ -6,6 +6,13 @@
 
 - ALTO input now uses block-level tags for filtering and section type in sentence corpus
     - By default, only includes blocks tagged as text, footnote, Title, or untagged
+- Revised and improved TEI input to operate at paragraph level
+    - Omits tables, math formulas, footnote references, and opening editorial introduction
+    - Skips footnote labels (e.g., "1)", "2)") from footnote text
+    - Omits newlines within paragraphs; ensures lines are separated by whitespace
+    - Includes all non-editorial text content
+    - Yields all body content first followed by all footnotes
+    - Improved speed of parsing
 
 ## [0.3.0] - 2025-10-27
 
