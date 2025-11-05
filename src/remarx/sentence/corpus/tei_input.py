@@ -159,7 +159,6 @@ class TEIDocument(BaseTEIXmlObject):
         TEIParagraph,
     )
     footnotes = xmlmap.NodeListField("//t:text//t:note[@type='footnote']", TEIFootnote)
-    footnotes = xmlmap.NodeListField("//t:text//t:note[@type='footnote']", TEIFootnote)
 
     @classmethod
     def init_from_file(cls, path: pathlib.Path) -> Self:
@@ -243,7 +242,7 @@ class TEIinput(FileInput):
         for i, footnote in enumerate(self.xml_doc.footnotes):
             fn_start = time()
             yield {
-                "text": footnote.text,
+                "text": footnote.get_text(),
                 "page_number": footnote.page_number,
                 "section_type": SectionType.FOOTNOTE.value,
                 "line_number": footnote.line_number,
