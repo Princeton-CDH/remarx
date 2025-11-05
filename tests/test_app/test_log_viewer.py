@@ -1,12 +1,9 @@
 import pathlib
 
+import marimo
 import pytest
 
-from remarx.app.log_viewer import (
-    create_log_refresh_control,
-    read_log_tail,
-    render_log_panel,
-)
+from remarx.app.log_viewer import read_log_tail, render_log_panel
 
 
 class DummyPath:
@@ -56,15 +53,10 @@ def test_read_log_tail_falls_back_when_encoding_not_supported() -> None:
     assert read_log_tail(path, max_lines=1) == "second"
 
 
-def test_create_log_refresh_control_returns_refresh() -> None:
-    control = create_log_refresh_control(key="test")
-    assert control.name == "marimo-refresh"
-
-
 def test_render_log_panel_accepts_refresh(tmp_path: pathlib.Path) -> None:
     log_file = tmp_path / "log.txt"
     log_file.write_text("line one\nline two")
-    control = create_log_refresh_control(key="test-render")
+    control = marimo.ui.refresh(options=["1s"], default_interval="1s")
 
     panel = render_log_panel(
         log_file,

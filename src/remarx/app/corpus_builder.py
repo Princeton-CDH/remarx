@@ -29,7 +29,7 @@ def _():
         create_temp_input,
         get_current_log_file,
     )
-    from remarx.app.log_viewer import create_log_refresh_control, render_log_panel
+    from remarx.app.log_viewer import render_log_panel
     from remarx.sentence.corpus.create import create_corpus
     from remarx.sentence.corpus import FileInput
     return (
@@ -42,7 +42,6 @@ def _():
         pathlib,
         remarx,
         logging,
-        create_log_refresh_control,
         render_log_panel,
     )
 
@@ -175,8 +174,8 @@ def _(mo):
 
 
 @app.cell
-def _(create_log_refresh_control):
-    log_refresh = create_log_refresh_control()
+def _(mo):
+    log_refresh = mo.ui.refresh(options=["1s"], default_interval="1s")
     return (log_refresh,)
 
 

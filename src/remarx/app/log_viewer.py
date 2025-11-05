@@ -52,18 +52,6 @@ def read_log_tail(
     return "\n".join(tail)
 
 
-def create_log_refresh_control(
-    *,
-    key: str = "default",
-) -> mo.ui.refresh:
-    """Create or reuse the refresh control used to trigger log polling."""
-
-    return mo.ui.refresh(
-        options=["1s"],
-        default_interval="1s",
-    )
-
-
 def render_log_panel(
     log_file_path: pathlib.Path | None,
     *,
@@ -76,7 +64,7 @@ def render_log_panel(
     refresh_ui = (
         refresh_control
         if refresh_control is not None
-        else create_log_refresh_control(key="default")
+        else mo.ui.refresh(options=["1s"], default_interval="1s")
     )
     hidden_refresh_ui = refresh_ui.style(display="none")
 
@@ -131,7 +119,6 @@ def render_log_panel(
 
 
 __all__ = [
-    "create_log_refresh_control",
     "read_log_tail",
     "render_log_panel",
 ]
