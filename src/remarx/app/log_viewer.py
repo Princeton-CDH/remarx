@@ -58,36 +58,22 @@ def render_log_panel(
     hidden_refresh = refresh_control.style(display="none")
     _ = refresh_ticks
 
-    if log_file_path is None:
-        return mo.vstack(
-            [
-                hidden_refresh,
-                mo.callout(
-                    mo.md(
-                        "Logging is configured to stdout for this session; "
-                        "no log file is available to preview."
-                    ),
-                    kind="info",
-                ),
-            ],
+    display_text: str
+    if log_file_path is not None:
+        watched_log = mo.watch.file(log_file_path)
+        log_tail = read_log_tail(watched_log)
+        if log_tail is None:
+            display_text = (
+                f"Waiting for log file `{log_file_path.name}` to be created..."
+            )
+        else:
+            display_text = log_tail or "[no log messages yet]"
+    else:
+        display_text = (
+            "Logging is configured to stdout for this session; "
+            "no log file is available to preview."
         )
 
-    watched_log = mo.watch.file(log_file_path)
-    log_tail = read_log_tail(watched_log)
-    if log_tail is None:
-        return mo.vstack(
-            [
-                hidden_refresh,
-                mo.callout(
-                    mo.md(
-                        f"Waiting for log file `{log_file_path.name}` to be created..."
-                    ),
-                    kind="info",
-                ),
-            ],
-        )
-
-    display_text = log_tail or "[no log messages yet]"
     return mo.vstack(
         [
             hidden_refresh,
