@@ -62,7 +62,7 @@ class TEIParagraph(BaseTEIXmlObject):
     """
 
     page_number = xmlmap.StringField("preceding::t:pb[not(@ed='manuscript')][1]/@n")
-    continuing_page = xmlmap.StringField("t:pb[not(@ed='manuscript')]/@n")
+    continuing_page = xmlmap.StringField(".//t:pb[not(@ed='manuscript')]/@n")
     # pb within this paragraph; not used yet
 
     text_nodes = xmlmap.StringListField(

@@ -115,6 +115,21 @@ class TestTEIParagraph:
         assert "Fortgang der Accumulation" in para_text
         assert "derAccumulation" not in para_text
 
+    cross_page_para = """<p xmlns="http://www.tei-c.org/ns/1.0">
+    <lb n="41"/> und es ist <hi rendition="i">der letzte Endzweck dieses Werks das ökonomische Be-
+    <pb n="14"/>
+    <lb n="1"/>wegungsgesetz der modernen Gesellschaft zu enthüllen</hi> kann sie na
+ </p>"""
+
+    def test_cross_page_paragraph(self):
+        para = xmlmap.load_xmlobject_from_string(self.cross_page_para, TEIParagraph)
+        assert para.continuing_page == "14"
+        assert (
+            para.get_text()
+            == "und es ist der letzte Endzweck dieses Werks das ökonomische Be- "
+            + "wegungsgesetz der modernen Gesellschaft zu enthüllen kann sie na"
+        )
+
 
 class TestTEIFootnote:
     def test_attributes(self):
