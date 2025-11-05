@@ -25,6 +25,7 @@ def _():
     import logging
     import remarx
     from remarx.app.utils import create_header, create_temp_input, get_current_log_file
+    from remarx.app.log_viewer import render_log_panel
     from remarx.sentence.corpus.create import create_corpus
     from remarx.sentence.corpus import FileInput
     return (
@@ -37,6 +38,7 @@ def _():
         pathlib,
         remarx,
         logging,
+        render_log_panel,
     )
 
 
@@ -228,8 +230,15 @@ def _(button, create_corpus, create_temp_input, input_file, mo, output_csv):
 
 
 @app.cell
-def _(mo, log_file_path):
-    mo.md(f"Logs are being written to: {log_file_path}")
+def _(log_file_path, mo, render_log_panel):
+    mo.vstack(
+        [
+            mo.md("### 4. Monitor Logs"),
+            render_log_panel(log_file_path),
+        ],
+        align="stretch",
+        gap="0.75em",
+    )
     return
 
 
