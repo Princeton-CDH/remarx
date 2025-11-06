@@ -175,3 +175,6 @@ cython_debug/
 
 # built mkdocs site
 site/
+
+# sentence embedding cache
+/.remarx_cache

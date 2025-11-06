@@ -2,13 +2,22 @@
 Library for generating sentence embeddings from pretrained Sentence Transformer models.
 """
 
+import json
 import logging
+import pathlib
+import zlib
 from timeit import default_timer as time
 
+import numpy as np
 import numpy.typing as npt
 from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
+
+# Cache directory (stored within the project directory)
+_PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[3]
+_CACHE_DIR = _PROJECT_ROOT / ".remarx_cache" / "embeddings"
+_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def get_sentence_embeddings(
@@ -25,6 +34,20 @@ def get_sentence_embeddings(
     :param model_name: Name of the pretrained sentence transformer model to use (default: paraphrase-multilingual-mpnet-base-v2)
     :return: 2-dimensional numpy array of normalized sentence embeddings with shape [# sents, # dims]
     """
+    # Generate cache key from JSON serialization to avoid newline collisions
+    content = json.dumps(
+        {"model_name": model_name, "sentences": sentences},
+        sort_keys=True,
+    )
+    cache_key = f"{zlib.crc32(content.encode('utf-8')):08x}"
+    cache_file = _CACHE_DIR / f"{cache_key}.npz"
+
+    # Check cache first
+    if cache_file.exists():
+        with np.load(cache_file) as cached:
+            embeddings = cached["embeddings"]
+        logger.info("Loaded embeddings from cache file %s", cache_file)
+        return embeddings
 
     # Generate embeddings using the specified model
     start = time()
@@ -37,4 +60,9 @@ def get_sentence_embeddings(
     n_vecs = len(embeddings)
     elapsed_time = time() - start
     logger.info(f"Generated {n_vecs:,} embeddings in {elapsed_time:.1f} seconds")
+
+    # Cache for next time
+    np.savez_compressed(cache_file, embeddings=embeddings)
+    logger.info("Saved embeddings to cache file %s", cache_file)
+
     return embeddings
