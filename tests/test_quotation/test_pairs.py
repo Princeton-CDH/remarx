@@ -10,6 +10,7 @@ from polars.testing import assert_frame_equal
 from voyager import Index, Space
 
 from remarx.quotation.pairs import (
+    QuoteDetectionMetrics,
     build_vector_index,
     compile_quote_pairs,
     find_quote_pairs,
@@ -67,8 +68,12 @@ def test_get_sentence_pairs(mock_build_index, mock_embeddings, caplog):
     expected = pl.DataFrame(
         [{"reuse_index": 2, "original_index": 1, "match_score": 0.18}]
     ).cast({"reuse_index": pl.UInt32})  # cast to match row index type
-    results = get_sentence_pairs("original_sents", "reuse_sents", 0.2)
+    results, metrics = get_sentence_pairs("original_sents", "reuse_sents", 0.2)
     assert_frame_equal(results, expected)
+    assert isinstance(metrics, QuoteDetectionMetrics)
+    assert metrics.embedding_seconds >= 0
+    assert metrics.index_seconds >= 0
+    assert metrics.query_seconds >= 0
     ## check mock calls
     assert mock_embeddings.call_count == 2
     mock_embeddings.assert_has_calls(
@@ -85,7 +90,7 @@ def test_get_sentence_pairs(mock_build_index, mock_embeddings, caplog):
     mock_embeddings.side_effect = [original_vecs, reuse_vecs]
     caplog.clear()
     with caplog.at_level(logging.INFO):
-        _ = get_sentence_pairs("original_sents", "reuse_sents", 0.2)
+        _results, _metrics = get_sentence_pairs("original_sents", "reuse_sents", 0.2)
 
     # currently all logging is info level
     assert len(caplog.record_tuples) == 4
@@ -216,13 +221,17 @@ def test_find_quote_pairs(
     orig_df = pl.DataFrame({"original_text": orig_texts})
     reuse_df = pl.DataFrame({"reuse_text": reuse_texts})
     mock_load_df.side_effect = [orig_df, reuse_df]
-    mock_sent_pairs.return_value = ["sent_pairs"]
+    mock_sent_pairs.return_value = (
+        ["sent_pairs"],
+        QuoteDetectionMetrics(1.0, 2.0, 3.0),
+    )
     mock_compile_pairs.return_value = pl.DataFrame({"foo": 1, "bar": "a"})
 
     # Basic
     out_csv = tmp_path / "out.csv"
-    find_quote_pairs("original", "reuse", out_csv)
+    metrics = find_quote_pairs("original", "reuse", out_csv)
     assert out_csv.read_text() == "foo,bar\n1,a\n"
+    assert isinstance(metrics, QuoteDetectionMetrics)
     ## check mocks
     assert mock_load_df.call_count == 2
     mock_sent_pairs.assert_called_once_with(
@@ -263,14 +272,15 @@ def test_find_quote_pairs(
 
     # Case no results
     mock_load_df.side_effect = [orig_df, reuse_df]
-    mock_sent_pairs.return_value = []
+    mock_sent_pairs.return_value = ([], QuoteDetectionMetrics(0.0, 0.0, 0.0))
     with caplog.at_level(logging.INFO):
         caplog.clear()
-        find_quote_pairs("original", "reuse", out_csv)
+        metrics = find_quote_pairs("original", "reuse", out_csv)
     assert len(caplog.record_tuples) == 1
     log = caplog.record_tuples[0]
     assert log[1] == logging.INFO
     assert "No sentence pairs for score cutoff = 0.225" in log[2]
+    assert isinstance(metrics, QuoteDetectionMetrics)
 
 
 def test_find_quote_pairs_integration(tmp_path):
@@ -315,7 +325,8 @@ def test_find_quote_pairs_integration(tmp_path):
     test_reuse.write_csv(reuse_csv)
 
     out_csv = tmp_path / "out.csv"
-    find_quote_pairs(orig_csv, reuse_csv, out_csv)
+    metrics = find_quote_pairs(orig_csv, reuse_csv, out_csv)
+    assert isinstance(metrics, QuoteDetectionMetrics)
     with out_csv.open(newline="") as file:
         reader = csv.DictReader(file)
         results = list(reader)

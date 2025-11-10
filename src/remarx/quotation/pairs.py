@@ -6,6 +6,7 @@ Note: Currently this script only supports one original and reuse corpus.
 
 import logging
 import pathlib
+from dataclasses import dataclass
 from timeit import default_timer as time
 
 import numpy.typing as npt
@@ -15,6 +16,15 @@ from voyager import Index, Space
 from remarx.quotation.embeddings import get_sentence_embeddings
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(slots=True)
+class QuoteDetectionMetrics:
+    """Execution timing metrics for quotation detection steps."""
+
+    embedding_seconds: float
+    index_seconds: float
+    query_seconds: float
 
 
 def build_vector_index(embeddings: npt.NDArray) -> Index:
@@ -43,11 +53,12 @@ def get_sentence_pairs(
     reuse_sents: list[str],
     score_cutoff: float,
     show_progress_bar: bool = False,
-) -> pl.DataFrame:
+) -> tuple[pl.DataFrame, QuoteDetectionMetrics]:
     """
     For a set of original and reuse sentences, identify pairs of original-reuse
-    sentence pairs where quotation is likely. Returns these sentence pairs as
-    a polars DataFrame including for each pair:
+    sentence pairs where quotation is likely. Returns a tuple containing the
+    sentence pairs as a polars DataFrame along with timing metrics. Each row of
+    the dataframe includes:
 
     - `original_index`: the index of the original sentence
     - `reuse_index`: the index of the reuse sentence
@@ -69,23 +80,25 @@ def get_sentence_pairs(
         reuse_sents, show_progress_bar=show_progress_bar
     )
     n_vecs = len(original_vecs) + len(reuse_vecs)
-    elapsed_time = time() - start
+    embedding_elapsed = time() - start
     logger.info(
-        f"Generated {n_vecs:,} sentence embeddings in {elapsed_time:.1f} seconds"
+        f"Generated {n_vecs:,} sentence embeddings in {embedding_elapsed:.1f} seconds"
     )
 
     # Build search index
     # NOTE: An index only needs to be generated once for a set of embeddings.
     #       Perhaps there's some potential reuse between runs?
+    start = time()
     index = build_vector_index(original_vecs)
+    index_elapsed = time() - start
 
     # Get sentence matches; query all vectors at once
     # returns a list of lists with results for each reuse vector
     start = time()
     all_neighbor_ids, all_distances = index.query(reuse_vecs, k=1)
-    elapsed_time = time() - start
+    query_elapsed = time() - start
     logger.info(
-        f"Queried {len(reuse_vecs):,} sentence embeddings in {elapsed_time:.1f} seconds"
+        f"Queried {len(reuse_vecs):,} sentence embeddings in {query_elapsed:.1f} seconds"
     )
 
     result = (
@@ -103,7 +116,12 @@ def get_sentence_pairs(
     logger.info(
         f"Identified {total:,} sentence pair{'' if total == 1 else 's'} under score cutuff {score_cutoff}"
     )
-    return result
+    metrics = QuoteDetectionMetrics(
+        embedding_seconds=embedding_elapsed,
+        index_seconds=index_elapsed,
+        query_seconds=query_elapsed,
+    )
+    return result, metrics
 
 
 def load_sent_df(sentence_corpus: pathlib.Path, col_pfx: str = "") -> pl.DataFrame:
@@ -159,11 +177,12 @@ def find_quote_pairs(
     out_csv: pathlib.Path,
     score_cutoff: float = 0.225,
     show_progress_bar: bool = False,
-) -> None:
+) -> QuoteDetectionMetrics:
     """
     For a given original and reuse sentence corpus, finds the likely sentence-level
     quote pairs. These quote pairs are saved as a CSV. Optionally, the required
-    quality for quote pairs can be modified via `score_cutoff`.
+    quality for quote pairs can be modified via `score_cutoff`. The elapsed time
+    for major detection steps is returned as `QuoteDetectionMetrics`.
     """
 
     # Build sentence dataframes
@@ -172,7 +191,7 @@ def find_quote_pairs(
 
     # Determine sentence pairs
     # TODO: Add support for relevant voyager parameters
-    sent_pairs = get_sentence_pairs(
+    sent_pairs, metrics = get_sentence_pairs(
         original_df.get_column("original_text").to_list(),
         reuse_df.get_column("reuse_text").to_list(),
         score_cutoff,
@@ -189,3 +208,5 @@ def find_quote_pairs(
         logger.info(
             f"No sentence pairs for score cutoff = {score_cutoff} ; output file not created."
         )
+
+    return metrics

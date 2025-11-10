@@ -65,6 +65,7 @@ dev = [ "remarx[dev]" ]
 [project.scripts]
 remarx-app = "remarx.app.utils:launch_app"
 remarx-create-corpus = "remarx.sentence.corpus.create:main"
+remarx-find-quotes = "remarx.quotation.find_quotes:main"
 
 [tool.hatch.version]
 path = "src/remarx/__init__.py"
