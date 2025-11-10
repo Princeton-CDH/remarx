@@ -3,27 +3,13 @@
 from __future__ import annotations
 
 import pathlib
-from typing import Protocol, runtime_checkable
 
 import marimo as mo
-
-
-@runtime_checkable
-class _ReadablePath(Protocol):
-    """Protocol for any object that exposes a Path-like read_text method."""
-
-    name: str
-
-    def read_text(
-        self,
-        encoding: str | None = None,
-        errors: str | None = None,
-    ) -> str:  # pragma: no cover - Protocol
-        """Return the file contents as text."""
+from marimo._runtime.watch._file import FileState
 
 
 def read_log_tail(
-    file_path: _ReadablePath,
+    file_path: pathlib.Path | FileState,
     max_lines: int = 10,
     *,
     encoding: str = "utf-8",
@@ -45,8 +31,6 @@ def read_log_tail(
         return ""
 
     lines = text.splitlines()
-    if max_lines == 0:
-        return ""
     return "\n".join(lines[-max_lines:])
 
 
@@ -73,7 +57,7 @@ def render_log_panel(
             display_text = log_tail or "[no log messages yet]"
     else:
         display_text = (
-            "Logging is configured to stdout for this session; "
+            "Logging is not configured to write to a file for this session; "
             "no log file is available to preview."
         )
 
