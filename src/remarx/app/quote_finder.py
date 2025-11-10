@@ -25,6 +25,7 @@ def _():
     import logging
     import remarx
     from remarx.app.utils import create_header, create_temp_input, get_current_log_file
+
     from remarx.sentence.corpus import FileInput
     from remarx.quotation.pairs import find_quote_pairs
     return (
@@ -34,6 +35,7 @@ def _():
         find_quote_pairs,
         get_current_log_file,
         logging,
+
         mo,
         pathlib,
         remarx,
