@@ -11,31 +11,9 @@ import logging
 import pathlib
 import sys
 from timeit import default_timer as time
-from typing import NoReturn
 
+from remarx.quotation.pairs import find_quote_pairs
 from remarx.utils import configure_logging
-
-try:
-    from remarx.quotation.pairs import find_quote_pairs
-except (
-    ModuleNotFoundError
-) as exc:  # pragma: no cover - exercised when optional deps missing
-    _pairs_import_error = exc
-
-    def find_quote_pairs(
-        original_corpus: pathlib.Path,
-        reuse_corpus: pathlib.Path,
-        out_csv: pathlib.Path,
-        score_cutoff: float = 0.225,
-        show_progress_bar: bool = False,
-    ) -> NoReturn:
-        """Fallback when quotation dependencies are missing."""
-        msg = (
-            "remarx.quotation.pairs dependencies are not available. "
-            "Install the project with its optional requirements."
-        )
-        raise ModuleNotFoundError(msg) from _pairs_import_error
-
 
 logger = logging.getLogger(__name__)
 
@@ -77,8 +55,8 @@ def run_find_quotes(
     return output_path
 
 
-def build_parser() -> argparse.ArgumentParser:
-    """Build the argument parser for the quotation script."""
+def main() -> None:
+    """Command-line access to quotation detection for sentence corpora."""
     parser = argparse.ArgumentParser(
         description="Find quotation pairs between two sentence corpora"
     )
@@ -110,12 +88,6 @@ def build_parser() -> argparse.ArgumentParser:
         default=False,
         help="Log benchmark timing information",
     )
-    return parser
-
-
-def main() -> None:
-    """Command-line access to quotation detection for sentence corpora."""
-    parser = build_parser()
     args = parser.parse_args()
 
     log_level = logging.DEBUG if args.verbose else logging.INFO
