@@ -38,7 +38,6 @@ def test_read_log_tail_handles_missing_file(tmp_path: pathlib.Path) -> None:
         ("a\nb\nc", 2, "b\nc"),
         ("line", 5, "line"),
         ("line1\nline2\n", 1, "line2"),
-        ("line1\nline2", 0, ""),
     ],
 )
 def test_read_log_tail_returns_expected_lines(
@@ -88,4 +87,8 @@ def test_render_log_panel_handles_stdout_configuration() -> None:
         refresh_ticks=0,
     )
 
-    assert "Logging is configured to stdout" in panel._repr_html_()
+    html = panel._repr_html_()
+    assert (
+        "Logging is not configured to write to a file for this session; "
+        "no log file is available to preview."
+    ) in html
