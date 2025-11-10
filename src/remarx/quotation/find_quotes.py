@@ -1,13 +1,9 @@
 """
 Command-line script to identify sentence-level quotation pairs between corpora.
 
-NOTE: Currently this script always writes a file named `quote_pairs.csv` in the
-provided output directory.
-
 Example Usage:
 
-    `remarx-find-quotes original_sentences.csv reuse_sentences.csv out_dir`
-
+    `remarx-find-quotes original_sentences.csv reuse_sentences.csv output.csv`
 """
 
 import argparse
@@ -15,24 +11,44 @@ import logging
 import pathlib
 import sys
 from timeit import default_timer as time
+from typing import NoReturn
 
-from remarx.quotation.pairs import find_quote_pairs
 from remarx.utils import configure_logging
 
-DEFAULT_OUTPUT_FILENAME = "quote_pairs.csv"
+try:
+    from remarx.quotation.pairs import find_quote_pairs
+except (
+    ModuleNotFoundError
+) as exc:  # pragma: no cover - exercised when optional deps missing
+    _pairs_import_error = exc
+
+    def find_quote_pairs(
+        original_corpus: pathlib.Path,
+        reuse_corpus: pathlib.Path,
+        out_csv: pathlib.Path,
+        score_cutoff: float = 0.225,
+        show_progress_bar: bool = False,
+    ) -> NoReturn:
+        """Fallback when quotation dependencies are missing."""
+        msg = (
+            "remarx.quotation.pairs dependencies are not available. "
+            "Install the project with its optional requirements."
+        )
+        raise ModuleNotFoundError(msg) from _pairs_import_error
+
+
 logger = logging.getLogger(__name__)
 
 
 def run_find_quotes(
     original_corpus: pathlib.Path,
     reuse_corpus: pathlib.Path,
-    output_dir: pathlib.Path,
+    output_path: pathlib.Path,
     *,
     benchmark: bool = False,
 ) -> pathlib.Path:
     """Run quotation detection and write results into the output directory."""
-    output_dir.mkdir(parents=True, exist_ok=True)
-    output_path = output_dir / DEFAULT_OUTPUT_FILENAME
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
     logger.info("Running quotation detection")
     logger.info("Original corpus: %s", original_corpus)
@@ -77,9 +93,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="Path to the reuse sentence corpus CSV",
     )
     parser.add_argument(
-        "output_dir",
+        "output_path",
         type=pathlib.Path,
-        help="Directory where the quote pairs CSV will be written",
+        help="Path where the quote pairs CSV will be written",
     )
     parser.add_argument(
         "-v",
@@ -108,7 +124,7 @@ def main() -> None:
     run_find_quotes(
         original_corpus=args.original_corpus,
         reuse_corpus=args.reuse_corpus,
-        output_dir=args.output_dir,
+        output_path=args.output_path,
         benchmark=args.benchmark,
     )
 
