@@ -16,6 +16,10 @@
     - Yields all body content first followed by all footnotes
     - Improved parsing speed
 
+### Quotation detection
+
+- Add the `find_quotes.py` CLI script to run the quote finder, with a `--benchmark` flag to collect performance metrics
+
 ## [0.3.0] - 2025-10-27
 
 ### Sentence corpus creation
