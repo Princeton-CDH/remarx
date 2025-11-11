@@ -10,7 +10,6 @@ import argparse
 import logging
 import pathlib
 import sys
-from timeit import default_timer as time
 
 from remarx.quotation.pairs import find_quote_pairs
 from remarx.utils import configure_logging
@@ -33,24 +32,12 @@ def run_find_quotes(
     logger.info("Reuse corpus: %s", reuse_corpus)
     logger.info("Output file: %s", output_path)
 
-    start = time()
-    metrics = find_quote_pairs(
+    find_quote_pairs(
         original_corpus=original_corpus,
         reuse_corpus=reuse_corpus,
         out_csv=output_path,
+        benchmark=benchmark,
     )
-    elapsed = time() - start
-
-    if benchmark:
-        minutes = elapsed / 60
-        logger.info(
-            "Benchmark summary: wall=%.2fs (%.2fm); embeddings=%.2fs; index=%.2fs; query=%.2fs",
-            elapsed,
-            minutes,
-            metrics.embedding_seconds,
-            metrics.index_seconds,
-            metrics.query_seconds,
-        )
 
     return output_path
 

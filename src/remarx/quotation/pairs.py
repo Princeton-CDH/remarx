@@ -23,8 +23,12 @@ class QuoteDetectionMetrics:
     """Execution timing metrics for quotation detection steps."""
 
     embedding_seconds: float
-    index_seconds: float
-    query_seconds: float
+    search_seconds: float
+
+    @property
+    def total_seconds(self) -> float:
+        """Total wall-clock seconds spent on embeddings plus search."""
+        return self.embedding_seconds + self.search_seconds
 
 
 def build_vector_index(embeddings: npt.NDArray) -> Index:
@@ -53,7 +57,9 @@ def get_sentence_pairs(
     reuse_sents: list[str],
     score_cutoff: float,
     show_progress_bar: bool = False,
-) -> tuple[pl.DataFrame, QuoteDetectionMetrics]:
+    *,
+    collect_metrics: bool = False,
+) -> tuple[pl.DataFrame, QuoteDetectionMetrics | None]:
     """
     For a set of original and reuse sentences, identify pairs of original-reuse
     sentence pairs where quotation is likely. Returns a tuple containing the
@@ -116,11 +122,12 @@ def get_sentence_pairs(
     logger.info(
         f"Identified {total:,} sentence pair{'' if total == 1 else 's'} under score cutuff {score_cutoff}"
     )
-    metrics = QuoteDetectionMetrics(
-        embedding_seconds=embedding_elapsed,
-        index_seconds=index_elapsed,
-        query_seconds=query_elapsed,
-    )
+    metrics = None
+    if collect_metrics:
+        metrics = QuoteDetectionMetrics(
+            embedding_seconds=embedding_elapsed,
+            search_seconds=index_elapsed + query_elapsed,
+        )
     return result, metrics
 
 
@@ -177,12 +184,14 @@ def find_quote_pairs(
     out_csv: pathlib.Path,
     score_cutoff: float = 0.225,
     show_progress_bar: bool = False,
-) -> QuoteDetectionMetrics:
+    *,
+    benchmark: bool = False,
+) -> None:
     """
     For a given original and reuse sentence corpus, finds the likely sentence-level
     quote pairs. These quote pairs are saved as a CSV. Optionally, the required
-    quality for quote pairs can be modified via `score_cutoff`. The elapsed time
-    for major detection steps is returned as `QuoteDetectionMetrics`.
+    quality for quote pairs can be modified via `score_cutoff`. When `benchmark`
+    is enabled, summary timings are logged for embeddings and index/query steps.
     """
 
     # Build sentence dataframes
@@ -196,6 +205,7 @@ def find_quote_pairs(
         reuse_df.get_column("reuse_text").to_list(),
         score_cutoff,
         show_progress_bar=show_progress_bar,
+        collect_metrics=benchmark,
     )
 
     # Build and save quote pairs if any are found
@@ -209,4 +219,10 @@ def find_quote_pairs(
             f"No sentence pairs for score cutoff = {score_cutoff} ; output file not created."
         )
 
-    return metrics
+    if benchmark and metrics is not None:
+        logger.info(
+            "Benchmark summary: embeddings=%.2fs; search=%.2fs; total=%.2fs",
+            metrics.embedding_seconds,
+            metrics.search_seconds,
+            metrics.total_seconds,
+        )

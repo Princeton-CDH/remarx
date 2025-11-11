@@ -70,10 +70,7 @@ def test_get_sentence_pairs(mock_build_index, mock_embeddings, caplog):
     ).cast({"reuse_index": pl.UInt32})  # cast to match row index type
     results, metrics = get_sentence_pairs("original_sents", "reuse_sents", 0.2)
     assert_frame_equal(results, expected)
-    assert isinstance(metrics, QuoteDetectionMetrics)
-    assert metrics.embedding_seconds >= 0
-    assert metrics.index_seconds >= 0
-    assert metrics.query_seconds >= 0
+    assert metrics is None
     ## check mock calls
     assert mock_embeddings.call_count == 2
     mock_embeddings.assert_has_calls(
@@ -221,21 +218,17 @@ def test_find_quote_pairs(
     orig_df = pl.DataFrame({"original_text": orig_texts})
     reuse_df = pl.DataFrame({"reuse_text": reuse_texts})
     mock_load_df.side_effect = [orig_df, reuse_df]
-    mock_sent_pairs.return_value = (
-        ["sent_pairs"],
-        QuoteDetectionMetrics(1.0, 2.0, 3.0),
-    )
+    mock_sent_pairs.return_value = (["sent_pairs"], None)
     mock_compile_pairs.return_value = pl.DataFrame({"foo": 1, "bar": "a"})
 
     # Basic
     out_csv = tmp_path / "out.csv"
-    metrics = find_quote_pairs("original", "reuse", out_csv)
+    find_quote_pairs("original", "reuse", out_csv)
     assert out_csv.read_text() == "foo,bar\n1,a\n"
-    assert isinstance(metrics, QuoteDetectionMetrics)
     ## check mocks
     assert mock_load_df.call_count == 2
     mock_sent_pairs.assert_called_once_with(
-        orig_texts, reuse_texts, 0.225, show_progress_bar=False
+        orig_texts, reuse_texts, 0.225, show_progress_bar=False, collect_metrics=False
     )
     mock_compile_pairs.assert_called_once_with(orig_df, reuse_df, ["sent_pairs"])
 
@@ -257,7 +250,7 @@ def test_find_quote_pairs(
     out_csv = tmp_path / "cutoff.csv"
     find_quote_pairs("original", "reuse", out_csv, score_cutoff=0.4)
     mock_sent_pairs.assert_called_once_with(
-        orig_texts, reuse_texts, 0.4, show_progress_bar=False
+        orig_texts, reuse_texts, 0.4, show_progress_bar=False, collect_metrics=False
     )
 
     # Case: show progress bar
@@ -267,20 +260,54 @@ def test_find_quote_pairs(
     find_quote_pairs("original", "reuse", out_csv, show_progress_bar=True)
     # check mocks
     mock_sent_pairs.assert_called_once_with(
-        orig_texts, reuse_texts, 0.225, show_progress_bar=True
+        orig_texts, reuse_texts, 0.225, show_progress_bar=True, collect_metrics=False
     )
 
     # Case no results
     mock_load_df.side_effect = [orig_df, reuse_df]
-    mock_sent_pairs.return_value = ([], QuoteDetectionMetrics(0.0, 0.0, 0.0))
+    mock_sent_pairs.return_value = ([], None)
     with caplog.at_level(logging.INFO):
         caplog.clear()
-        metrics = find_quote_pairs("original", "reuse", out_csv)
+        find_quote_pairs("original", "reuse", out_csv)
     assert len(caplog.record_tuples) == 1
     log = caplog.record_tuples[0]
     assert log[1] == logging.INFO
     assert "No sentence pairs for score cutoff = 0.225" in log[2]
-    assert isinstance(metrics, QuoteDetectionMetrics)
+
+
+@patch("remarx.quotation.pairs.compile_quote_pairs")
+@patch("remarx.quotation.pairs.get_sentence_pairs")
+@patch("remarx.quotation.pairs.load_sent_df")
+def test_find_quote_pairs_benchmark_logs(
+    mock_load_df, mock_sent_pairs, mock_compile_pairs, caplog, tmp_path
+):
+    orig_df = pl.DataFrame({"original_text": ["orig"]})
+    reuse_df = pl.DataFrame({"reuse_text": ["reuse"]})
+    mock_load_df.side_effect = [orig_df, reuse_df]
+    metrics = QuoteDetectionMetrics(embedding_seconds=1.2, search_seconds=0.5)
+    mock_sent_pairs.return_value = (["sent_pairs"], metrics)
+    mock_compile_pairs.return_value = pl.DataFrame({"foo": [1]})
+
+    out_csv = tmp_path / "bench.csv"
+    with caplog.at_level(logging.INFO):
+        caplog.clear()
+        find_quote_pairs("original", "reuse", out_csv, benchmark=True)
+
+    summaries = [
+        record[2] for record in caplog.record_tuples if "Benchmark summary" in record[2]
+    ]
+    assert summaries
+    summary = summaries[0]
+    assert "embeddings=1.20s" in summary
+    assert "search=0.50s" in summary
+    assert "total=1.70s" in summary
+    mock_sent_pairs.assert_called_with(
+        ["orig"],
+        ["reuse"],
+        0.225,
+        show_progress_bar=False,
+        collect_metrics=True,
+    )
 
 
 def test_find_quote_pairs_integration(tmp_path):
@@ -325,8 +352,7 @@ def test_find_quote_pairs_integration(tmp_path):
     test_reuse.write_csv(reuse_csv)
 
     out_csv = tmp_path / "out.csv"
-    metrics = find_quote_pairs(orig_csv, reuse_csv, out_csv)
-    assert isinstance(metrics, QuoteDetectionMetrics)
+    find_quote_pairs(orig_csv, reuse_csv, out_csv)
     with out_csv.open(newline="") as file:
         reader = csv.DictReader(file)
         results = list(reader)
