@@ -1,6 +1,6 @@
 import polars as pl
 
-from remarx.quotation.consolidate import identify_sequences
+from remarx.quotation.consolidate import consolidate_quotes, identify_sequences
 
 
 def test_identify_sequences():
@@ -38,3 +38,45 @@ def test_identify_sequences():
     assert df_seq["idx_group"].to_list() == [2, 4, 6, 8]
     # none are sequential
     assert all(df_seq["idx_sequential"].eq(False))
+
+
+def test_consolidate_quotes():
+    #  simple case: two rows, sequential on both sides
+    df = pl.from_dicts(
+        [
+            {
+                "match_score": 0.6,
+                "reuse_id": "r1",
+                "reuse_sent_index": 1,
+                "reuse_text": "first part of a sentence",
+                "original_id": "o1",
+                "original_sent_index": 5,
+                "original_text": "First section of my sentence",
+            },
+            {
+                "match_score": 0.4,
+                "reuse_id": "r2",
+                "reuse_sent_index": 2,
+                "reuse_text": "continuation text",
+                "original_id": "o2",
+                "original_sent_index": 6,
+                "original_text": "continuing text",
+            },
+        ]
+    )
+
+    df_consolidated = consolidate_quotes(df)
+    assert len(df_consolidated) == 1
+    result = df_consolidated.to_dicts()[0]
+    assert result["match_score"] == 0.5
+    assert result["num_sentences"] == 2
+    # first for id fields
+    assert result["reuse_id"] == "r1"
+    assert result["original_id"] == "o1"
+    # consolidate/combine other fields
+    assert result["reuse_text"] == "first part of a sentence continuation text"
+    assert result["original_text"] == "First section of my sentence continuing text"
+
+    # confirm columns are as expected (no extra beyond num_sentences)
+
+    # NEXT: test that non-sequential rows returned as-is (doesn't work yet)

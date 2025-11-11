@@ -1,6 +1,10 @@
 """functionality for consolidating sequential quotes into passages"""
 
+import logging
+
 import polars as pl
+
+logger = logging.getLogger(__name__)
 
 
 def identify_sequences(df: pl.DataFrame, field: str) -> pl.DataFrame:
@@ -13,8 +17,7 @@ def identify_sequences(df: pl.DataFrame, field: str) -> pl.DataFrame:
     """
     # sort by the field, since sequential test requires rows to be ordered by field
     df_seq = (
-        df.sort(field)
-        .with_columns(
+        df.with_columns(
             # use shift + add to add columns with the expected value if sequential
             seq_follow=pl.col(field).shift().add(1),
             seq_precede=pl.col(field).shift(-1).sub(1),
@@ -39,3 +42,44 @@ def identify_sequences(df: pl.DataFrame, field: str) -> pl.DataFrame:
         .drop("seq_follow", "seq_precede")
     )  # drop interim fields
     return df_seq
+
+
+def consolidate_quotes(df: pl.DataFrame) -> pl.DataFrame:
+    """
+    Consolidate quotes that are sequential in both original and reuse texts.
+    """
+    # first identify sequential reuse sentences
+    df_seq = identify_sequences(df.sort("reuse_sent_index"), "reuse_sent_index")
+    # filter to groups that are sequential - candidates for consolidating further
+    df_reuse_sequential = df_seq.filter(pl.col("reuse_sent_index_sequential"))
+    # report how many we found at this stage ?
+    total_reuse_seqs = df_reuse_sequential["reuse_sent_index_group"].unique().count()
+    logger.debug(
+        f"Identified {total_reuse_seqs:,} groups of sequential sentences in reuse text"
+    )
+
+    # NOTE: import that the method does not re-sort on original sentence index!
+    df_reuse_sequential = identify_sequences(df_reuse_sequential, "original_sent_index")
+    # ? report how many found?
+
+    df_consolidated = df_reuse_sequential.group_by(
+        "reuse_sent_index_group", "original_sent_index_group"
+    ).agg(
+        pl.col("match_score").mean(),  # average match score within the group
+        pl.first("reuse_id"),  # first reuse id
+        pl.col("reuse_text").str.join(" "),  # combined reuse text
+        # pl.col('reuse_file').unique().str.join('; '),    # reuse filename; combine if multiple non-unique
+        # pl.col('reuse_section_type').unique().str.join('; '),
+        pl.first("original_id"),  # first original id
+        pl.col("original_text").str.join(" "),  # combined original text
+        pl.len().alias("num_sentences"),
+    )
+    # TODO: needs to combine/preserve ALL fields that are present in the metadata!
+    # also needs to drop all the interim group/sequence fields before combining/returning
+
+    # include non-sequential sentences & sort (columns must match)
+    # df_nonseq = df_seq.filter(~pl.col("reuse_sent_index_sequential"))
+    # print(df_nonseq)
+    # return pl.concat([df_nonseq, df_consolidated])
+
+    return df_consolidated
