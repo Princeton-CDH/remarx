@@ -18,7 +18,7 @@ def identify_sequences(df: pl.DataFrame, field: str) -> pl.DataFrame:
     # sort by the field, since sequential test requires rows to be ordered by field
     df_seq = (
         df.with_columns(
-            # use shift + add to add columns with the expected value if sequential
+            # use shift + add to create columns with the expected value if rows are sequential
             seq_follow=pl.col(field).shift().add(1),
             seq_precede=pl.col(field).shift(-1).sub(1),
         )
@@ -47,6 +47,10 @@ def identify_sequences(df: pl.DataFrame, field: str) -> pl.DataFrame:
 def consolidate_quotes(df: pl.DataFrame) -> pl.DataFrame:
     """
     Consolidate quotes that are sequential in both original and reuse texts.
+    Required fields:
+        - `reuse_sent_index` and `original_sent_index` must be present for aggregation
+    Expected fields:
+        -
     """
     # first identify sequential reuse sentences
     df_seq = identify_sequences(df.sort("reuse_sent_index"), "reuse_sent_index")
@@ -54,6 +58,7 @@ def consolidate_quotes(df: pl.DataFrame) -> pl.DataFrame:
     df_reuse_sequential = df_seq.filter(pl.col("reuse_sent_index_sequential"))
     # report how many we found at this stage ?
     total_reuse_seqs = df_reuse_sequential["reuse_sent_index_group"].unique().count()
+    # maybe report out of total rows to start with?
     logger.debug(
         f"Identified {total_reuse_seqs:,} groups of sequential sentences in reuse text"
     )
@@ -62,18 +67,32 @@ def consolidate_quotes(df: pl.DataFrame) -> pl.DataFrame:
     df_reuse_sequential = identify_sequences(df_reuse_sequential, "original_sent_index")
     # ? report how many found?
 
+    aggregate_fields = []
+    # aggregate fields in the order the appear, based on what is present
+    for field in df.columns:
+        if field == "match_score":
+            # average match score within the group
+            aggregate_fields.append(pl.col(field).mean())
+        elif field in ["reuse_id", "original_id"]:
+            # use the first id within the group
+            aggregate_fields.append(pl.first(field))
+
+        elif field in ["reuse_text", "original_text"]:
+            # combine text content across all sentences in the group
+            aggregate_fields.append(pl.col(field).str.join(" "))
+
+        # for all other fields, combine unique values
+        else:
+            aggregate_fields.append(pl.col(field).unique().str.join("; "))
+
+    # last: add a count of the number of sentences in the group
+    aggregate_fields.append(pl.len().alias("num_sentences"))
+
+    # group sentences that are sequential in both original and reuse
     df_consolidated = df_reuse_sequential.group_by(
         "reuse_sent_index_group", "original_sent_index_group"
-    ).agg(
-        pl.col("match_score").mean(),  # average match score within the group
-        pl.first("reuse_id"),  # first reuse id
-        pl.col("reuse_text").str.join(" "),  # combined reuse text
-        # pl.col('reuse_file').unique().str.join('; '),    # reuse filename; combine if multiple non-unique
-        # pl.col('reuse_section_type').unique().str.join('; '),
-        pl.first("original_id"),  # first original id
-        pl.col("original_text").str.join(" "),  # combined original text
-        pl.len().alias("num_sentences"),
-    )
+    ).agg(*aggregate_fields)
+
     # TODO: needs to combine/preserve ALL fields that are present in the metadata!
     # also needs to drop all the interim group/sequence fields before combining/returning
 
