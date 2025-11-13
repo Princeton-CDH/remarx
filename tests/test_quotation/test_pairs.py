@@ -317,34 +317,27 @@ def test_find_quote_pairs_integration(tmp_path):
     masked by mocking.
     """
     test_orig = pl.DataFrame(
-        [
-            {
-                "sent_id": "B",
-                "corpus": "original",
-                "text": "Und nun sollen seine Geister Auch nach meinem Willen leben.",
-            },
-            {
-                "sent_id": "A",
-                "corpus": "original",
-                "text": "Hat der alte Hexenmeister Sich doch einmal wegbegeben!",
-            },
-            {
-                "sent_id": "C",
-                "corpus": "original",
-                "text": "Seine Wort und Werke Merkt ich und den Brauch, Und mit Geistesstärke Tu ich Wunder auch.",
-            },
-        ]
-    )
+        data={
+            "sent_id": ["B", "A", "C"],
+            # "sent_index": [1, 2, 3],
+            "text": [
+                "Und nun sollen seine Geister Auch nach meinem Willen leben.",
+                "Hat der alte Hexenmeister Sich doch einmal wegbegeben!",
+                "Seine Wort und Werke Merkt ich und den Brauch, Und mit Geistesstärke Tu ich Wunder auch.",
+            ],
+        }
+    ).with_columns(corpus=pl.lit("original"))
+
     test_reuse = pl.DataFrame(
-        [
-            {
-                "sent_id": "a",
-                "corpus": "reuse",
-                "text": "Hat der alte Hexenmeister Sich doch einmal wegbegeben!",
-            },
-            {"sent_id": "b", "text": "Komm zurück zu mir", "corpus": "reuse"},
-        ]
-    )
+        data={
+            "sent_id": ["a", "b"],
+            "text": [
+                "Hat der alte Hexenmeister Sich doch einmal wegbegeben!",
+                "Komm zurück zu mir",
+            ],
+        }
+    ).with_columns(corpus=pl.lit("reuse"))
+
     # Create files
     orig_csv = tmp_path / "original.csv"
     test_orig.write_csv(orig_csv)
