@@ -193,11 +193,18 @@ class ALTOInput(FileInput):
         num_valid_files = 0
         include_sections = self.default_include if self.filter_sections else None
 
-        # track article metadata across pages
+        # track article metadata across pages; metadata is updated while iterating
+        # through blocks and reused for footnotes or later sentences. The
+        # _collecting_title/_collecting_author flags record cases where consecutive
+        # blocks on the same page contribute to a single field (common in DNZ,
+        # where titles or author lines are split across multiple TextBlocks).
         self._current_title = ""
         self._current_author = ""
-        self._continue_title = False
-        self._continuing_author = False
+        self._collecting_title = False
+        self._collecting_author = False
+        # set when we encounter a blank title block; cleared once we know whether
+        # the blank block marked the start of a new article
+        self._pending_title_reset = False
 
         start = time()
         with ZipFile(self.input_file) as archive:
@@ -239,8 +246,9 @@ class ALTOInput(FileInput):
                 )
 
                 # ensure block-level continuation state resets between files
-                self._continue_title = False
-                self._continuing_author = False
+                self._collecting_title = False
+                self._collecting_author = False
+                self._pending_title_reset = False
 
                 for block in alto_xmlobj.sorted_blocks:
                     section = (
@@ -285,39 +293,67 @@ class ALTOInput(FileInput):
         1896-97a.pdf_page_124.xml or the closing "Dr. B." line on
         1896-97a.pdf_page_253.xml); those cases are not yet supported since there is no
         structured signal to retroactively update metadata for prior text blocks.
+        TODO: capture trailing author initials when the ALTO tagging provides a reliable signal.
         """
 
         section = section or SectionType.TEXT.value
         text_clean = (block_text or "").strip()
 
         if section == "Title":
+            self._collecting_author = False
+
             if text_clean:
-                if self._continue_title and self._current_title:
+                if self._pending_title_reset:
+                    self._reset_article_metadata()
+                    self._pending_title_reset = False
+
+                if self._collecting_title and self._current_title:
                     self._current_title = f"{self._current_title}\n{text_clean}"
                 else:
+                    # start a new title; reset author since author metadata follows title
                     self._current_title = text_clean
                     self._current_author = ""
-                self._continue_title = True
+                self._collecting_title = True
             else:
-                # blank title blocks still delineate articles; reset title/author
-                self._current_title = ""
-                self._current_author = ""
-                self._continue_title = False
-            self._continuing_author = False
+                # blank title blocks indicate the start of a new article unless the
+                # following block provides author metadata
+                self._collecting_title = False
+                self._pending_title_reset = True
             return
 
         if section == "author":
+            self._collecting_title = False
+            # author blocks finalize title aggregation; metadata now applies to body/footnotes
+
+            if self._pending_title_reset:
+                # blank title immediately followed by author indicates the metadata
+                # belongs to the existing article; do not reset
+                self._pending_title_reset = False
+
             if text_clean:
-                if self._continuing_author and self._current_author:
+                if self._collecting_author and self._current_author:
                     self._current_author = f"{self._current_author}\n{text_clean}"
                 else:
                     self._current_author = text_clean
-                self._continuing_author = True
+                self._collecting_author = True
             else:
-                self._continuing_author = False
-            self._continue_title = False
+                # blank author blocks indicate lack of author metadata for this article
+                self._current_author = ""
+                self._collecting_author = False
+
             return
 
-        # any other section breaks the continuation chains but keeps the last metadata
-        self._continue_title = False
-        self._continuing_author = False
+        # any other section: conclude any title/author collection and apply pending resets
+        if self._pending_title_reset:
+            self._reset_article_metadata()
+            self._pending_title_reset = False
+
+        self._collecting_title = False
+        self._collecting_author = False
+
+    def _reset_article_metadata(self) -> None:
+        """
+        Clear currently collected title/author metadata when a new article boundary is detected.
+        """
+        self._current_title = ""
+        self._current_author = ""

@@ -412,6 +412,113 @@ def test_altoinput_resets_metadata_on_blank_blocks(tmp_path: pathlib.Path):
     )
 
 
+def test_altoinput_preserves_title_through_blank_blocks(tmp_path: pathlib.Path):
+    archive_path = tmp_path / "alto_fixture.zip"
+    with ZipFile(archive_path, "w") as archive:
+        archive.write(FIXTURE_ALTO_PAGE, arcname="alto_page.xml")
+
+    alto_input = ALTOInput(input_file=archive_path, filter_sections=False)
+    chunks = list(alto_input.get_text())
+
+    first_article_chunk = next(
+        chunk
+        for chunk in chunks
+        if chunk["section_type"] == "text"
+        and chunk["text"].startswith("Im Nachlass von Karl Marx")
+    )
+    assert (
+        first_article_chunk["title"]
+        == "Ein Brief von Karl Marx an I. B. v. Schweitzer über\n"
+        "Lassalleanismus und Gewerkschaftskampf."
+    )
+    assert first_article_chunk["author"] == "Vorbemerkung."
+
+    mid_article_chunk = next(
+        chunk
+        for chunk in chunks
+        if chunk["section_type"] == "text"
+        and chunk["text"].startswith("Die naturalistische Hochfluth")
+    )
+    assert mid_article_chunk["title"].startswith(
+        "Der zweite, weit interessantere Band enthält"
+    )
+
+    section_chunk = next(
+        chunk
+        for chunk in chunks
+        if chunk["section_type"] == "section title" and chunk["text"] == "Feuilleton."
+    )
+    assert section_chunk["title"] == ""
+    assert section_chunk["author"] == ""
+
+    new_article_body = next(
+        chunk
+        for chunk in chunks
+        if chunk["section_type"] == "text"
+        and chunk["text"].startswith("(Nachdruck verboten.)")
+    )
+    assert new_article_body["title"] == "Kämpfe."
+    assert (
+        new_article_body["author"]
+        == "Von August Strindberg. Deutsch von Gustav Lichtenstein."
+    )
+
+
+def test_update_article_metadata_sequences():
+    alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
+    # initialize fields as get_text would
+    alto_input._current_title = ""
+    alto_input._current_author = ""
+    alto_input._collecting_title = False
+    alto_input._collecting_author = False
+    alto_input._pending_title_reset = False
+
+    def apply(section: str, text: str) -> None:
+        alto_input._update_article_metadata(section, text)
+
+    apply("Title", "Article A")
+    assert alto_input._current_title == "Article A"
+    assert alto_input._current_author == ""
+
+    apply("Title", "Subtitle")
+    assert alto_input._current_title == "Article A\nSubtitle"
+
+    apply("author", "Von Foo")
+    assert alto_input._current_author == "Von Foo"
+
+    apply("author", "Aus Bar")
+    assert alto_input._current_author == "Von Foo\nAus Bar"
+
+    apply("text", "Body text.")
+    assert alto_input._current_title.startswith("Article A")
+
+    # blank title should not immediately clear metadata
+    apply("Title", "")
+    assert alto_input._current_title.startswith("Article A")
+
+    # next non-title block clears metadata
+    apply("section title", "Feuilleton.")
+    assert alto_input._current_title == ""
+    assert alto_input._current_author == ""
+
+    apply("Title", "Article B")
+    assert alto_input._current_title == "Article B"
+    assert alto_input._current_author == ""
+
+    apply("author", "Von Example")
+    assert alto_input._current_author == "Von Example"
+
+    # blank title followed immediately by author should keep metadata
+    apply("Title", "")
+    apply("author", "Von Tail Author")
+    assert alto_input._current_title == "Article B"
+    assert alto_input._current_author == "Von Tail Author"
+
+    # blank author clears current author metadata
+    apply("author", "")
+    assert alto_input._current_author == ""
+
+
 def test_altoinput_warn_no_text(caplog):
     alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
     with caplog.at_level(logging.WARNING, logger="remarx.sentence.corpus.alto_input"):
