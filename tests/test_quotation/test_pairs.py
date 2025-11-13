@@ -242,6 +242,7 @@ def test_find_quote_pairs(
     mock_sent_pairs.reset_mock()
     find_quote_pairs("original", "reuse", out_csv, consolidate=True)
     mock_consolidate_quotes.assert_called_with(mock_compile_pairs.return_value)
+    mock_consolidate_quotes.return_value.write_csv.assert_called_with(out_csv)
 
     ## check logging
     mock_load_df.side_effect = [orig_df, reuse_df]

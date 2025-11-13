@@ -222,7 +222,7 @@ def find_quote_pairs(
 
         # consolidate quotes when requested
         if consolidate:
-            consolidate_quotes(quote_pairs)
+            quote_pairs = consolidate_quotes(quote_pairs)
         quote_pairs.write_csv(out_csv)
         logger.info(f"Saved {len(quote_pairs):,} quote pairs to {out_csv}")
     else:

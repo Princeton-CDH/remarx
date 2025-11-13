@@ -129,6 +129,6 @@ def consolidate_quotes(df: pl.DataFrame) -> pl.DataFrame:
     # combine the consolidated and single sentences and sort by reuse index
     df_combined = pl.concat([df_nonseq, df_consolidated]).sort("reuse_sent_index")
     logger.info(
-        "{df_consolidated.height:,} consolidated quotes, {df_combined.height:,} total"
+        f"{df_consolidated.height:,} consolidated quotes ({df_combined.height:,} total rows)"
     )
     return df_combined
