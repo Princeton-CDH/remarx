@@ -697,7 +697,7 @@
                     HEIGHT="180.0"
                     WC="0.9995611691474915"></String>
           </TextLine>
-          <TextLine ID="eSc_line_d297ec3e"
+        <TextLine ID="eSc_line_d297ec3e"
                     BASELINE="320 6579 4419 6617"
                     HPOS="316.0"
                     VPOS="6485.0"
@@ -710,6 +710,248 @@
                     WIDTH="4103.0"
                     HEIGHT="184.0"
                     WC="0.995499323857458"></String>
+          </TextLine>
+        </TextBlock>
+        <!-- Additional excerpt from 1896-97a.pdf_page_5.xml to exercise Title/author metadata -->
+        <TextBlock HPOS="900.0"
+                   VPOS="5900.0"
+                   WIDTH="2800.0"
+                   HEIGHT="180.0"
+                   ID="metadata_title_primary"
+                   TAGREFS="BT1">
+          <Shape><Polygon POINTS="900 5900 3700 5900 3700 6080 900 6080 900 5900"/></Shape>
+          <TextLine ID="metadata_title_primary_line"
+                    HPOS="920.0"
+                    VPOS="5920.0"
+                    WIDTH="2760.0"
+                    HEIGHT="140.0">
+            <Shape><Polygon POINTS="920 5920 920 6060 3680 6060 3680 5920 920 5920"/></Shape>
+            <String CONTENT="Ein Brief von Karl Marx an I. B. v. Schweitzer über"
+                    HPOS="920.0"
+                    VPOS="5920.0"
+                    WIDTH="2760.0"
+                    HEIGHT="140.0"
+                    WC="0.9999"></String>
+          </TextLine>
+        </TextBlock>
+        <TextBlock HPOS="900.0"
+                   VPOS="6100.0"
+                   WIDTH="3000.0"
+                   HEIGHT="170.0"
+                   ID="metadata_title_secondary"
+                   TAGREFS="BT1">
+          <Shape><Polygon POINTS="900 6100 3900 6100 3900 6270 900 6270 900 6100"/></Shape>
+          <TextLine ID="metadata_title_secondary_line"
+                    HPOS="920.0"
+                    VPOS="6120.0"
+                    WIDTH="2960.0"
+                    HEIGHT="130.0">
+            <Shape><Polygon POINTS="920 6120 920 6250 3880 6250 3880 6120 920 6120"/></Shape>
+            <String CONTENT="Lassalleanismus und Gewerkschaftskampf."
+                    HPOS="920.0"
+                    VPOS="6120.0"
+                    WIDTH="2960.0"
+                    HEIGHT="130.0"
+                    WC="0.9999"></String>
+          </TextLine>
+        </TextBlock>
+        <TextBlock HPOS="900.0"
+                   VPOS="6300.0"
+                   WIDTH="1800.0"
+                   HEIGHT="140.0"
+                   ID="metadata_author"
+                   TAGREFS="BT256">
+          <Shape><Polygon POINTS="900 6300 2700 6300 2700 6440 900 6440 900 6300"/></Shape>
+          <TextLine ID="metadata_author_line"
+                    HPOS="920.0"
+                    VPOS="6320.0"
+                    WIDTH="1760.0"
+                    HEIGHT="120.0">
+            <Shape><Polygon POINTS="920 6320 920 6440 2680 6440 2680 6320 920 6320"/></Shape>
+            <String CONTENT="Vorbemerkung."
+                    HPOS="920.0"
+                    VPOS="6320.0"
+                    WIDTH="1760.0"
+                    HEIGHT="120.0"
+                    WC="0.9999"></String>
+          </TextLine>
+        </TextBlock>
+        <TextBlock HPOS="220.0"
+                   VPOS="6500.0"
+                   WIDTH="4365.0"
+                   HEIGHT="250.0"
+                   ID="metadata_body_text"
+                   TAGREFS="BT241">
+          <Shape><Polygon POINTS="220 6500 4585 6500 4585 6750 220 6750 220 6500"/></Shape>
+          <TextLine ID="metadata_body_text_line1"
+                    HPOS="240.0"
+                    VPOS="6520.0"
+                    WIDTH="4325.0"
+                    HEIGHT="120.0">
+            <Shape><Polygon POINTS="240 6520 240 6640 4565 6640 4565 6520 240 6520"/></Shape>
+            <String CONTENT="Im Nachlass von Karl Marx fand sich die Abschrift des folgenden Briefes"
+                    HPOS="240.0"
+                    VPOS="6520.0"
+                    WIDTH="4325.0"
+                    HEIGHT="120.0"
+                    WC="0.9999"></String>
+          </TextLine>
+          <TextLine ID="metadata_body_text_line2"
+                    HPOS="240.0"
+                    VPOS="6640.0"
+                    WIDTH="4325.0"
+                    HEIGHT="120.0">
+            <Shape><Polygon POINTS="240 6640 240 6760 4565 6760 4565 6640 240 6640"/></Shape>
+            <String CONTENT="an J. B. v. Schweitzer, seinerzeit Präsident des von Lassalle gegründeten All⸗"
+                    HPOS="240.0"
+                    VPOS="6640.0"
+                    WIDTH="4325.0"
+                    HEIGHT="120.0"
+                    WC="0.9999"></String>
+          </TextLine>
+          <TextLine ID="metadata_body_text_line3"
+                    HPOS="240.0"
+                    VPOS="6760.0"
+                    WIDTH="4325.0"
+                    HEIGHT="120.0">
+            <Shape><Polygon POINTS="240 6760 240 6880 4565 6880 4565 6760 240 6760"/></Shape>
+            <String CONTENT="gemeinen Deutschen Arbeitervereins."
+                    HPOS="240.0"
+                    VPOS="6760.0"
+                    WIDTH="4325.0"
+                    HEIGHT="120.0"
+                    WC="0.9999"></String>
+          </TextLine>
+        </TextBlock>
+        <TextBlock HPOS="220.0"
+                   VPOS="6765.0"
+                   WIDTH="4365.0"
+                   HEIGHT="200.0"
+                   ID="split_title_intro"
+                   TAGREFS="BT1">
+          <Shape><Polygon POINTS="220 6765 4585 6765 4585 6965 220 6965 220 6765"/></Shape>
+          <TextLine ID="split_title_intro_line1"
+                    HPOS="240.0"
+                    VPOS="6785.0"
+                    WIDTH="4325.0"
+                    HEIGHT="120.0">
+            <Shape><Polygon POINTS="240 6785 240 6905 4565 6905 4565 6785 240 6785"/></Shape>
+            <String CONTENT="Der zweite, weit interessantere Band enthält nicht mehr gewöhnliche Salon⸗"
+                    HPOS="240.0"
+                    VPOS="6785.0"
+                    WIDTH="4325.0"
+                    HEIGHT="120.0"
+                    WC="0.9999"></String>
+          </TextLine>
+          <TextLine ID="split_title_intro_line2"
+                    HPOS="240.0"
+                    VPOS="6905.0"
+                    WIDTH="2000.0"
+                    HEIGHT="120.0">
+            <Shape><Polygon POINTS="240 6905 240 7025 2240 7025 2240 6905 240 6905"/></Shape>
+            <String CONTENT="kritiken."
+                    HPOS="240.0"
+                    VPOS="6905.0"
+                    WIDTH="2000.0"
+                    HEIGHT="120.0"
+                    WC="0.9999"></String>
+          </TextLine>
+        </TextBlock>
+        <TextBlock HPOS="220.0"
+                   VPOS="6980.0"
+                   WIDTH="4365.0"
+                   HEIGHT="200.0"
+                   ID="split_intervening_text"
+                   TAGREFS="BT241">
+          <Shape><Polygon POINTS="220 6980 4585 6980 4585 7180 220 7180 220 6980"/></Shape>
+          <TextLine ID="split_intervening_text_line1"
+                    HPOS="240.0"
+                    VPOS="7000.0"
+                    WIDTH="4325.0"
+                    HEIGHT="120.0">
+            <Shape><Polygon POINTS="240 7000 240 7120 4565 7120 4565 7000 240 7000"/></Shape>
+            <String CONTENT="Die naturalistische Hochfluth ist vorüber. Wir sind bescheidener geworden in dem"
+                    HPOS="240.0"
+                    VPOS="7000.0"
+                    WIDTH="4325.0"
+                    HEIGHT="120.0"
+                    WC="0.9999"></String>
+          </TextLine>
+        </TextBlock>
+        <TextBlock HPOS="220.0"
+                   VPOS="7195.0"
+                   WIDTH="4365.0"
+                   HEIGHT="200.0"
+                   ID="split_title_main"
+                   TAGREFS="BT1">
+          <Shape><Polygon POINTS="220 7195 4585 7195 4585 7395 220 7395 220 7195"/></Shape>
+          <TextLine ID="split_title_main_line1"
+                    HPOS="240.0"
+                    VPOS="7215.0"
+                    WIDTH="4325.0"
+                    HEIGHT="120.0">
+            <Shape><Polygon POINTS="240 7215 240 7335 4565 7335 4565 7215 240 7215"/></Shape>
+            <String CONTENT="Die nächsten Aufgaben der deutschen Gewerkschafts-"
+                    HPOS="240.0"
+                    VPOS="7215.0"
+                    WIDTH="4325.0"
+                    HEIGHT="120.0"
+                    WC="0.9999"></String>
+          </TextLine>
+          <TextLine ID="split_title_main_line2"
+                    HPOS="240.0"
+                    VPOS="7335.0"
+                    WIDTH="4325.0"
+                    HEIGHT="120.0">
+            <Shape><Polygon POINTS="240 7335 240 7455 4565 7455 4565 7335 240 7335"/></Shape>
+            <String CONTENT="bewegung."
+                    HPOS="240.0"
+                    VPOS="7335.0"
+                    WIDTH="4325.0"
+                    HEIGHT="120.0"
+                    WC="0.9999"></String>
+          </TextLine>
+        </TextBlock>
+        <TextBlock HPOS="220.0"
+                   VPOS="7410.0"
+                   WIDTH="3000.0"
+                   HEIGHT="140.0"
+                   ID="split_author"
+                   TAGREFS="BT256">
+          <Shape><Polygon POINTS="220 7410 3220 7410 3220 7550 220 7550 220 7410"/></Shape>
+          <TextLine ID="split_author_line"
+                    HPOS="240.0"
+                    VPOS="7430.0"
+                    WIDTH="2960.0"
+                    HEIGHT="120.0">
+            <Shape><Polygon POINTS="240 7430 240 7550 3200 7550 3200 7430 240 7430"/></Shape>
+            <String CONTENT="Von G. Mauerer."
+                    HPOS="240.0"
+                    VPOS="7430.0"
+                    WIDTH="2960.0"
+                    HEIGHT="120.0"
+                    WC="0.9999"></String>
+          </TextLine>
+        </TextBlock>
+        <TextBlock HPOS="220.0"
+                   VPOS="7565.0"
+                   WIDTH="4365.0"
+                   HEIGHT="200.0"
+                   ID="split_body_text"
+                   TAGREFS="BT241">
+          <Shape><Polygon POINTS="220 7565 4585 7565 4585 7765 220 7765 220 7565"/></Shape>
+          <TextLine ID="split_body_text_line1"
+                    HPOS="240.0"
+                    VPOS="7585.0"
+                    WIDTH="4325.0"
+                    HEIGHT="120.0">
+            <Shape><Polygon POINTS="240 7585 240 7705 4565 7705 4565 7585 240 7585"/></Shape>
+            <String CONTENT="Ein altes Thema! So wird Mancher, vielleicht die Mehrzahl derer ausrufen,"
+                    HPOS="240.0"
+                    VPOS="7585.0"
+                    WIDTH="4325.0"
+                    HEIGHT="120.0"
+                    WC="0.9999"></String>
           </TextLine>
         </TextBlock>
         <TextBlock HPOS="206.0"

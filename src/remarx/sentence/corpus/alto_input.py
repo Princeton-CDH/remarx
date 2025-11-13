@@ -162,11 +162,16 @@ class AltoDocument(AltoXmlObject):
 @dataclass
 class ALTOInput(FileInput):
     """
-    Preliminary FileInput implementation for ALTO XML delivered as a zipfile.
-    Iterates through ALTO XML members and stubs out chunk yielding for future parsing.
+    FileInput implementation for ALTO XML delivered as a zipfile.
+    Iterates through ALTO XML members and yields text blocks with ALTO metadata.
     """
 
-    field_names: ClassVar[tuple[str, ...]] = (*FileInput.field_names, "section_type")
+    field_names: ClassVar[tuple[str, ...]] = (
+        *FileInput.field_names,
+        "section_type",
+        "title",
+        "author",
+    )
     "List of field names for sentences originating from ALTO XML content."
 
     file_type: ClassVar[str] = ".zip"
@@ -186,6 +191,13 @@ class ALTOInput(FileInput):
         """
         num_files = 0
         num_valid_files = 0
+        include_sections = self.default_include if self.filter_sections else None
+
+        # track article metadata across pages
+        self._current_title = ""
+        self._current_author = ""
+        self._continue_title = False
+        self._continuing_author = False
 
         start = time()
         with ZipFile(self.input_file) as archive:
@@ -226,13 +238,26 @@ class ALTOInput(FileInput):
                     f"{base_filename}: {len(alto_xmlobj.blocks)} blocks, {len(alto_xmlobj.lines)} lines"
                 )
 
-                # filter by section type when configured to do so
-                text_kwargs = {}
-                if self.filter_sections:
-                    text_kwargs["include"] = self.default_include
-                for chunk in alto_xmlobj.text_chunks(**text_kwargs):
-                    # use the base xml file as filename here, rather than zipfile for all
-                    yield chunk | {"file": base_filename}
+                # ensure block-level continuation state resets between files
+                self._continue_title = False
+                self._continuing_author = False
+
+                for block in alto_xmlobj.sorted_blocks:
+                    section = (
+                        alto_xmlobj.tags.get(block.tag_id) or SectionType.TEXT.value
+                    )
+                    block_text = block.text_content
+                    self._update_article_metadata(section, block_text)
+                    chunk_data = {
+                        "text": block_text,
+                        "section_type": section,
+                        "title": self._current_title,
+                        "author": self._current_author,
+                    }
+
+                    if include_sections is None or section in include_sections:
+                        # use the base xml file as filename here, rather than zipfile for all
+                        yield chunk_data | {"file": base_filename}
 
                 # warn if a document has no lines
                 if len(alto_xmlobj.lines) == 0:
@@ -248,3 +273,51 @@ class ALTOInput(FileInput):
         # error if no valid files were found
         if num_valid_files == 0:
             raise ValueError(f"No valid ALTO XML files found in {self.file_name}")
+
+    def _update_article_metadata(
+        self, section: str | None, block_text: str | None
+    ) -> None:
+        """
+        Update running title and author metadata based on the current block label.
+
+        NOTE: Some DNZ articles include trailing signatures or initials without
+        ALTO author tags (e.g., the text block ending with "Oskar Geck." on
+        1896-97a.pdf_page_124.xml or the closing "Dr. B." line on
+        1896-97a.pdf_page_253.xml); those cases are not yet supported since there is no
+        structured signal to retroactively update metadata for prior text blocks.
+        """
+
+        section = section or SectionType.TEXT.value
+        text_clean = (block_text or "").strip()
+
+        if section == "Title":
+            if text_clean:
+                if self._continue_title and self._current_title:
+                    self._current_title = f"{self._current_title}\n{text_clean}"
+                else:
+                    self._current_title = text_clean
+                    self._current_author = ""
+                self._continue_title = True
+            else:
+                # blank title blocks still delineate articles; reset title/author
+                self._current_title = ""
+                self._current_author = ""
+                self._continue_title = False
+            self._continuing_author = False
+            return
+
+        if section == "author":
+            if text_clean:
+                if self._continuing_author and self._current_author:
+                    self._current_author = f"{self._current_author}\n{text_clean}"
+                else:
+                    self._current_author = text_clean
+                self._continuing_author = True
+            else:
+                self._continuing_author = False
+            self._continue_title = False
+            return
+
+        # any other section breaks the continuation chains but keeps the last metadata
+        self._continue_title = False
+        self._continuing_author = False

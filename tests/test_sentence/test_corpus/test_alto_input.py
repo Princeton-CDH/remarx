@@ -28,8 +28,8 @@ FIXTURE_ALTO_PAGE = FIXTURE_DIR / "alto_page.xml"
 
 def test_alto_document():
     altoxml = xmlmap.load_xmlobject_from_file(FIXTURE_ALTO_PAGE, AltoDocument)
-    # sample page has 4 text blocks
-    assert len(altoxml.blocks) == 4
+    # sample page has 13 text blocks
+    assert len(altoxml.blocks) == 13
     assert isinstance(altoxml.blocks[0], TextBlock)
 
 
@@ -77,14 +77,28 @@ def test_alto_document_text_chunks():
         "Header",
         "page number",
         "text",
+        "Title",
+        "Title",
+        "author",
+        "text",
+        "Title",
         "footnote",
+        "text",
+        "Title",
+        "author",
+        "text",
     ]
 
     # optionally filter by type/block tag
     content_chunks = list(altoxml.text_chunks(include={"text", "footnote"}))
-    assert len(content_chunks) == 2
-    assert content_chunks[0]["section_type"] == "text"
-    assert content_chunks[1]["section_type"] == "footnote"
+    assert len(content_chunks) == 5
+    assert [chunk["section_type"] for chunk in content_chunks] == [
+        "text",
+        "text",
+        "footnote",
+        "text",
+        "text",
+    ]
 
     # ignores irrelevant tag
     other_chunks = list(altoxml.text_chunks(include={"Header", "foo"}))
@@ -146,7 +160,7 @@ def test_alto_textblock_sorted_lines():
 def test_alto_textblock_text_content():
     altoxml = xmlmap.load_xmlobject_from_file(FIXTURE_ALTO_PAGE, AltoDocument)
 
-    alto_textblock = altoxml.blocks[3]
+    alto_textblock = next(block for block in altoxml.blocks if block.tag_id == "BT255")
     block_text = alto_textblock.text_content
     # check that we have the expected number of lines
     assert len(block_text.split("\n")) == len(alto_textblock.lines)
@@ -171,7 +185,12 @@ def test_alto_textline():
 
 
 def test_field_names():
-    assert ALTOInput.field_names == (*FileInput.field_names, "section_type")
+    assert ALTOInput.field_names == (
+        *FileInput.field_names,
+        "section_type",
+        "title",
+        "author",
+    )
 
 
 def test_altoinput_get_text(caplog):
@@ -216,6 +235,22 @@ def test_altoinput_get_text(caplog):
         "langsamer und deshalb auch viel häßlicher und viel widerlicher. Und wie die"
     )
 
+    first_article = next(
+        chunk
+        for chunk in chunks_by_filename["1896-97a.pdf_page_1.xml"]
+        if chunk["section_type"] == "text"
+    )
+    assert first_article["title"] == "Arbeiter und Gewerbeausstellung."
+    assert first_article["author"] == ""
+
+    continued_article = next(
+        chunk
+        for chunk in chunks_by_filename["1896-97a.pdf_page_2.xml"]
+        if chunk["section_type"] == "text"
+    )
+    assert continued_article["title"] == first_article["title"]
+    assert continued_article["author"] == ""
+
     processing_prefix = "Processing XML file "
     processed_files = [
         record.getMessage().removeprefix(processing_prefix)
@@ -237,6 +272,107 @@ def test_altoinput_get_text_filtered(caplog):
     filtered_chunks = alto_input.get_text()
     # this sample does not include any footnote blocks; only text + Title
     assert {chunk["section_type"] for chunk in filtered_chunks} == {"text", "Title"}
+
+
+def test_altoinput_includes_title_and_author_metadata():
+    alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
+    chunks = list(alto_input.get_text())
+
+    first_text = next(
+        chunk
+        for chunk in chunks
+        if chunk["file"] == "1896-97a.pdf_page_1.xml"
+        and chunk["section_type"] == "text"
+    )
+    assert first_text["title"] == "Arbeiter und Gewerbeausstellung."
+    assert first_text["author"] == ""
+
+    marx_text = next(
+        chunk
+        for chunk in chunks
+        if chunk["file"] == "1896-97a.pdf_page_5.xml"
+        and chunk["section_type"] == "text"
+    )
+    assert (
+        marx_text["title"] == "Ein Brief von Karl Marx an I. B. v. Schweitzer über\n"
+        "Lassalleanismus und Gewerkschaftskampf."
+    )
+    assert marx_text["author"] == "Vorbemerkung."
+
+
+def test_altoinput_combines_sequential_title_author(tmp_path: pathlib.Path):
+    archive_path = tmp_path / "single_page.zip"
+    with ZipFile(archive_path, "w") as archive:
+        archive.write(FIXTURE_ALTO_PAGE, arcname="alto_page.xml")
+
+    alto_input = ALTOInput(input_file=archive_path, filter_sections=False)
+    chunks = list(alto_input.get_text())
+
+    title_chunks = [
+        chunk
+        for chunk in chunks
+        if chunk["section_type"] == "Title"
+        and chunk["title"].startswith("Ein Brief von Karl Marx")
+    ]
+    assert (
+        title_chunks[0]["title"]
+        == "Ein Brief von Karl Marx an I. B. v. Schweitzer über"
+    )
+    assert (
+        title_chunks[1]["title"]
+        == "Ein Brief von Karl Marx an I. B. v. Schweitzer über\n"
+        "Lassalleanismus und Gewerkschaftskampf."
+    )
+
+    article_chunk = next(
+        chunk
+        for chunk in chunks
+        if chunk["section_type"] == "text"
+        and chunk["text"].startswith("Im Nachlass von Karl Marx")
+    )
+    assert (
+        article_chunk["title"]
+        == "Ein Brief von Karl Marx an I. B. v. Schweitzer über\n"
+        "Lassalleanismus und Gewerkschaftskampf."
+    )
+    assert article_chunk["author"] == "Vorbemerkung."
+
+    intro_text_chunk = next(
+        chunk
+        for chunk in chunks
+        if chunk["section_type"] == "text"
+        and chunk["text"].startswith(
+            "Die naturalistische Hochfluth ist vorüber"  # codespell:ignore
+        )
+    )
+    assert intro_text_chunk["title"].startswith(
+        "Der zweite, weit interessantere Band enthält nicht mehr gewöhnliche Salon"
+    )
+
+    split_title_chunk = next(
+        chunk
+        for chunk in chunks
+        if chunk["section_type"] == "Title"
+        and chunk["text"].startswith(
+            "Die nächsten Aufgaben der deutschen Gewerkschafts-"
+        )
+    )
+    assert (
+        split_title_chunk["title"]
+        == "Die nächsten Aufgaben der deutschen Gewerkschafts-\nbewegung."
+    )
+
+    split_article_chunk = next(
+        chunk
+        for chunk in chunks
+        if chunk["section_type"] == "text"
+        and chunk["text"].startswith("Ein altes Thema! So wird Mancher")
+    )
+    assert (
+        split_article_chunk["title"]
+        == "Die nächsten Aufgaben der deutschen Gewerkschafts-\nbewegung."
+    )
+    assert split_article_chunk["author"] == "Von G. Mauerer."
 
 
 def test_altoinput_warn_no_text(caplog):
