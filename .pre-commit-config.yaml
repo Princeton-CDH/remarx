@@ -59,7 +59,3 @@ repos:
     rev: v0.8.0
     hooks:
       - id: action-validator
-  - repo: https://github.com/rohaquinlop/complexipy-pre-commit
-    rev: v3.0.0
-    hooks:
-      - id: complexipy
