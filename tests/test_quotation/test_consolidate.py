@@ -44,27 +44,20 @@ def test_consolidate_quotes():
     #  simple case: two rows, sequential on both sides
     reuse_text = ["A sentence.", "Another."]
     orig_text = ["A short sentence.", "Another sentence."]
-    df = pl.from_dicts(
-        [
-            {
-                "match_score": 0.6,
-                "reuse_id": "r1",
-                "reuse_sent_index": 1,
-                "reuse_text": reuse_text[0],
-                "original_id": "o1",
-                "original_sent_index": 5,
-                "original_text": orig_text[0],
-            },
-            {
-                "match_score": 0.4,
-                "reuse_id": "r2",
-                "reuse_sent_index": 2,
-                "reuse_text": reuse_text[1],
-                "original_id": "o2",
-                "original_sent_index": 6,
-                "original_text": orig_text[1],
-            },
-        ]
+    orig_file = ["one.txt", "two.txt"]
+    reuse_file = "abc.txt"
+    df = pl.DataFrame(
+        data={
+            "match_score": [0.6, 0.4],
+            "reuse_id": ["r1", "r2"],
+            "reuse_sent_index": [1, 2],
+            "reuse_text": reuse_text,
+            "reuse_file": [reuse_file, reuse_file],  # same
+            "original_id": ["o1", "o2"],
+            "original_sent_index": [5, 6],
+            "original_text": orig_text,
+            "original_file": orig_file,  # different
+        }
     )
 
     df_consolidated = consolidate_quotes(df)
@@ -78,11 +71,32 @@ def test_consolidate_quotes():
     # text fields are combined with whitespace
     assert result["reuse_text"] == " ".join(reuse_text)
     assert result["original_text"] == " ".join(orig_text)
+    # other fields are combined with semi-colon (unique values only)
+    assert result["reuse_file"] == reuse_file  # both rows have the same
+    assert result["original_file"] == "; ".join(orig_file)
 
     # confirm columns are as expected (no extra beyond num_sentences)
     assert len(df_consolidated.columns) == len(df.columns) + 1
 
-    # test that non-sequential rows returned as-is (doesn't work yet)
-    nonseq_df = df.limit(1)  # use first row from first test dataframe
+    # test that non-sequential rows are returned as-is
+    nonseq_df = pl.DataFrame(
+        data={
+            "match_score": 0.3,
+            "reuse_id": "r3",
+            "reuse_sent_index": 25,
+            "reuse_text": "some text",
+            "reuse_file": "input.txt",
+            "original_id": "o7",
+            "original_sent_index": 33,
+            "original_text": "some other text",
+            "original_file": "orig.txt",
+        }
+    )
     nonseq_df_consolidated = consolidate_quotes(nonseq_df)
     assert len(nonseq_df_consolidated) == 1
+
+    # test mixed dataframe of sequential and non-sequential
+    mixed_df = pl.concat([df, nonseq_df])
+    mixed_df_consolidated = consolidate_quotes(mixed_df)
+    # one consolidated quote and one unconsolidated
+    assert len(mixed_df_consolidated) == 2

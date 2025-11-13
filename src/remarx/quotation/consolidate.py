@@ -89,9 +89,11 @@ def consolidate_quotes(df: pl.DataFrame) -> pl.DataFrame:
             # combine text content across all sentences in the group
             aggregate_fields.append(pl.col(field).str.join(" "))
 
-        # for all other fields, combine unique values
+        # for all other fields, combine unique values; preserve input order
         else:
-            aggregate_fields.append(pl.col(field).unique().str.join("; "))
+            aggregate_fields.append(
+                pl.col(field).unique(maintain_order=True).str.join("; ")
+            )
 
     # last: add a count of the number of sentences in the group
     aggregate_fields.append(pl.len().alias("num_sentences").cast(pl.Int64))
@@ -99,7 +101,8 @@ def consolidate_quotes(df: pl.DataFrame) -> pl.DataFrame:
     # group sentences that are sequential in both original and reuse
     df_consolidated = (
         df_reuse_sequential.group_by(
-            "reuse_sent_index_group", "original_sent_index_group"
+            "reuse_sent_index_group",
+            "original_sent_index_group",
         )
         .agg(*aggregate_fields)
         .drop(
