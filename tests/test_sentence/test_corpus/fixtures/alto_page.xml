@@ -1032,6 +1032,138 @@
                     WC="0.9999238808949789"></String>
           </TextLine>
         </TextBlock>
+
+        <TextBlock HPOS="220.0"
+                   VPOS="7565.0"
+                   WIDTH="4365.0"
+                   HEIGHT="200.0"
+                   ID="transition_text_block"
+                   TAGREFS="BT241">
+          <Shape><Polygon POINTS="220 7565 4585 7565 4585 7765 220 7765 220 7565"/></Shape>
+          <TextLine ID="transition_text_line"
+                    HPOS="240.0"
+                    VPOS="7585.0"
+                    WIDTH="4325.0"
+                    HEIGHT="120.0">
+            <Shape><Polygon POINTS="240 7585 240 7705 4565 7705 4565 7585 240 7585"/></Shape>
+            <String CONTENT="Bericht durchgelesen, möchten wir der Ansicht beipflichten."
+                    HPOS="240.0"
+                    VPOS="7585.0"
+                    WIDTH="4325.0"
+                    HEIGHT="120.0"
+                    WC="0.9999"></String>
+          </TextLine>
+        </TextBlock>
+
+        <TextBlock HPOS="900.0"
+                   VPOS="7775.0"
+                   WIDTH="1800.0"
+                   HEIGHT="140.0"
+                   ID="blank_title_block"
+                   TAGREFS="BT1">
+          <Shape><Polygon POINTS="900 7775 2700 7775 2700 7915 900 7915 900 7775"/></Shape>
+          <TextLine ID="blank_title_line"
+                    HPOS="920.0"
+                    VPOS="7795.0"
+                    WIDTH="1760.0"
+                    HEIGHT="120.0">
+            <Shape><Polygon POINTS="920 7795 920 7915 2680 7915 2680 7795 920 7795"/></Shape>
+            <String CONTENT=""
+                    HPOS="920.0"
+                    VPOS="7795.0"
+                    WIDTH="1760.0"
+                    HEIGHT="120.0"
+                    WC="0.9999"></String>
+          </TextLine>
+        </TextBlock>
+
+        <TextBlock HPOS="220.0"
+                   VPOS="7930.0"
+                   WIDTH="2000.0"
+                   HEIGHT="150.0"
+                   ID="section_title_block"
+                   TAGREFS="BT253">
+          <Shape><Polygon POINTS="220 7930 2220 7930 2220 8080 220 8080 220 7930"/></Shape>
+          <TextLine ID="section_title_line"
+                    HPOS="240.0"
+                    VPOS="7950.0"
+                    WIDTH="1960.0"
+                    HEIGHT="120.0">
+            <Shape><Polygon POINTS="240 7950 240 8070 2200 8070 2200 7950 240 7950"/></Shape>
+            <String CONTENT="Feuilleton."
+                    HPOS="240.0"
+                    VPOS="7950.0"
+                    WIDTH="1960.0"
+                    HEIGHT="120.0"
+                    WC="0.9999"></String>
+          </TextLine>
+        </TextBlock>
+
+        <TextBlock HPOS="900.0"
+                   VPOS="8110.0"
+                   WIDTH="2500.0"
+                   HEIGHT="160.0"
+                   ID="new_article_title"
+                   TAGREFS="BT1">
+          <Shape><Polygon POINTS="900 8110 3400 8110 3400 8270 900 8270 900 8110"/></Shape>
+          <TextLine ID="new_article_title_line"
+                    HPOS="920.0"
+                    VPOS="8130.0"
+                    WIDTH="2460.0"
+                    HEIGHT="130.0">
+            <Shape><Polygon POINTS="920 8130 920 8260 3380 8260 3380 8130 920 8130"/></Shape>
+            <String CONTENT="Kämpfe."
+                    HPOS="920.0"
+                    VPOS="8130.0"
+                    WIDTH="2460.0"
+                    HEIGHT="130.0"
+                    WC="0.9999"></String>
+          </TextLine>
+        </TextBlock>
+
+        <TextBlock HPOS="900.0"
+                   VPOS="8290.0"
+                   WIDTH="3200.0"
+                   HEIGHT="150.0"
+                   ID="new_article_author"
+                   TAGREFS="BT256">
+          <Shape><Polygon POINTS="900 8290 4100 8290 4100 8440 900 8440 900 8290"/></Shape>
+          <TextLine ID="new_article_author_line"
+                    HPOS="920.0"
+                    VPOS="8310.0"
+                    WIDTH="3160.0"
+                    HEIGHT="120.0">
+            <Shape><Polygon POINTS="920 8310 920 8430 4080 8430 4080 8310 920 8310"/></Shape>
+            <String CONTENT="Von August Strindberg. Deutsch von Gustav Lichtenstein."
+                    HPOS="920.0"
+                    VPOS="8310.0"
+                    WIDTH="3160.0"
+                    HEIGHT="120.0"
+                    WC="0.9999"></String>
+          </TextLine>
+        </TextBlock>
+
+        <TextBlock HPOS="220.0"
+                   VPOS="8460.0"
+                   WIDTH="4365.0"
+                   HEIGHT="200.0"
+                   ID="new_article_text"
+                   TAGREFS="BT241">
+          <Shape><Polygon POINTS="220 8460 4585 8460 4585 8660 220 8660 220 8460"/></Shape>
+          <TextLine ID="new_article_text_line1"
+                    HPOS="240.0"
+                    VPOS="8480.0"
+                    WIDTH="4325.0"
+                    HEIGHT="120.0">
+            <Shape><Polygon POINTS="240 8480 240 8600 4565 8600 4565 8480 240 8480"/></Shape>
+            <String CONTENT="(Nachdruck verboten.) Ihm waren die Augen über die Albernheiten der Welt aufgegangen."
+                    HPOS="240.0"
+                    VPOS="8480.0"
+                    WIDTH="4325.0"
+                    HEIGHT="120.0"
+                    WC="0.9999"></String>
+          </TextLine>
+        </TextBlock>
       </PrintSpace>
     </Page>
   </Layout>

@@ -28,8 +28,8 @@ FIXTURE_ALTO_PAGE = FIXTURE_DIR / "alto_page.xml"
 
 def test_alto_document():
     altoxml = xmlmap.load_xmlobject_from_file(FIXTURE_ALTO_PAGE, AltoDocument)
-    # sample page has 13 text blocks
-    assert len(altoxml.blocks) == 13
+    # sample page has 19 text blocks
+    assert len(altoxml.blocks) == 19
     assert isinstance(altoxml.blocks[0], TextBlock)
 
 
@@ -87,15 +87,23 @@ def test_alto_document_text_chunks():
         "Title",
         "author",
         "text",
+        "text",
+        "Title",
+        "section title",
+        "Title",
+        "author",
+        "text",
     ]
 
     # optionally filter by type/block tag
     content_chunks = list(altoxml.text_chunks(include={"text", "footnote"}))
-    assert len(content_chunks) == 5
+    assert len(content_chunks) == 7
     assert [chunk["section_type"] for chunk in content_chunks] == [
         "text",
         "text",
         "footnote",
+        "text",
+        "text",
         "text",
         "text",
     ]
@@ -373,6 +381,35 @@ def test_altoinput_combines_sequential_title_author(tmp_path: pathlib.Path):
         == "Die nächsten Aufgaben der deutschen Gewerkschafts-\nbewegung."
     )
     assert split_article_chunk["author"] == "Von G. Mauerer."
+
+
+def test_altoinput_resets_metadata_on_blank_blocks(tmp_path: pathlib.Path):
+    archive_path = tmp_path / "fixture_page.zip"
+    with ZipFile(archive_path, "w") as archive:
+        archive.write(FIXTURE_ALTO_PAGE, arcname="alto_page.xml")
+
+    alto_input = ALTOInput(input_file=archive_path, filter_sections=False)
+    chunks = list(alto_input.get_text())
+
+    section_title_chunk = next(
+        chunk
+        for chunk in chunks
+        if chunk["section_type"] == "section title" and chunk["text"] == "Feuilleton."
+    )
+    assert section_title_chunk["title"] == ""
+    assert section_title_chunk["author"] == ""
+
+    new_article_chunk = next(
+        chunk
+        for chunk in chunks
+        if chunk["section_type"] == "text"
+        and chunk["text"].startswith("(Nachdruck verboten.)")
+    )
+    assert new_article_chunk["title"] == "Kämpfe."
+    assert (
+        new_article_chunk["author"]
+        == "Von August Strindberg. Deutsch von Gustav Lichtenstein."
+    )
 
 
 def test_altoinput_warn_no_text(caplog):
