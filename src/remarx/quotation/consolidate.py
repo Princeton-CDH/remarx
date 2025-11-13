@@ -68,13 +68,19 @@ def consolidate_quotes(df: pl.DataFrame) -> pl.DataFrame:
     # ? report how many found?
 
     aggregate_fields = []
-    # aggregate fields in the order the appear, based on what is present
+    # generate a list of aggregate fields, based on in the order they appear
+    # in the input dataframe
     for field in df.columns:
         if field == "match_score":
             # average match score within the group
             aggregate_fields.append(pl.col(field).mean())
-        elif field in ["reuse_id", "original_id"]:
-            # use the first id within the group
+        elif field in [
+            "reuse_id",
+            "original_id",
+            "reuse_sent_index",
+            "original_sent_index",
+        ]:
+            # use the first ids and indices within the group
             aggregate_fields.append(pl.first(field))
 
         elif field in ["reuse_text", "original_text"]:
@@ -86,19 +92,26 @@ def consolidate_quotes(df: pl.DataFrame) -> pl.DataFrame:
             aggregate_fields.append(pl.col(field).unique().str.join("; "))
 
     # last: add a count of the number of sentences in the group
-    aggregate_fields.append(pl.len().alias("num_sentences"))
+    aggregate_fields.append(pl.len().alias("num_sentences").cast(pl.Int64))
 
     # group sentences that are sequential in both original and reuse
-    df_consolidated = df_reuse_sequential.group_by(
-        "reuse_sent_index_group", "original_sent_index_group"
-    ).agg(*aggregate_fields)
-
-    # TODO: needs to combine/preserve ALL fields that are present in the metadata!
-    # also needs to drop all the interim group/sequence fields before combining/returning
+    df_consolidated = (
+        df_reuse_sequential.group_by(
+            "reuse_sent_index_group", "original_sent_index_group"
+        )
+        .agg(*aggregate_fields)
+        .drop(
+            # drop grouping fields after aggregation is complete
+            "reuse_sent_index_group",
+            "original_sent_index_group",
+        )
+    )
 
     # include non-sequential sentences & sort (columns must match)
-    # df_nonseq = df_seq.filter(~pl.col("reuse_sent_index_sequential"))
-    # print(df_nonseq)
-    # return pl.concat([df_nonseq, df_consolidated])
-
-    return df_consolidated
+    df_nonseq = (
+        df_seq.filter(~pl.col("reuse_sent_index_sequential"))
+        .with_columns(num_sentences=pl.lit(1).cast(pl.Int64))
+        .drop("reuse_sent_index_group", "reuse_sent_index_sequential")
+    )
+    # combine the consolidated and single sentences and sort by reuse index
+    return pl.concat([df_nonseq, df_consolidated]).sort("reuse_sent_index")

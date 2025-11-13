@@ -42,25 +42,27 @@ def test_identify_sequences():
 
 def test_consolidate_quotes():
     #  simple case: two rows, sequential on both sides
+    reuse_text = ["A sentence.", "Another."]
+    orig_text = ["A short sentence.", "Another sentence."]
     df = pl.from_dicts(
         [
             {
                 "match_score": 0.6,
                 "reuse_id": "r1",
                 "reuse_sent_index": 1,
-                "reuse_text": "first part of a sentence",
+                "reuse_text": reuse_text[0],
                 "original_id": "o1",
                 "original_sent_index": 5,
-                "original_text": "First section of my sentence",
+                "original_text": orig_text[0],
             },
             {
                 "match_score": 0.4,
                 "reuse_id": "r2",
                 "reuse_sent_index": 2,
-                "reuse_text": "continuation text",
+                "reuse_text": reuse_text[1],
                 "original_id": "o2",
                 "original_sent_index": 6,
-                "original_text": "continuing text",
+                "original_text": orig_text[1],
             },
         ]
     )
@@ -73,10 +75,14 @@ def test_consolidate_quotes():
     # first for id fields
     assert result["reuse_id"] == "r1"
     assert result["original_id"] == "o1"
-    # consolidate/combine other fields
-    assert result["reuse_text"] == "first part of a sentence continuation text"
-    assert result["original_text"] == "First section of my sentence continuing text"
+    # text fields are combined with whitespace
+    assert result["reuse_text"] == " ".join(reuse_text)
+    assert result["original_text"] == " ".join(orig_text)
 
     # confirm columns are as expected (no extra beyond num_sentences)
+    assert len(df_consolidated.columns) == len(df.columns) + 1
 
-    # NEXT: test that non-sequential rows returned as-is (doesn't work yet)
+    # test that non-sequential rows returned as-is (doesn't work yet)
+    nonseq_df = df.limit(1)  # use first row from first test dataframe
+    nonseq_df_consolidated = consolidate_quotes(nonseq_df)
+    assert len(nonseq_df_consolidated) == 1
