@@ -289,12 +289,13 @@ class ALTOInput(FileInput):
         Update running title and author metadata based on the current block label.
 
         NOTE: Some DNZ articles include trailing signatures or initials without
-        ALTO author tags (e.g., the text block ending with "Oskar Geck." on
-        1896-97a.pdf_page_124.xml or the closing "Dr. B." line on
-        1896-97a.pdf_page_253.xml); those cases are not yet supported since there is no
+        ALTO author tags; those cases are not yet supported since there is no
         structured signal to retroactively update metadata for prior text blocks.
         TODO: capture trailing author initials when the ALTO tagging provides a reliable signal.
         """
+        # Examples of unsupported trailing author cases:
+        # - text block ending with "Oskar Geck." on 1896-97a.pdf_page_124.xml
+        # - closing "Dr. B." line on 1896-97a.pdf_page_253.xml
 
         section = section or SectionType.TEXT.value
         text_clean = (block_text or "").strip()
