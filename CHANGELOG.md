@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.5.0.dev
+
+- ALTO-generated corpora now include per-sentence `title` and `author` metadata derived from ALTO block tags
+
 ## 0.4.0
 
 ### Sentence corpus creation
