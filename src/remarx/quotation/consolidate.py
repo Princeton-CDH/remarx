@@ -50,10 +50,20 @@ def consolidate_quotes(df: pl.DataFrame) -> pl.DataFrame:
     Required fields:
         - `reuse_sent_index` and `original_sent_index` must be present for aggregation,
            and must be numeric
-           TODO: filenames
-    Expected fields:
-        -
+    DataFrame is expected to include standard quote pair fields; for consolidated
+    quotes, fields are aggregated as follows:
+        - `match_score` average across the group
+        - `id` and `sent_index` (both `reuse` and `original`): first value in group
+        - `reuse_text` and `original_text`: combined with whitespace delimiter
+        - For all other fields, unique values are combined, delimited by semicolon and space
+
+    The returned DataFrame includes a new column `num_sentences` which documents
+    the number of sentences in a group (1 for unconsolidated quotes).
     """
+    # NOTE: logic currently includes single file on both sides!
+    # sorting and grouping will take filenames into account when we support
+    # multiple input files, and we will need to revise alto input handling
+
     # first identify sequential reuse sentences
     df_seq = identify_sequences(df.sort("reuse_sent_index"), "reuse_sent_index")
     # filter to groups that are sequential - candidates for consolidating further
@@ -64,10 +74,7 @@ def consolidate_quotes(df: pl.DataFrame) -> pl.DataFrame:
     logger.info(
         f"Identified {total_reuse_seqs:,} groups of sequential sentences in reuse text ({df.height:,} total rows)"
     )
-
-    # NOTE: import that the method does not re-sort on original sentence index!
     df_reuse_sequential = identify_sequences(df_reuse_sequential, "original_sent_index")
-    # ? report how many found?
 
     aggregate_fields = []
     # generate a list of aggregate fields, based on in the order they appear
