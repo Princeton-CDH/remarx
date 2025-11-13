@@ -1,0 +1,12 @@
+name: Code Complexity Check
+on: [pull_request]
+jobs:
+  complexity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: rohaquinlop/complexipy-action@v2
+        with:
+          paths: .
+          max_complexity_allowed: 10
+          output_json: true
