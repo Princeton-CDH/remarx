@@ -41,6 +41,7 @@ dependencies = [
 dev = [
   "pre-commit",
   "ruff",
+  "complexipy>=4.2.0",
   "remarx[test]",
   "remarx[docs]",
   "remarx[html]",
@@ -60,7 +61,9 @@ docs = [
 html = [ "bs4" ]
 
 [dependency-groups]
-dev = [ "remarx[dev]" ]
+dev = [
+ "remarx[dev]",
+]
 
 [project.scripts]
 remarx-app = "remarx.app.utils:launch_app"
