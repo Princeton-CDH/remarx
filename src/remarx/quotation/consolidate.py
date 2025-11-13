@@ -48,7 +48,9 @@ def consolidate_quotes(df: pl.DataFrame) -> pl.DataFrame:
     """
     Consolidate quotes that are sequential in both original and reuse texts.
     Required fields:
-        - `reuse_sent_index` and `original_sent_index` must be present for aggregation
+        - `reuse_sent_index` and `original_sent_index` must be present for aggregation,
+           and must be numeric
+           TODO: filenames
     Expected fields:
         -
     """
@@ -59,8 +61,8 @@ def consolidate_quotes(df: pl.DataFrame) -> pl.DataFrame:
     # report how many we found at this stage ?
     total_reuse_seqs = df_reuse_sequential["reuse_sent_index_group"].unique().count()
     # maybe report out of total rows to start with?
-    logger.debug(
-        f"Identified {total_reuse_seqs:,} groups of sequential sentences in reuse text"
+    logger.info(
+        f"Identified {total_reuse_seqs:,} groups of sequential sentences in reuse text ({df.height:,} total rows)"
     )
 
     # NOTE: import that the method does not re-sort on original sentence index!
@@ -113,5 +115,10 @@ def consolidate_quotes(df: pl.DataFrame) -> pl.DataFrame:
         .with_columns(num_sentences=pl.lit(1).cast(pl.Int64))
         .drop("reuse_sent_index_group", "reuse_sent_index_sequential")
     )
+
     # combine the consolidated and single sentences and sort by reuse index
-    return pl.concat([df_nonseq, df_consolidated]).sort("reuse_sent_index")
+    df_combined = pl.concat([df_nonseq, df_consolidated]).sort("reuse_sent_index")
+    logger.info(
+        "{df_consolidated.height:,} consolidated quotes, {df_combined.height:,} total"
+    )
+    return df_combined
