@@ -2,14 +2,14 @@ import logging
 import sys
 from unittest.mock import patch
 
+import pytest
+
 from remarx.quotation import find_quotes
 
 
 @patch("remarx.quotation.find_quotes.configure_logging")
 @patch("remarx.quotation.find_quotes.find_quote_pairs")
-def test_main_configures_logging_and_passes_flags(
-    mock_find_quote_pairs, mock_configure_logging, tmp_path
-):
+def test_main(mock_find_quote_pairs, mock_configure_logging, tmp_path):
     orig_input = tmp_path / "orig.csv"
     orig_input.touch()
     reuse_input = tmp_path / "reuse.csv"
@@ -48,3 +48,36 @@ def test_main_configures_logging_and_passes_flags(
         consolidate=False,
         benchmark=True,
     )
+
+
+@patch("remarx.quotation.find_quotes.configure_logging")
+@patch("remarx.quotation.find_quotes.find_quote_pairs")
+def test_main_check_paths(
+    mock_find_quote_pairs, mock_configure_logging, tmp_path, capsys
+):
+    orig_input = tmp_path / "orig.csv"
+    reuse_input = tmp_path / "reuse.csv"
+    output = tmp_path / "out" / "pairs.csv"
+    args = ["remarx-find-quotes", str(orig_input), str(reuse_input), str(output)]
+    with patch("sys.argv", args):
+        # input files and output directory do not exist
+        with pytest.raises(SystemExit):
+            find_quotes.main()
+        captured = capsys.readouterr()
+        assert captured.err == f"Error: input file {orig_input} does not exist\n"
+
+        # reuse input file does not exist
+        orig_input.touch()
+        with pytest.raises(SystemExit):
+            find_quotes.main()
+        captured = capsys.readouterr()
+        assert captured.err == f"Error: input file {reuse_input} does not exist\n"
+
+        # output directory does not exist
+        reuse_input.touch()
+        with pytest.raises(SystemExit):
+            find_quotes.main()
+        captured = capsys.readouterr()
+        assert (
+            captured.err == f"Error: output directory {output.parent} does not exist\n"
+        )
