@@ -22,6 +22,7 @@ from test_sentence.test_corpus.test_text_input import simple_segmenter
 FIXTURE_DIR = pathlib.Path(__file__).parent / "fixtures"
 FIXTURE_ALTO_ZIPFILE = FIXTURE_DIR / "alto_sample.zip"
 FIXTURE_ALTO_PAGE = FIXTURE_DIR / "alto_page.xml"
+FIXTURE_ALTO_PAGE_WITH_FOOTNOTES = FIXTURE_DIR / "alto_page_with_footnote.xml"
 
 # test xmlmap classes
 
@@ -462,6 +463,31 @@ def test_altoinput_preserves_title_through_blank_blocks(tmp_path: pathlib.Path):
         new_article_body["author"]
         == "Von August Strindberg. Deutsch von Gustav Lichtenstein."
     )
+
+
+def test_footnotes_inherit_article_metadata(tmp_path: pathlib.Path):
+    archive_path = tmp_path / "alto_footnote_fixture.zip"
+    with ZipFile(archive_path, "w") as archive:
+        archive.write(
+            FIXTURE_ALTO_PAGE_WITH_FOOTNOTES, arcname="alto_page_with_footnote.xml"
+        )
+
+    alto_input = ALTOInput(input_file=archive_path)
+    chunks = list(alto_input.get_text())
+
+    # Find the footnote chunk
+    footnote_chunk = next(
+        chunk for chunk in chunks if chunk["section_type"] == "footnote"
+    )
+    assert footnote_chunk["title"] == "Ein Brief von Karl Marx an J. B. v. Schweitzer."
+    assert footnote_chunk["author"] == "Der Herausgeber."
+    assert "Historisch" in footnote_chunk["text"]
+    assert "Manuskript" in footnote_chunk["text"]
+
+    # Verify that text blocks also have the same metadata
+    text_chunk = next(chunk for chunk in chunks if chunk["section_type"] == "text")
+    assert text_chunk["title"] == "Ein Brief von Karl Marx an J. B. v. Schweitzer."
+    assert text_chunk["author"] == "Der Herausgeber."
 
 
 def test_update_article_metadata_sequences():
