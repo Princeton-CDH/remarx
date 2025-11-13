@@ -1,69 +1,50 @@
 import logging
-import pathlib
-from types import SimpleNamespace
+import sys
+from unittest.mock import patch
 
 from remarx.quotation import find_quotes
 
 
-def test_run_find_quotes_calls_find_quote_pairs(monkeypatch, tmp_path):
-    captured = SimpleNamespace(args=None)
+@patch("remarx.quotation.find_quotes.configure_logging")
+@patch("remarx.quotation.find_quotes.find_quote_pairs")
+def test_main_configures_logging_and_passes_flags(
+    mock_find_quote_pairs, mock_configure_logging, tmp_path
+):
+    orig_input = tmp_path / "orig.csv"
+    orig_input.touch()
+    reuse_input = tmp_path / "reuse.csv"
+    reuse_input.touch()
+    # output = tmp_path / "out" / "pairs.csv"
+    output = tmp_path / "pairs.csv"
+    # default options
+    args = ["remarx-find-quotes", str(orig_input), str(reuse_input), str(output)]
+    with patch("sys.argv", args):
+        find_quotes.main()
 
-    def fake_find_quote_pairs(*, original_corpus, reuse_corpus, out_csv, benchmark):
-        captured.args = (original_corpus, reuse_corpus, out_csv, benchmark)
-
-    monkeypatch.setattr(find_quotes, "find_quote_pairs", fake_find_quote_pairs)
-
-    original = tmp_path / "original.csv"
-    reuse = tmp_path / "reuse.csv"
-    output_file = tmp_path / "results" / "pairs.csv"
-
-    output_path = find_quotes.run_find_quotes(original, reuse, output_file)
-    assert captured.args == (original, reuse, output_file, False)
-
-    output_path = find_quotes.run_find_quotes(
-        original, reuse, output_file, benchmark=True
+    mock_configure_logging.assert_called_with(sys.stdout, log_level=logging.INFO)
+    # consolidate and benchmark are default options
+    mock_find_quote_pairs.assert_called_with(
+        original_corpus=orig_input,
+        reuse_corpus=reuse_input,
+        out_csv=output,
+        consolidate=True,
+        benchmark=False,
     )
-    assert captured.args == (original, reuse, output_file, True)
-    assert output_path == output_file
-    assert output_file.parent.is_dir()
 
+    # verbose
+    verbose_args = [*args, "--verbose"]
+    with patch("sys.argv", verbose_args):
+        find_quotes.main()
+    mock_configure_logging.assert_called_with(sys.stdout, log_level=logging.DEBUG)
 
-def test_main_configures_logging_and_passes_flags(monkeypatch, tmp_path):
-    logged = SimpleNamespace(stream=None, log_level=None)
-
-    def fake_configure_logging(stream, log_level):
-        logged.stream = stream
-        logged.log_level = log_level
-
-    called = SimpleNamespace(args=None, benchmark=None)
-
-    def fake_run_find_quotes(
-        original_corpus,
-        reuse_corpus,
-        output_path,
-        *,
-        benchmark,
-    ):
-        called.args = (original_corpus, reuse_corpus, output_path)
-        called.benchmark = benchmark
-
-    monkeypatch.setattr(find_quotes, "configure_logging", fake_configure_logging)
-    monkeypatch.setattr(find_quotes, "run_find_quotes", fake_run_find_quotes)
-
-    argv = [
-        "remarx-find-quotes",
-        str(tmp_path / "orig.csv"),
-        str(tmp_path / "reuse.csv"),
-        str(tmp_path / "out" / "pairs.csv"),
-        "--verbose",
-        "--benchmark",
-    ]
-
-    monkeypatch.setattr(find_quotes.sys, "argv", argv)
-
-    find_quotes.main()
-
-    assert logged.log_level == logging.DEBUG
-    assert called.benchmark is True
-    assert called.args[0] == pathlib.Path(argv[1])
-    assert called.args[2] == pathlib.Path(argv[3])
+    # no consolidate, benchmark
+    verbose_args = [*args, "--no-consolidate", "--benchmark"]
+    with patch("sys.argv", verbose_args):
+        find_quotes.main()
+    mock_find_quote_pairs.assert_called_with(
+        original_corpus=orig_input,
+        reuse_corpus=reuse_input,
+        out_csv=output,
+        consolidate=False,
+        benchmark=True,
+    )
