@@ -13,6 +13,7 @@ import numpy.typing as npt
 import polars as pl
 from voyager import Index, Space
 
+from remarx.quotation.consolidate import consolidate_quotes
 from remarx.quotation.embeddings import get_sentence_embeddings
 
 logger = logging.getLogger(__name__)
@@ -144,8 +145,14 @@ def load_sent_df(sentence_corpus: pathlib.Path, col_pfx: str = "") -> pl.DataFra
     """
     start_cols = ["index", "sent_id", "text"]
     return (
-        # Since all required fields are strings, there's no need to infer schema
-        pl.read_csv(sentence_corpus, row_index_name="index", infer_schema=False)
+        # Most required fields are strings; don't infer schema, but
+        # configure sentence index as an integer for later consolidation
+        pl.read_csv(
+            sentence_corpus,
+            row_index_name="index",
+            infer_schema=False,
+            schema_overrides={"sent_index": pl.Int32},
+        )
         .select(*start_cols, pl.all().exclude(start_cols))
         .rename({"sent_id": "id"})
         .rename(lambda x: f"{col_pfx}{x}")
@@ -183,8 +190,8 @@ def find_quote_pairs(
     reuse_corpus: pathlib.Path,
     out_csv: pathlib.Path,
     score_cutoff: float = 0.225,
+    consolidate: bool = True,
     show_progress_bar: bool = False,
-    *,
     benchmark: bool = False,
 ) -> None:
     """
@@ -212,6 +219,10 @@ def find_quote_pairs(
     if len(sent_pairs):
         quote_pairs = compile_quote_pairs(original_df, reuse_df, sent_pairs)
         # NOTE: Perhaps this should return a DataFrame rather than creating a CSV?
+
+        # consolidate quotes when requested
+        if consolidate:
+            quote_pairs = consolidate_quotes(quote_pairs)
         quote_pairs.write_csv(out_csv)
         logger.info(f"Saved {len(quote_pairs):,} quote pairs to {out_csv}")
     else:

@@ -24,7 +24,8 @@
 
 ### Quotation detection
 
-- Add the `find_quotes.py` CLI script to run the quote finder, with a `--benchmark` flag to collect performance metrics
+- Add the `remarx-find-quotes` CLI script to run the quote finder, with a `--benchmark` flag to collect performance metrics
+- Add consolidation logic to group quotes that are sequential in both original and reuse texts
 
 ### Application
 

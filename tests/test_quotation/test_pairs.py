@@ -201,16 +201,20 @@ def test_compile_quote_pairs():
     )
 
     result = compile_quote_pairs(orig_df, reuse_df, detected_pairs)
-    print(f"result: {result.columns}")
-    print(f"expected: {expected.columns}")
     assert_frame_equal(result, expected, check_row_order=False)
 
 
+@patch("remarx.quotation.pairs.consolidate_quotes")
 @patch("remarx.quotation.pairs.compile_quote_pairs")
 @patch("remarx.quotation.pairs.get_sentence_pairs")
 @patch("remarx.quotation.pairs.load_sent_df")
 def test_find_quote_pairs(
-    mock_load_df, mock_sent_pairs, mock_compile_pairs, caplog, tmp_path
+    mock_load_df,
+    mock_sent_pairs,
+    mock_compile_pairs,
+    mock_consolidate_quotes,
+    caplog,
+    tmp_path,
 ):
     # setup mocks
     orig_texts = ["some", "text"]
@@ -223,7 +227,7 @@ def test_find_quote_pairs(
 
     # Basic
     out_csv = tmp_path / "out.csv"
-    find_quote_pairs("original", "reuse", out_csv)
+    find_quote_pairs("original", "reuse", out_csv, consolidate=False)
     assert out_csv.read_text() == "foo,bar\n1,a\n"
     ## check mocks
     assert mock_load_df.call_count == 2
@@ -231,12 +235,20 @@ def test_find_quote_pairs(
         orig_texts, reuse_texts, 0.225, show_progress_bar=False, collect_metrics=False
     )
     mock_compile_pairs.assert_called_once_with(orig_df, reuse_df, ["sent_pairs"])
+    mock_consolidate_quotes.assert_not_called()
+
+    # Consolidate enabled: should be called with result of compile pairs method
+    mock_load_df.side_effect = [orig_df, reuse_df]
+    mock_sent_pairs.reset_mock()
+    find_quote_pairs("original", "reuse", out_csv, consolidate=True)
+    mock_consolidate_quotes.assert_called_with(mock_compile_pairs.return_value)
+    mock_consolidate_quotes.return_value.write_csv.assert_called_with(out_csv)
 
     ## check logging
     mock_load_df.side_effect = [orig_df, reuse_df]
     with caplog.at_level(logging.INFO):
         caplog.clear()
-        find_quote_pairs("original", "reuse", out_csv)
+        find_quote_pairs("original", "reuse", out_csv, consolidate=False)
     logs = caplog.record_tuples
     assert len(logs) == 1
     assert logs[0][0] == "remarx.quotation.pairs"
@@ -248,7 +260,7 @@ def test_find_quote_pairs(
     mock_load_df.side_effect = [orig_df, reuse_df]
     mock_sent_pairs.reset_mock()
     out_csv = tmp_path / "cutoff.csv"
-    find_quote_pairs("original", "reuse", out_csv, score_cutoff=0.4)
+    find_quote_pairs("original", "reuse", out_csv, score_cutoff=0.4, consolidate=False)
     mock_sent_pairs.assert_called_once_with(
         orig_texts, reuse_texts, 0.4, show_progress_bar=False, collect_metrics=False
     )
@@ -257,7 +269,9 @@ def test_find_quote_pairs(
     mock_load_df.side_effect = [orig_df, reuse_df]
     mock_sent_pairs.reset_mock()
     out_csv = tmp_path / "progress.csv"
-    find_quote_pairs("original", "reuse", out_csv, show_progress_bar=True)
+    find_quote_pairs(
+        "original", "reuse", out_csv, show_progress_bar=True, consolidate=False
+    )
     # check mocks
     mock_sent_pairs.assert_called_once_with(
         orig_texts, reuse_texts, 0.225, show_progress_bar=True, collect_metrics=False
@@ -268,7 +282,7 @@ def test_find_quote_pairs(
     mock_sent_pairs.return_value = ([], None)
     with caplog.at_level(logging.INFO):
         caplog.clear()
-        find_quote_pairs("original", "reuse", out_csv)
+        find_quote_pairs("original", "reuse", out_csv, consolidate=False)
     assert len(caplog.record_tuples) == 1
     log = caplog.record_tuples[0]
     assert log[1] == logging.INFO
@@ -291,7 +305,9 @@ def test_find_quote_pairs_benchmark_logs(
     out_csv = tmp_path / "bench.csv"
     with caplog.at_level(logging.INFO):
         caplog.clear()
-        find_quote_pairs("original", "reuse", out_csv, benchmark=True)
+        find_quote_pairs(
+            "original", "reuse", out_csv, benchmark=True, consolidate=False
+        )
 
     summaries = [
         record[2] for record in caplog.record_tuples if "Benchmark summary" in record[2]
@@ -317,34 +333,27 @@ def test_find_quote_pairs_integration(tmp_path):
     masked by mocking.
     """
     test_orig = pl.DataFrame(
-        [
-            {
-                "sent_id": "B",
-                "corpus": "original",
-                "text": "Und nun sollen seine Geister Auch nach meinem Willen leben.",
-            },
-            {
-                "sent_id": "A",
-                "corpus": "original",
-                "text": "Hat der alte Hexenmeister Sich doch einmal wegbegeben!",
-            },
-            {
-                "sent_id": "C",
-                "corpus": "original",
-                "text": "Seine Wort und Werke Merkt ich und den Brauch, Und mit Geistesstärke Tu ich Wunder auch.",
-            },
-        ]
-    )
+        data={
+            "sent_id": ["B", "A", "C"],
+            # "sent_index": [1, 2, 3],
+            "text": [
+                "Und nun sollen seine Geister Auch nach meinem Willen leben.",
+                "Hat der alte Hexenmeister Sich doch einmal wegbegeben!",
+                "Seine Wort und Werke Merkt ich und den Brauch, Und mit Geistesstärke Tu ich Wunder auch.",
+            ],
+        }
+    ).with_columns(corpus=pl.lit("original"))
+
     test_reuse = pl.DataFrame(
-        [
-            {
-                "sent_id": "a",
-                "corpus": "reuse",
-                "text": "Hat der alte Hexenmeister Sich doch einmal wegbegeben!",
-            },
-            {"sent_id": "b", "text": "Komm zurück zu mir", "corpus": "reuse"},
-        ]
-    )
+        data={
+            "sent_id": ["a", "b"],
+            "text": [
+                "Hat der alte Hexenmeister Sich doch einmal wegbegeben!",
+                "Komm zurück zu mir",
+            ],
+        }
+    ).with_columns(corpus=pl.lit("reuse"))
+
     # Create files
     orig_csv = tmp_path / "original.csv"
     test_orig.write_csv(orig_csv)
@@ -352,12 +361,11 @@ def test_find_quote_pairs_integration(tmp_path):
     test_reuse.write_csv(reuse_csv)
 
     out_csv = tmp_path / "out.csv"
-    find_quote_pairs(orig_csv, reuse_csv, out_csv)
+    find_quote_pairs(orig_csv, reuse_csv, out_csv, consolidate=False)
     with out_csv.open(newline="") as file:
         reader = csv.DictReader(file)
         results = list(reader)
         assert len(results) == 1
-        print(results[0].keys())
         assert list(results[0].keys()) == [
             "match_score",
             "reuse_id",
