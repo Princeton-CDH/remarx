@@ -1,4 +1,5 @@
 import polars as pl
+import pytest
 
 from remarx.quotation.consolidate import consolidate_quotes, identify_sequences
 
@@ -100,3 +101,11 @@ def test_consolidate_quotes():
     mixed_df_consolidated = consolidate_quotes(mixed_df)
     # one consolidated quote and one unconsolidated
     assert len(mixed_df_consolidated) == 2
+
+    # no data but required fields - should not error
+    empty_df = pl.DataFrame(data={"reuse_sent_index": [], "original_sent_index": []})
+    assert isinstance(consolidate_quotes(empty_df), pl.DataFrame)
+
+    empty_df = pl.DataFrame()
+    with pytest.raises(pl.exceptions.ColumnNotFoundError):
+        consolidate_quotes(empty_df)

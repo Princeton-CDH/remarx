@@ -50,6 +50,8 @@ def consolidate_quotes(df: pl.DataFrame) -> pl.DataFrame:
     Required fields:
         - `reuse_sent_index` and `original_sent_index` must be present for aggregation,
            and must be numeric
+    If required fields are not present, raises `polars.exceptions.ColumnNotFoundError`
+
     DataFrame is expected to include standard quote pair fields; for consolidated
     quotes, fields are aggregated as follows:
         - `match_score` average across the group
