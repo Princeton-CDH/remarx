@@ -69,7 +69,7 @@ def consolidate_quotes(df: pl.DataFrame) -> pl.DataFrame:
     # filter to groups that are sequential - candidates for consolidating further
     df_reuse_sequential = df_seq.filter(pl.col("reuse_sent_index_sequential"))
     # report how many we found at this stage ?
-    total_reuse_seqs = df_reuse_sequential["reuse_sent_index_group"].unique().count()
+    total_reuse_seqs = df_reuse_sequential["reuse_sent_index_group"].n_unique()
     # maybe report out of total rows to start with?
     logger.info(
         f"Identified {total_reuse_seqs:,} groups of sequential sentences in reuse text ({df.height:,} total rows)"
