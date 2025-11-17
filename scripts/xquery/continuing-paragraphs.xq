@@ -3,6 +3,8 @@ declare namespace output = "http://www.w3.org/2010/xslt-xquery-serialization";
 declare option output:method   "xml";
 declare option output:indent   "yes";
 
+(: first case: paragraphs that cross page boundaries but are contained by a single <p> :)
+
 (: find all paragraphs anywhere in the input doc :)
 let $continuing_p := (for $p in //tei:p
 (: look for nested non-manuscript pb tag :)
@@ -16,11 +18,30 @@ return <p>
 (: uncomment to see output with page numbers :)
 (: return $continuing_p :)
 
-(: TODO: these are the easy ones to find.
-How to find logical continuation interrupted by a footnote that is not
-marked up as a single paragraph? Maybe can infer based on end punctuation? :)
+(: second case: logical paragraphs that cross page boundaries but are interrupted
+by footnotes and thus NOT contained by a single <p> :)
+
+(: find all paragraphs that are followed immediately by a footnote :)
+let $interrupted_p := (for $p in //tei:p
+let $pb_num := $p/preceding::tei:pb[not(@ed='manuscript')][1]/@n
+(: get normalized text content, but exclude footnote references and editorial content :)
+let $p_text := normalize-space(string-join($p//text()[not(./parent::tei:add|./parent::tei:ref)]))
+let $p_text_len := string-length($p_text)
+where $p/following-sibling::*[1] = $p/following-sibling::tei:note[1]
+and not(ends-with($p_text, ".") or ends-with($p_text, '.“'))
+return <p>
+{$p/@id}
+<pb xmlns="" n="{$pb_num}"/>
+{substring($p_text, $p_text_len - 50)}
+</p>)
+
+
+(: uncomment to see output with page numbers and last line of text:)
+(: return $interrupted_p  :)
+
 
 return <total>
 	<paragraphs>{count(//tei:p)}</paragraphs>
 	<continuing>{count($continuing_p)}</continuing>
+	<interrupted>{count($interrupted_p)}</interrupted>
 </total>
