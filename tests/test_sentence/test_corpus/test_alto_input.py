@@ -219,7 +219,7 @@ def test_altoinput_get_text(caplog):
         "1896-97a.pdf_page_3.xml",
         "1896-97a.pdf_page_4.xml",
         "1896-97a.pdf_page_5.xml",
-        "empty_page.xml",
+        "empty_page.xml",  # now skipped entirely
         "unsorted_page.xml",
     ]
 
@@ -228,7 +228,8 @@ def test_altoinput_get_text(caplog):
     for chunk in chunks:
         chunks_by_filename[chunk["file"]].append(chunk)
 
-    assert set(chunks_by_filename.keys()) == set(expected_files)
+    # empty page should not be present since no chunks are yielded
+    assert set(chunks_by_filename.keys()) == set(expected_files) - {"empty_page.xml"}
 
     # check block tag section types for one file
     assert [
@@ -271,7 +272,8 @@ def test_altoinput_get_text(caplog):
     # last log entry should report time to process, # of files
     summary_log_message = caplog.records[-1].getMessage()
     assert summary_log_message.startswith(
-        f"Processed {FIXTURE_ALTO_ZIPFILE.name} with 7 files (7 valid ALTO)"
+        # empty file now considered invalid
+        f"Processed {FIXTURE_ALTO_ZIPFILE.name} with 7 files (6 valid ALTO)"
     )
 
 
@@ -552,7 +554,7 @@ def test_altoinput_warn_no_text(caplog):
 
     warning_messages = [record.getMessage() for record in caplog.records]
     assert any(
-        message == "No text lines found in ALTO XML file: empty_page.xml"
+        message == "No text lines in ALTO XML file: empty_page.xml"
         for message in warning_messages
     )
 
@@ -641,8 +643,8 @@ def test_get_sentences_sequential(mock_segment_text: Mock):
     sentences = list(alto_input.get_sentences())
     num_sentences = len(sentences)
     # currently with this fixture data and simple segmenter,
-    # and filtering by section type expect 16 sentences
-    assert num_sentences == 20
+    # and filtering by section type expect 18 sentences
+    assert num_sentences == 18
 
     # sentence indexes should start at 0 and continue across all sentences
     indexes = [sentence["sent_index"] for sentence in sentences]
