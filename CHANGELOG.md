@@ -2,7 +2,16 @@
 
 ## 0.5.0.dev
 
+### Sentence corpus creation
+
 - ALTO-generated corpora now include per-sentence `title` and `author` metadata derived from ALTO block tags
+
+### Quotation detection
+
+- Add consolidation logic to group quotes that are sequential in both original and reuse texts
+    - Quote consolidation is enabled by default but configurable:
+        - `remarx-find-quotes` script has a boolean parameter (`--no-consolidate`)
+        - App now has a toggle to control consolidation; enabled by default
 
 ## 0.4.0
 
@@ -25,7 +34,6 @@
 ### Quotation detection
 
 - Add the `remarx-find-quotes` CLI script to run the quote finder, with a `--benchmark` flag to collect performance metrics
-- Add consolidation logic to group quotes that are sequential in both original and reuse texts
 
 ### Application
 
