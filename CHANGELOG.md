@@ -1,8 +1,13 @@
 # CHANGELOG
 
-## 0.5.0.dev
+## 0.5.0
 
 - ALTO-generated corpora now include per-sentence `title` and `author` metadata derived from ALTO block tags
+
+### Scripts
+
+- Add `xquery` directory with instructions and XQuery files for investigating
+    & reporting on continuing paragraph and footnote content in MEGA TEI
 
 ## 0.4.0
 
