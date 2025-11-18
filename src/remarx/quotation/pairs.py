@@ -54,13 +54,11 @@ def build_vector_index(embeddings: npt.NDArray) -> Index:
 
 
 def get_sentence_pairs(
-    original_sents: list[str],
-    reuse_sents: list[str],
+    original_vecs: npt.NDArray,
+    reuse_vecs: npt.NDArray,
     score_cutoff: float,
     show_progress_bar: bool = False,
-    *,
-    collect_metrics: bool = False,
-) -> tuple[pl.DataFrame, QuoteDetectionMetrics | None]:
+) -> pl.DataFrame:
     """
     For a set of original and reuse sentences, identify pairs of original-reuse
     sentence pairs where quotation is likely. Returns a tuple containing the
@@ -77,27 +75,15 @@ def get_sentence_pairs(
     (cosine similarity) above the specified cutoff.
     Optionally, the parameters for Annoy may be specified.
     """
-    # Generate embeddings
-    logger.info("Now generating sentence embeddings")
-    start = time()
-    original_vecs = get_sentence_embeddings(
-        original_sents, show_progress_bar=show_progress_bar
-    )
-    reuse_vecs = get_sentence_embeddings(
-        reuse_sents, show_progress_bar=show_progress_bar
-    )
-    n_vecs = len(original_vecs) + len(reuse_vecs)
-    embedding_elapsed = time() - start
-    logger.info(
-        f"Generated {n_vecs:,} sentence embeddings in {embedding_elapsed:.1f} seconds"
-    )
-
     # Build search index
     # NOTE: An index only needs to be generated once for a set of embeddings.
     #       Perhaps there's some potential reuse between runs?
     start = time()
     index = build_vector_index(original_vecs)
     index_elapsed = time() - start
+    logger.info(
+        f"Indexed {len(original_vecs):,} sentence embeddings in {index_elapsed:.1f} seconds"
+    )
 
     # Get sentence matches; query all vectors at once
     # returns a list of lists with results for each reuse vector
@@ -120,19 +106,16 @@ def get_sentence_pairs(
         .filter(pl.col("match_score").lt(score_cutoff))
     )
     total = result.height
+    pluralize = "" if total == 1 else "s"
     logger.info(
-        f"Identified {total:,} sentence pair{'' if total == 1 else 's'} under score cutuff {score_cutoff}"
+        f"Identified {total:,} sentence pair{pluralize} with distance less than {score_cutoff}"
     )
-    metrics = None
-    if collect_metrics:
-        metrics = QuoteDetectionMetrics(
-            embedding_seconds=embedding_elapsed,
-            search_seconds=index_elapsed + query_elapsed,
-        )
-    return result, metrics
+    return result
 
 
-def load_sent_df(sentence_corpus: pathlib.Path, col_pfx: str = "") -> pl.DataFrame:
+def load_sent_corpus(
+    sentence_corpus: pathlib.Path, col_pfx: str | None = None
+) -> tuple[pl.DataFrame, npt.NDArray]:
     """
     For a given sentence corpus, create a polars DataFrame suitable for finding
     sentence-level quote pairs. Optionally, a prefix can be added to all column names.
@@ -144,7 +127,7 @@ def load_sent_df(sentence_corpus: pathlib.Path, col_pfx: str = "") -> pl.DataFra
 
     """
     start_cols = ["index", "sent_id", "text"]
-    return (
+    df = (
         # Most required fields are strings; don't infer schema, but
         # configure sentence index as an integer for later consolidation
         pl.read_csv(
@@ -155,8 +138,19 @@ def load_sent_df(sentence_corpus: pathlib.Path, col_pfx: str = "") -> pl.DataFra
         )
         .select(*start_cols, pl.all().exclude(start_cols))
         .rename({"sent_id": "id"})
-        .rename(lambda x: f"{col_pfx}{x}")
     )
+    start = time()
+    vectors = get_sentence_embeddings(
+        df.get_column("text").to_list()
+        # show_progress_bar=show_progress_bar
+    )
+    elapsed = time() - start
+    logger.info(
+        f"Generated {len(vectors):,} sentence embeddings from {sentence_corpus} in {elapsed:.1f} seconds"
+    )
+    if col_pfx:
+        df = df.rename(lambda x: f"{col_pfx}{x}")
+    return (df, vectors)
 
 
 def compile_quote_pairs(
@@ -186,6 +180,7 @@ def compile_quote_pairs(
 
 
 def find_quote_pairs(
+    # original_corpus: list[pathlib.Path],  # TODO
     original_corpus: pathlib.Path,
     reuse_corpus: pathlib.Path,
     out_csv: pathlib.Path,
@@ -201,18 +196,21 @@ def find_quote_pairs(
     is enabled, summary timings are logged for embeddings and index/query steps.
     """
 
-    # Build sentence dataframes
-    original_df = load_sent_df(original_corpus, col_pfx="original_")
-    reuse_df = load_sent_df(reuse_corpus, col_pfx="reuse_")
+    # Load sentence data and generate embeddings
+    # TODO: handle multiple original corpus files
+    # TODO: pass option for show_progress_bar
+    original_df, original_vectors = load_sent_corpus(
+        original_corpus, col_pfx="original_"
+    )
+    reuse_df, reuse_vectors = load_sent_corpus(reuse_corpus, col_pfx="reuse_")
 
     # Determine sentence pairs
     # TODO: Add support for relevant voyager parameters
-    sent_pairs, metrics = get_sentence_pairs(
-        original_df.get_column("original_text").to_list(),
-        reuse_df.get_column("reuse_text").to_list(),
+    sent_pairs = get_sentence_pairs(
+        original_vectors,
+        reuse_vectors,
         score_cutoff,
-        show_progress_bar=show_progress_bar,
-        collect_metrics=benchmark,
+        show_progress_bar=show_progress_bar,  # NOTE: currently unused
     )
 
     # Build and save quote pairs if any are found
@@ -230,10 +228,10 @@ def find_quote_pairs(
             f"No sentence pairs for score cutoff = {score_cutoff} ; output file not created."
         )
 
-    if benchmark and metrics is not None:
-        logger.info(
-            "Benchmark summary: embeddings=%.2fs; search=%.2fs; total=%.2fs",
-            metrics.embedding_seconds,
-            metrics.search_seconds,
-            metrics.total_seconds,
-        )
+    # if benchmark and metrics is not None:
+    #     logger.info(
+    #         "Benchmark summary: embeddings=%.2fs; search=%.2fs; total=%.2fs",
+    #         metrics.embedding_seconds,
+    #         metrics.search_seconds,
+    #         metrics.total_seconds,
+    #     )
