@@ -120,7 +120,7 @@ def test_load_sent_corpus(mock_get_sentence_embed, tmp_path):
     expected = pl.DataFrame(expected_data)
     result, vec = load_sent_corpus(test_csv)
     assert vec == mock_get_sentence_embed.return_value
-    mock_get_sentence_embed.assert_called_with(test_text)
+    mock_get_sentence_embed.assert_called_with(test_text, show_progress_bar=False)
     assert_frame_equal(result, expected, check_dtypes=False)
 
     ## With prefix
@@ -129,7 +129,7 @@ def test_load_sent_corpus(mock_get_sentence_embed, tmp_path):
     result, vec = load_sent_corpus(test_csv, "test_")
     assert_frame_equal(result, pfx_expected, check_dtypes=False)
     # embeddings still called correctly with text content
-    mock_get_sentence_embed.assert_called_with(test_text)
+    mock_get_sentence_embed.assert_called_with(test_text, show_progress_bar=False)
 
     # Case additional metadata fields
     test_df = test_df.with_columns(
@@ -152,6 +152,10 @@ def test_load_sent_corpus(mock_get_sentence_embed, tmp_path):
     )
     result, vec = load_sent_corpus(test_csv, "test_")
     assert_frame_equal(result, pfx_expected, check_dtypes=False)
+
+    # test with progress bar enabled
+    load_sent_corpus(test_csv, show_progress_bar=True)
+    mock_get_sentence_embed.assert_called_with(test_text, show_progress_bar=True)
 
 
 def test_compile_quote_pairs():

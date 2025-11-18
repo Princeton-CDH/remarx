@@ -26,7 +26,7 @@ def build_vector_index(embeddings: npt.NDArray) -> Index:
     """
     # TODO: Add relevant voyager parameters
     start = time()
-    # Instantiate annoy index using dot product
+    # Instantiate index using inner product / cosine similarity
     n_vecs, n_dims = embeddings.shape
     index = Index(Space.InnerProduct, num_dimensions=n_dims, max_elements=n_vecs)
     # more efficient to add all vectors at once
@@ -47,20 +47,17 @@ def get_sentence_pairs(
     show_progress_bar: bool = False,
 ) -> pl.DataFrame:
     """
-    For a set of original and reuse sentences, identify pairs of original-reuse
-    sentence pairs where quotation is likely. Returns a tuple containing the
-    sentence pairs as a polars DataFrame along with timing metrics. Each row of
-    the dataframe includes:
+    Given an array of original and reuse sentence embeddings, identify pairs
+    of original-reuse pairs with high similarity (i.e., likely quotation).
+    Returns a polars DataFrame of sentence pairs with the following information:
 
     - `original_index`: the index of the original sentence
     - `reuse_index`: the index of the reuse sentence
     - `match_score`: the quality of the match
 
-    Likely quote pairs are identified through the sentences' embeddings. The Annoy
-    library is used to find the nearest original sentence for each reuse sentence.
-    Then likely quote pairs are determined by those sentence pairs with a match score
+    Uses embeddings and a vector index to find the nearest original sentence
+    for each reuse sentence. Sentence pairs are filtered to those pairs with a match score
     (cosine similarity) above the specified cutoff.
-    Optionally, the parameters for Annoy may be specified.
     """
     # Build search index
     # NOTE: An index only needs to be generated once for a set of embeddings.
@@ -101,14 +98,17 @@ def get_sentence_pairs(
 
 
 def load_sent_corpus(
-    sentence_corpus: pathlib.Path, col_pfx: str | None = None
+    sentence_corpus: pathlib.Path,
+    col_pfx: str | None = None,
+    show_progress_bar: bool = False,
 ) -> tuple[pl.DataFrame, npt.NDArray]:
     """
-    Takes a sentence corpus file and loads it into a polars DataFrame suitable,
-    and generates sentence embeddings for the text of each sentences.
+    Takes a sentence corpus file and loads it into a polars DataFrame,
+    and generates sentence embeddings for the text of each sentence in the corpus.
     Optionally supports adding a prefix to all column names in the DataFrame.
 
-    The resulting dataframe has the same fields as the input corpus except with:
+    The resulting dataframe has the same fields as the input corpus, with the
+    following adjustments:
 
     - a new field `index` corresponding to the row index
     - the sentence id field `sent_id` is renamed to `id`
@@ -134,8 +134,7 @@ def load_sent_corpus(
     )
     start = time()
     vectors = get_sentence_embeddings(
-        df["text"].to_list()
-        # show_progress_bar=show_progress_bar
+        df["text"].to_list(), show_progress_bar=show_progress_bar
     )
     elapsed = time() - start
     logger.info(
@@ -152,8 +151,8 @@ def compile_quote_pairs(
     detected_pairs: pl.DataFrame,
 ) -> pl.DataFrame:
     """
-    Link sentence metadata to the detected sentence pairs from the given original
-    and reuse sentence corpus dataframes to form quote pairs. The original and reuse
+    1Combine sentence metadata from original and reuse corpora with detected
+    sentence pair identifiers to form quote pairs. The original and reuse
     corpus dataframes must contain a row index column named `original_index` and
     `reuse_index` respectively. Ideally, these dataframes should be built using
     [load_sent_df][remarx.quotation.pairs.load_sent_df].
@@ -161,8 +160,8 @@ def compile_quote_pairs(
     Returns a dataframe with the following fields:
 
     - `match_score`: Estimated quality of the match
-    - All other fields in order from the reuse corpus except its row index
-    - All other fields in order from the original corpus except its row index
+    - All other fields in order from the reuse corpus except row index
+    - All other fields in order from the original corpus except row index
     """
     # Build and return quote pairs
     return (
@@ -182,12 +181,14 @@ def find_quote_pairs(
     benchmark: bool = False,
 ) -> None:
     """
-    For a given original and reuse sentence corpus, finds the likely sentence-level
-    quote pairs. These quote pairs are saved as a CSV. Optionally, the required
-    quality for quote pairs can be modified via `score_cutoff`. When `benchmark`
-    is enabled, summary timings are logged for embeddings and index/query steps.
-    """
+    For a set of original sentence corpora and one reuse sentence corpus, finds
+    the likely sentence-level quote pairs, which are saved as a CSV file.
 
+    Optional parameters allow configuring the `score_cutoff` for threshold to
+    include quote pairs, and consolidation of consecutive sentences (on by default).
+    When `benchmark` is enabled, summary information is logged to report
+    on corpus size and timings to generate embeddings and search for pairs.
+    """
     # Load sentence data and generate embeddings
     # TODO: pass option for show_progress_bar
 
@@ -196,13 +197,17 @@ def find_quote_pairs(
     original_dfs = []
     original_vecs = []
     for corpus_file in original_corpus:
-        df, vecs = load_sent_corpus(corpus_file, col_pfx="original_")
+        df, vecs = load_sent_corpus(
+            corpus_file, col_pfx="original_", show_progress_bar=show_progress_bar
+        )
         original_dfs.append(df)
         original_vecs.append(vecs)
     # combine dataframes and vectors, preserving order
     original_df = pl.concat(original_dfs)
     original_vecs = np.concatenate(original_vecs)
-    reuse_df, reuse_vecs = load_sent_corpus(reuse_corpus, col_pfx="reuse_")
+    reuse_df, reuse_vecs = load_sent_corpus(
+        reuse_corpus, col_pfx="reuse_", show_progress_bar=show_progress_bar
+    )
     embeddings_seconds = time() - start
 
     # Find sentence pairs
