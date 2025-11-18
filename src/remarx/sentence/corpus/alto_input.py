@@ -212,7 +212,7 @@ class ALTOInput(FileInput):
                 )
 
                 # pre-compute metadata to apply to each block so that it can be merged
-                # without keeping update-state as we iterate and while footnotes are buffered
+                # as we iterate and while footnotes are buffered
                 metadata_by_block = self._collect_article_metadata(alto_xmlobj)
                 footnote_chunks: list[dict[str, str]] = []
 
@@ -229,14 +229,14 @@ class ALTOInput(FileInput):
                     if include_sections is not None and section not in include_sections:
                         continue
 
-                    # Buffer footnotes so they are emitted after all other content
+                    # Buffer footnotes so they are emitted after the body text
                     if section == "footnote":
                         footnote_chunks.append(chunk)
                         continue
 
                     yield chunk
 
-                # Emit buffered footnotes at the end to mirror TEI behavior (body text first)
+                # Emit buffered footnotes at the end
                 yield from footnote_chunks
 
         elapsed_time = time() - start
@@ -322,7 +322,7 @@ class ALTOInput(FileInput):
                         title_lines.append(text_clean)
                     j += 1
                 current_title = "\n".join(title_lines)
-                # new title implicitly resets author context
+                # new title resets author context
                 current_author = ""
                 # apply the updated metadata to all title blocks in this run
                 for k in range(i, j):
