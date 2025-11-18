@@ -23,6 +23,8 @@ def _():
     import tempfile
 
     import logging
+    from datetime import datetime
+    import polars as pl
     import remarx
     from remarx.app.utils import (
         create_header,
@@ -39,6 +41,7 @@ def _():
         logging,
         mo,
         pathlib,
+        pl,
     )
 
 
@@ -153,6 +156,70 @@ def _(mo, original_csv_browser, reuse_csv_browser):
         gap=1.2,
     )
     return original_csvs, reuse_csvs
+
+
+@app.cell
+def _(mo, pathlib, pl, original_csvs):
+    def summarize(selection) -> dict | None:
+        """Build lightweight summary for a selected corpus CSV."""
+        path = pathlib.Path(selection.path)
+        if not path.is_file():
+            return None
+
+        # Use lazy scan to keep memory low; only collect simple aggregates.
+        lf = pl.scan_csv(path, infer_schema_length=0)
+
+        # total sentences
+        total = lf.select(pl.len()).collect().item()
+
+        # section breakdowns when available; otherwise count everything as text
+        if "section_type" in lf.collect_schema():
+            counts = (
+                lf.group_by("section_type")
+                .agg(pl.len().alias("sentences"))
+                .collect()
+            )
+            body = int(
+                counts.filter(pl.col("section_type") == "text")["sentences"].sum()
+            )
+            foot = int(
+                counts.filter(pl.col("section_type") == "footnote")["sentences"].sum()
+            )
+        else:
+            body, foot = total, 0
+
+        # last modified timestamp for display
+        last_updated = datetime.fromtimestamp(path.stat().st_mtime).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+
+        return {
+            "corpus": path.name,
+            "total_lines": total,
+            "body_text_lines": body,
+            "footnote_lines": foot,
+            "last_updated": last_updated,
+        }
+
+    summaries = [s for s in (summarize(sel) for sel in original_csvs) if s]
+
+    if summaries:
+        content = mo.vstack(
+            [
+                mo.md("#### Selected Original Corpora"),
+                mo.ui.table(
+                    summaries,
+                    page_size=min(10, len(summaries)),
+                    selection=None,  # display only
+                    show_download=False,  # hide download control
+                ).style(max_height="260px", overflow="auto"),
+            ]
+        )
+    else:
+        content = mo.callout("No original corpora selected yet.", kind="info")
+
+    content
+    return (summaries,)
 
 
 @app.cell
