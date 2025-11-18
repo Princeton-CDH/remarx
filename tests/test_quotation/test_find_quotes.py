@@ -24,7 +24,7 @@ def test_main(mock_find_quote_pairs, mock_configure_logging, tmp_path):
     mock_configure_logging.assert_called_with(sys.stdout, log_level=logging.INFO)
     # consolidate and benchmark are default options
     mock_find_quote_pairs.assert_called_with(
-        original_corpus=orig_input,
+        original_corpus=[orig_input],
         reuse_corpus=reuse_input,
         out_csv=output,
         consolidate=True,
@@ -42,7 +42,7 @@ def test_main(mock_find_quote_pairs, mock_configure_logging, tmp_path):
     with patch("sys.argv", verbose_args):
         find_quotes.main()
     mock_find_quote_pairs.assert_called_with(
-        original_corpus=orig_input,
+        original_corpus=[orig_input],
         reuse_corpus=reuse_input,
         out_csv=output,
         consolidate=False,

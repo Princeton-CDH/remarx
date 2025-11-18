@@ -6,9 +6,9 @@ Note: Currently this script only supports one original and reuse corpus.
 
 import logging
 import pathlib
-from dataclasses import dataclass
 from timeit import default_timer as time
 
+import numpy as np
 import numpy.typing as npt
 import polars as pl
 from voyager import Index, Space
@@ -17,19 +17,6 @@ from remarx.quotation.consolidate import consolidate_quotes
 from remarx.quotation.embeddings import get_sentence_embeddings
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass(slots=True)
-class QuoteDetectionMetrics:
-    """Execution timing metrics for quotation detection steps."""
-
-    embedding_seconds: float
-    search_seconds: float
-
-    @property
-    def total_seconds(self) -> float:
-        """Total wall-clock seconds spent on embeddings plus search."""
-        return self.embedding_seconds + self.search_seconds
 
 
 def build_vector_index(embeddings: npt.NDArray) -> Index:
@@ -117,15 +104,21 @@ def load_sent_corpus(
     sentence_corpus: pathlib.Path, col_pfx: str | None = None
 ) -> tuple[pl.DataFrame, npt.NDArray]:
     """
-    For a given sentence corpus, create a polars DataFrame suitable for finding
-    sentence-level quote pairs. Optionally, a prefix can be added to all column names.
+    Takes a sentence corpus file and loads it into a polars DataFrame suitable,
+    and generates sentence embeddings for the text of each sentences.
+    Optionally supports adding a prefix to all column names in the DataFrame.
 
     The resulting dataframe has the same fields as the input corpus except with:
 
     - a new field `index` corresponding to the row index
     - the sentence id field `sent_id` is renamed to `id`
+    - all field names are prefixed if a column prefix is specified
 
+    Returns a tuple of DataFrame and numpy array with embeddings vectors
     """
+    # TODO: in future should add an option to specify the model
+    # to pass through to embeddings
+
     start_cols = ["index", "sent_id", "text"]
     df = (
         # Most required fields are strings; don't infer schema, but
@@ -141,7 +134,7 @@ def load_sent_corpus(
     )
     start = time()
     vectors = get_sentence_embeddings(
-        df.get_column("text").to_list()
+        df["text"].to_list()
         # show_progress_bar=show_progress_bar
     )
     elapsed = time() - start
@@ -180,8 +173,7 @@ def compile_quote_pairs(
 
 
 def find_quote_pairs(
-    # original_corpus: list[pathlib.Path],  # TODO
-    original_corpus: pathlib.Path,
+    original_corpus: list[pathlib.Path],
     reuse_corpus: pathlib.Path,
     out_csv: pathlib.Path,
     score_cutoff: float = 0.225,
@@ -197,21 +189,32 @@ def find_quote_pairs(
     """
 
     # Load sentence data and generate embeddings
-    # TODO: handle multiple original corpus files
     # TODO: pass option for show_progress_bar
-    original_df, original_vectors = load_sent_corpus(
-        original_corpus, col_pfx="original_"
-    )
-    reuse_df, reuse_vectors = load_sent_corpus(reuse_corpus, col_pfx="reuse_")
 
-    # Determine sentence pairs
+    # for each individual file specified, get data & embeddings
+    start = time()
+    original_dfs = []
+    original_vecs = []
+    for corpus_file in original_corpus:
+        df, vecs = load_sent_corpus(corpus_file, col_pfx="original_")
+        original_dfs.append(df)
+        original_vecs.append(vecs)
+    # combine dataframes and vectors, preserving order
+    original_df = pl.concat(original_dfs)
+    original_vecs = np.concatenate(original_vecs)
+    reuse_df, reuse_vecs = load_sent_corpus(reuse_corpus, col_pfx="reuse_")
+    embeddings_seconds = time() - start
+
+    # Find sentence pairs
     # TODO: Add support for relevant voyager parameters
+    start = time()
     sent_pairs = get_sentence_pairs(
-        original_vectors,
-        reuse_vectors,
+        original_vecs,
+        reuse_vecs,
         score_cutoff,
         show_progress_bar=show_progress_bar,  # NOTE: currently unused
     )
+    query_seconds = time() - start
 
     # Build and save quote pairs if any are found
     if len(sent_pairs):
@@ -225,13 +228,12 @@ def find_quote_pairs(
         logger.info(f"Saved {len(quote_pairs):,} quote pairs to {out_csv}")
     else:
         logger.info(
-            f"No sentence pairs for score cutoff = {score_cutoff} ; output file not created."
+            f"No sentence pairs for score cutoff={score_cutoff}; output file not created."
         )
 
-    # if benchmark and metrics is not None:
-    #     logger.info(
-    #         "Benchmark summary: embeddings=%.2fs; search=%.2fs; total=%.2fs",
-    #         metrics.embedding_seconds,
-    #         metrics.search_seconds,
-    #         metrics.total_seconds,
-    #     )
+    if benchmark:
+        logger.info(
+            f"Benchmark summary: corpus size: original={len(original_df):,}; "
+            + f"reuse={len(reuse_df):,}; pairs={len(quote_pairs):,}; "
+            + f"embeddings={embeddings_seconds:.2f}s; search={query_seconds:.2f}s"
+        )
