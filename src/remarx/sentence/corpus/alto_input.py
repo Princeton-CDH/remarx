@@ -193,19 +193,6 @@ class ALTOInput(FileInput):
         num_valid_files = 0
         include_sections = self.default_include if self.filter_sections else None
 
-        # track article metadata across pages; metadata is updated while iterating
-        # through blocks and reused for footnotes or later sentences. The
-        # _collecting_title/_collecting_author flags record cases where consecutive
-        # blocks on the same page contribute to a single field (common in DNZ,
-        # where titles or author lines are split across multiple TextBlocks).
-        self._current_title = ""
-        self._current_author = ""
-        self._collecting_title = False
-        self._collecting_author = False
-        # set when we encounter a blank title block; cleared once we know whether
-        # the blank block marked the start of a new article
-        self._pending_title_reset = False
-
         start = time()
         with ZipFile(self.input_file) as archive:
             # iterate over all files in the zipfile;
@@ -224,25 +211,33 @@ class ALTOInput(FileInput):
                     f"{base_filename}: {len(alto_xmlobj.blocks)} blocks, {len(alto_xmlobj.lines)} lines"
                 )
 
-                # ensure block-level continuation state resets between files
-                self._collecting_title = False
-                self._collecting_author = False
-                self._pending_title_reset = False
+                # pre-compute metadata to apply to each block so that it can be merged
+                # without keeping update-state as we iterate and while footnotes are buffered
+                metadata_by_block = self._collect_article_metadata(alto_xmlobj)
+                footnote_chunks: list[dict[str, str]] = []
 
-                for block in alto_xmlobj.sorted_blocks:
+                for idx, block in enumerate(alto_xmlobj.sorted_blocks):
                     section = alto_xmlobj.tags.get(block.tag_id, SectionType.TEXT.value)
                     block_text = block.text_content
-                    self._update_article_metadata(section, block_text)
+                    chunk = {
+                        "text": block_text,
+                        "section_type": section,
+                        "file": base_filename,  # use the base xml file for consistency
+                    } | metadata_by_block.get(idx, {"title": "", "author": ""})
 
-                    if include_sections is None or section in include_sections:
-                        yield {
-                            "text": block_text,
-                            "section_type": section,
-                            "title": self._current_title,
-                            "author": self._current_author,
-                            # use the base xml file as filename here, rather than zipfile for all
-                            "file": base_filename,
-                        }
+                    # Apply section filtering up front
+                    if include_sections is not None and section not in include_sections:
+                        continue
+
+                    # Buffer footnotes so they are emitted after all other content
+                    if section == "footnote":
+                        footnote_chunks.append(chunk)
+                        continue
+
+                    yield chunk
+
+                # Emit buffered footnotes at the end to mirror TEI behavior (body text first)
+                yield from footnote_chunks
 
         elapsed_time = time() - start
         logger.info(
@@ -294,79 +289,70 @@ class ALTOInput(FileInput):
 
         return alto_xmlobj
 
-    def _update_article_metadata(
-        self, section: str | None, block_text: str | None
-    ) -> None:
+    def _collect_article_metadata(
+        self, alto_xmlobj: AltoDocument
+    ) -> dict[int, dict[str, str]]:
         """
-        Update running title and author metadata based on the current block label.
+        Collect title/author metadata once per page and return a mapping of block
+        index -> metadata to merge into emitted chunks. Title/author blocks are
+        concatenated when consecutive so that multi-line headings/authors are preserved.
 
-        NOTE: Some DNZ articles include trailing signatures or initials without
-        ALTO author tags; those cases are not yet supported since there is no
-        structured signal to retroactively update metadata for prior text blocks.
-        TODO: capture trailing author initials when the ALTO tagging provides a reliable signal.
+        Doing this up front avoids fragile per-block state and supports buffering
+        footnotes (which still need the correct article metadata) before yielding.
         """
-        # Examples of unsupported trailing author cases:
-        # - text block ending with "Oskar Geck." on 1896-97a.pdf_page_124.xml
-        # - closing "Dr. B." line on 1896-97a.pdf_page_253.xml
+        current_title = ""
+        current_author = ""
+        metadata_by_block: dict[int, dict[str, str]] = {}
+        blocks = alto_xmlobj.sorted_blocks
 
-        section = section or SectionType.TEXT.value
-        text_clean = (block_text or "").strip()
+        def get_section(block: TextBlock) -> str:
+            return alto_xmlobj.tags.get(block.tag_id) or SectionType.TEXT.value
 
-        if section == "Title":
-            self._collecting_author = False
+        i = 0
+        while i < len(blocks):
+            section = get_section(blocks[i])
 
-            if text_clean:
-                if self._pending_title_reset:
-                    self._reset_article_metadata()
-                    self._pending_title_reset = False
+            if section == "Title":
+                # accumulate consecutive title blocks to preserve multi-line headings
+                title_lines: list[str] = []
+                j = i
+                while j < len(blocks) and get_section(blocks[j]) == "Title":
+                    text_clean = (blocks[j].text_content or "").strip()
+                    if text_clean:
+                        title_lines.append(text_clean)
+                    j += 1
+                current_title = "\n".join(title_lines)
+                # new title implicitly resets author context
+                current_author = ""
+                # apply the updated metadata to all title blocks in this run
+                for k in range(i, j):
+                    metadata_by_block[k] = {
+                        "title": current_title,
+                        "author": current_author,
+                    }
+                i = j
+                continue
 
-                if self._collecting_title and self._current_title:
-                    self._current_title = f"{self._current_title}\n{text_clean}"
-                else:
-                    # start a new title; reset author since author metadata follows title
-                    self._current_title = text_clean
-                    self._current_author = ""
-                self._collecting_title = True
-            else:
-                # blank title blocks indicate the start of a new article unless the
-                # following block provides author metadata
-                self._collecting_title = False
-                self._pending_title_reset = True
-            return
+            if section == "author":
+                # accumulate consecutive author blocks
+                author_lines: list[str] = []
+                j = i
+                while j < len(blocks) and get_section(blocks[j]) == "author":
+                    text_clean = (blocks[j].text_content or "").strip()
+                    if text_clean:
+                        author_lines.append(text_clean)
+                    j += 1
+                current_author = "\n".join(author_lines)
+                for k in range(i, j):
+                    metadata_by_block[k] = {
+                        "title": current_title,
+                        "author": current_author,
+                    }
+                i = j
+                continue
 
-        if section == "author":
-            self._collecting_title = False
-            # author blocks finalize title aggregation; metadata now applies to body/footnotes
+            # For any other section, apply the current running metadata
+            metadata_by_block[i] = {"title": current_title, "author": current_author}
+            i += 1
 
-            if self._pending_title_reset:
-                # blank title immediately followed by author indicates the metadata
-                # belongs to the existing article; do not reset
-                self._pending_title_reset = False
-
-            if text_clean:
-                if self._collecting_author and self._current_author:
-                    self._current_author = f"{self._current_author}\n{text_clean}"
-                else:
-                    self._current_author = text_clean
-                self._collecting_author = True
-            else:
-                # blank author blocks indicate lack of author metadata for this article
-                self._current_author = ""
-                self._collecting_author = False
-
-            return
-
-        # any other section: conclude any title/author collection and apply pending resets
-        if self._pending_title_reset:
-            self._reset_article_metadata()
-            self._pending_title_reset = False
-
-        self._collecting_title = False
-        self._collecting_author = False
-
-    def _reset_article_metadata(self) -> None:
-        """
-        Clear currently collected title/author metadata when a new article boundary is detected.
-        """
-        self._current_title = ""
-        self._current_author = ""
+        return metadata_by_block
