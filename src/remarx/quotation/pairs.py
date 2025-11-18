@@ -151,11 +151,11 @@ def compile_quote_pairs(
     detected_pairs: pl.DataFrame,
 ) -> pl.DataFrame:
     """
-    1Combine sentence metadata from original and reuse corpora with detected
+    Combine sentence metadata from original and reuse corpora with detected
     sentence pair identifiers to form quote pairs. The original and reuse
     corpus dataframes must contain a row index column named `original_index` and
     `reuse_index` respectively. Ideally, these dataframes should be built using
-    [load_sent_df][remarx.quotation.pairs.load_sent_df].
+    [load_sent_corpus][remarx.quotation.pairs.load_sent_corpus].
 
     Returns a dataframe with the following fields:
 
