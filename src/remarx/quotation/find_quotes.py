@@ -76,7 +76,8 @@ def main() -> None:
         sys.exit(1)
 
     find_quote_pairs(
-        original_corpus=args.original_corpus,
+        # for now, pass single file as a list; in future, support multifile
+        original_corpus=[args.original_corpus],
         reuse_corpus=args.reuse_corpus,
         out_csv=args.output_path,
         consolidate=args.consolidate,
