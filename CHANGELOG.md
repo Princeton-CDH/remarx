@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 0.5.0.dev
+## 0.5.0
 
 ### Sentence corpus creation
 
@@ -12,6 +12,11 @@
     - Quote consolidation is enabled by default but configurable:
         - `remarx-find-quotes` script has a boolean parameter (`--no-consolidate`)
         - App now has a toggle to control consolidation; enabled by default
+
+### Scripts
+
+- Add `xquery` directory with instructions and XQuery files for investigating
+    & reporting on continuing paragraph and footnote content in MEGA TEI
 
 ## 0.4.0
 
