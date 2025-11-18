@@ -335,6 +335,18 @@ def test_find_quote_pairs_benchmark_logs(
     assert re.search(r" search=0\.0[567]s", benchmark_info)
 
 
+# original and reuse content for integration test
+orig_sentences = [
+    "Und nun sollen seine Geister Auch nach meinem Willen leben.",
+    "Hat der alte Hexenmeister Sich doch einmal wegbegeben!",
+    "Seine Wort und Werke Merkt ich und den Brauch, Und mit Geistesstärke Tu ich Wunder auch.",
+]
+reuse_sentences = [
+    "Hat der alte Hexenmeister Sich doch einmal wegbegeben!",
+    "Komm zurück zu mir",
+]
+
+
 def test_find_quote_pairs_integration(tmp_path):
     """
     Tests the full quote detection pipeline. Checks that all functions within this
@@ -342,25 +354,11 @@ def test_find_quote_pairs_integration(tmp_path):
     masked by mocking.
     """
     test_orig = pl.DataFrame(
-        data={
-            "sent_id": ["B", "A", "C"],
-            # "sent_index": [1, 2, 3],
-            "text": [
-                "Und nun sollen seine Geister Auch nach meinem Willen leben.",
-                "Hat der alte Hexenmeister Sich doch einmal wegbegeben!",
-                "Seine Wort und Werke Merkt ich und den Brauch, Und mit Geistesstärke Tu ich Wunder auch.",
-            ],
-        }
+        data={"sent_id": ["B", "A", "C"], "text": orig_sentences}
     ).with_columns(corpus=pl.lit("original"))
 
     test_reuse = pl.DataFrame(
-        data={
-            "sent_id": ["a", "b"],
-            "text": [
-                "Hat der alte Hexenmeister Sich doch einmal wegbegeben!",
-                "Komm zurück zu mir",
-            ],
-        }
+        data={"sent_id": ["a", "b"], "text": reuse_sentences}
     ).with_columns(corpus=pl.lit("reuse"))
 
     # Create files
@@ -388,3 +386,35 @@ def test_find_quote_pairs_integration(tmp_path):
         assert results[0]["original_id"] == "A"
         # Need to specify the relative tolerance because 0 is a special case
         assert float(results[0]["match_score"]) == pytest.approx(0, rel=1e-6, abs=1e-6)
+
+
+def test_find_quote_pairs_integration_multifile(tmp_path):
+    # same as above, but with multiple files for original content
+    test_orig1 = pl.DataFrame(
+        data={"sent_id": ["B", "A"], "text": orig_sentences[:2]}
+    ).with_columns(corpus=pl.lit("original"))
+    test_orig2 = pl.DataFrame(
+        data={"sent_id": ["C"], "text": orig_sentences[2:]}
+    ).with_columns(corpus=pl.lit("original"))
+
+    test_reuse = pl.DataFrame(
+        data={"sent_id": ["a", "b"], "text": reuse_sentences}
+    ).with_columns(corpus=pl.lit("reuse"))
+
+    # Create files
+    orig1_csv = tmp_path / "original1.csv"
+    test_orig1.write_csv(orig1_csv)
+    orig2_csv = tmp_path / "original2.csv"
+    test_orig2.write_csv(orig2_csv)
+    reuse_csv = tmp_path / "reuse.csv"
+    test_reuse.write_csv(reuse_csv)
+
+    out_csv = tmp_path / "out.csv"
+    find_quote_pairs([orig1_csv, orig2_csv], reuse_csv, out_csv, consolidate=False)
+    # load and inspect to check for our one expected match
+    results_df = pl.read_csv(out_csv)
+    result = results_df.to_dicts()[0]
+    assert result["reuse_id"] == "a"
+    assert result["original_id"] == "A"
+    # check with tolerance because 0 is a special case
+    assert float(result["match_score"]) == pytest.approx(0, rel=1e-6, abs=1e-6)
