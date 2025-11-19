@@ -87,7 +87,7 @@ def _(mo):
 
 @app.cell
 def _(mo, pathlib):
-    # Create file browsers for quotation detection (CSV files only)
+    # Create file browser for original corpora (CSV files only)
     original_csv_browser = mo.ui.file_browser(
         selection_mode="file",
         multiple=True,
@@ -95,67 +95,33 @@ def _(mo, pathlib):
         filetypes=[".csv"],
     )
 
-    reuse_csv_browser = mo.ui.file_browser(
-        selection_mode="file",
-        multiple=True,
-        initial_path=pathlib.Path.home(),
-        filetypes=[".csv"],
-    )
-    return original_csv_browser, reuse_csv_browser
+    return (original_csv_browser,)
 
 
 @app.cell
-def _(mo, original_csv_browser, reuse_csv_browser):
+def _(mo, original_csv_browser):
     # Process file selections for quotation detection
     original_csvs = original_csv_browser.value or []
-    reuse_csvs = reuse_csv_browser.value or []
 
     original_msg = (
         f"{len(original_csvs)} files selected"
         if original_csvs
         else "No original text files selected"
     )
-    reuse_msg = (
-        f"{len(reuse_csvs)} files selected"
-        if reuse_csvs
-        else "No reuse text files selected"
-    )
 
     original_callout_type = "success" if original_csvs else "warn"
-    reuse_callout_type = "success" if reuse_csvs else "warn"
 
-    # Create side-by-side file browser interface
-    mo.hstack(
-        [
-            mo.callout(
-                mo.vstack(
-                    [
-                        mo.md(
-                            "**:card_file_box: Select Original Sentence Corpora (CSVs)**"
-                        ).center(),
-                        original_csv_browser,
-                        mo.md(original_msg),
-                    ]
-                ),
-                kind=original_callout_type,
-            ),
-            mo.callout(
-                mo.vstack(
-                    [
-                        mo.md(
-                            "**:recycle: Select Reuse Sentence Corpora (CSVs)**"
-                        ).center(),
-                        reuse_csv_browser,
-                        mo.md(reuse_msg),
-                    ]
-                ),
-                kind=reuse_callout_type,
-            ),
-        ],
-        widths="equal",
-        gap=1.2,
+    mo.callout(
+        mo.vstack(
+            [
+                mo.md("**:card_file_box: Select Original Sentence Corpora (CSVs)**").center(),
+                original_csv_browser,
+                mo.md(original_msg),
+            ]
+        ),
+        kind=original_callout_type,
     )
-    return original_csvs, reuse_csvs
+    return (original_csvs,)
 
 
 @app.cell
@@ -220,6 +186,40 @@ def _(mo, pathlib, pl, original_csvs):
 
     content
     return (summaries,)
+
+
+@app.cell
+def _(mo, pathlib):
+    reuse_csv_browser = mo.ui.file_browser(
+        selection_mode="file",
+        multiple=True,
+        initial_path=pathlib.Path.home(),
+        filetypes=[".csv"],
+    )
+    return (reuse_csv_browser,)
+
+
+@app.cell
+def _(mo, reuse_csv_browser):
+    reuse_csvs = reuse_csv_browser.value or []
+    reuse_msg = (
+        f"{len(reuse_csvs)} files selected"
+        if reuse_csvs
+        else "No reuse text files selected"
+    )
+    reuse_callout_type = "success" if reuse_csvs else "warn"
+
+    mo.callout(
+        mo.vstack(
+            [
+                mo.md("**:recycle: Select Reuse Sentence Corpora (CSVs)**").center(),
+                reuse_csv_browser,
+                mo.md(reuse_msg),
+            ]
+        ),
+        kind=reuse_callout_type,
+    )
+    return (reuse_csvs,)
 
 
 @app.cell
