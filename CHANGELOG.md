@@ -1,22 +1,5 @@
 # CHANGELOG
 
-## 0.5.0
-
-### Sentence corpus creation
-
-- ALTO-generated corpora now include per-sentence `title` and `author` metadata derived from ALTO block tags
-
-### Quotation detection
-
-- Add consolidation logic to group quotes that are sequential in both original and reuse texts
-    - Quote consolidation is enabled by default but configurable in both app and command line script
-- Now supports multiple original sentence corpora as input
-
-### Scripts
-
-- Add `xquery` directory with instructions and XQuery files for investigating
-    & reporting on continuing paragraph and footnote content in MEGA TEI
-
 ## 0.4.0
 
 ### Sentence corpus creation
@@ -37,7 +20,7 @@
 
 ### Quotation detection
 
-- Add the `remarx-find-quotes` CLI script to run the quote finder, with a `--benchmark` flag to collect performance metrics
+- Add the `find_quotes.py` CLI script to run the quote finder, with a `--benchmark` flag to collect performance metrics
 
 ### Application
 
