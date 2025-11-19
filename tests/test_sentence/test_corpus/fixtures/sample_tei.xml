@@ -10,6 +10,19 @@
     <text n="2/5">
     <group>
         <text n="0">
+            <body>
+                <div>
+                        <head type="h1a">
+                                    <lb n="1"/>
+                                    <pb n="1" ed="manuscript"/>
+                                    <add resp="ed" type="mpb2">|</add>
+                                    <label type="mpb">1</label>
+                                    <add resp="ed" type="mpb2">|</add> ERSTES BUCH.
+                                 </head>
+                                <head type="h1b">
+                                    <lb n="2"/>Der Produktionsprozeß des Kapitals.
+                                 </head>
+
                                     <pb n="12"/>
                                     <p n="cE">
                                         <lb n="1"/>als in der ersten Darstellung. Ich rathe daher dem nicht durchaus in dia-
@@ -57,13 +70,13 @@
                                          <lb n="35"/>zurufen: <hi rendition="i">De te fabula narratur!</hi>
                                     </p>
 
-                                        <p>
+                                        <ab>
                                         <lb n="36"/>An und für sich handelt es sich nicht um den höheren oder niedrigeren<lb n="37"/>Entwicklungsgrad der gesellschaftlichen Antagonismen, welche aus den
                                          <lb n="38"/>Naturgesetzen der kapitalistischen Produktion entspringen. Es handelt sich
                                          <lb n="39"/>um <hi rendition="i">diese Gesetze selbst,</hi> um diese mit eherner Nothwendigkeit wirkenden
-                                         <lb n="40"/>und sich durchsetzenden <hi rendition="i">Tendenzen</hi>. Das industriell entwickeltere Land
+                                         <lb n="40"/>und sich durchsetzenden <hi rendition="i">Tendenzen</hi>. Das industriell epntwickeltere Land
                                          <lb n="41"/>zeigt dem minder entwickelten nur das Bild der eignen Zukunft!
-                                         </p>
+                                         </ab>
                                     <pb n="13"/>
                                     <p>
                                         <lb n="1"/>Aber abgesehn hiervon. Wo die kapitalistische Produktion völlig bei uns<lb n="2"/>eingebürgert ist, z. B. in den eigentlichen Fabriken, sind die Zustände <hi rendition="i">viel
@@ -81,7 +94,9 @@
                                          <lb n="10"/>tischen Verhältnissen. Wir leiden nicht nur von den Lebenden, sondern auch
                                          <lb n="11"/>von den Todten. <hi rendition="i">Le mort saisit le vif!</hi>
                                     </p>
-                                </text>
-                            </group>
-                        </text>
+                                </div>
+                            </body>
+                </text>
+            </group>
+        </text>
 </TEI>

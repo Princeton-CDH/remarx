@@ -1,5 +1,31 @@
 # CHANGELOG
 
+## 0.4.0
+
+### Sentence corpus creation
+
+- ALTO input now uses block-level tags for filtering and section type in sentence corpus
+
+    - By default, only includes blocks tagged as text, footnote, Title, or untagged
+
+- TEI input revised and improved, now operates at paragraph level instead of page
+
+    - Omits tables, math formulas, footnote references, and opening editorial introduction
+    - Omits footnote labels (e.g., "1)", "2)") from footnote text
+    - Converts newlines within paragraphs to whitespace; ensures lines are separated by whitespace
+    - Handles sentences that cross pages when contained within a single paragraph tag
+    - Excludes editorial content; includes all non-editorial text content
+    - Yields all body content first followed by all footnotes
+    - Improved parsing speed
+
+### Quotation detection
+
+- Add the `find_quotes.py` CLI script to run the quote finder, with a `--benchmark` flag to collect performance metrics
+
+### Application
+
+- Display logging output in real-time to show progress when building corpus
+
 ## [0.3.0] - 2025-10-27
 
 ### Sentence corpus creation
