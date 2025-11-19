@@ -5,6 +5,7 @@
 ### Sentence corpus creation
 
 - ALTO-generated corpora now include per-sentence `title` and `author` metadata derived from ALTO block tags
+- Buffered ALTO footnotes while iterating the blocks and emitted footnotes at the end
 
 ### Quotation detection
 
