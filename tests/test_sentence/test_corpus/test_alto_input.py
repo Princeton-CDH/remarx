@@ -256,10 +256,8 @@ def test_altoinput_get_text(caplog):
     page2_title_blocks = [
         chunk["text"] for chunk in second_page_texts if chunk["section_type"] == "Title"
     ]
-    if page2_title_blocks:
-        assert continued_article["title"] == page2_title_blocks[-1]
-    else:
-        assert continued_article["title"] == ""
+    expected_title = page2_title_blocks[-1] if page2_title_blocks else ""
+    assert continued_article["title"] == expected_title
     assert continued_article["author"] == ""
 
     processing_prefix = "Processing XML file "
