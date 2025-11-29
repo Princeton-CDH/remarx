@@ -28,6 +28,7 @@ def _():
         create_header,
         create_temp_input,
         get_current_log_file,
+        prepare_default_corpus_directories,
     )
 
     from remarx.sentence.corpus import FileInput
@@ -39,6 +40,7 @@ def _():
         logging,
         mo,
         pathlib,
+        prepare_default_corpus_directories,
     )
 
 
@@ -57,6 +59,22 @@ def _(get_current_log_file, logging):
     logger = logging.getLogger("remarx-app")
     logger.info("Remarx Quote Finder notebook started")
     return (log_file_path,)
+
+
+@app.cell
+def _(prepare_default_corpus_directories):
+    default_dirs_ready_initial, default_dirs_initial = prepare_default_corpus_directories()
+    return default_dirs_ready_initial, default_dirs_initial
+
+
+@app.cell
+def _(default_dirs_ready_initial, mo):
+    create_dirs_btn = mo.ui.run_button(
+        label="Create default corpus folders",
+        disabled=default_dirs_ready_initial,
+        tooltip="Create ~/remarx_corpora/original and ~/remarx_corpora/reuse",
+    )
+    return create_dirs_btn,
 
 
 @app.cell
@@ -81,21 +99,73 @@ def _(mo):
     """)
     return
 
+@app.cell
+def _(
+    create_dirs_btn,
+    default_dirs_initial,
+    default_dirs_ready_initial,
+    mo,
+    prepare_default_corpus_directories,
+):
+    default_dirs = default_dirs_initial
+    default_dirs_ready = default_dirs_ready_initial
+
+    status_msg = (
+        ":white_check_mark: Default corpus folders are ready."
+        if default_dirs_ready_initial
+        else ":x: Default corpus folders were not found."
+    )
+    callout_kind = "success" if default_dirs_ready_initial else "warn"
+
+    if create_dirs_btn.value and not default_dirs_ready_initial:
+        default_dirs_ready, default_dirs = prepare_default_corpus_directories(
+            create_if_missing=True
+        )
+        status_msg = (
+            f"Created default corpus folders under `{default_dirs.root}`"
+        )
+        callout_kind = "success"
+
+    mo.callout(
+        mo.vstack(
+            [
+                mo.md("""
+                By default, these two folders are used as the default location for selecting original and reuse sentence corpora if default corpus folders were created.
+                """),
+                mo.md(
+                    f"""
+                - **Original corpora**: `{default_dirs.original}`
+                - **Reuse corpora**: `{default_dirs.reuse}`
+                """
+                ),
+                mo.md(status_msg),
+                create_dirs_btn,
+            ]
+        ),
+        kind=callout_kind,
+    )
+    return default_dirs_ready, default_dirs
+
+
 
 @app.cell
-def _(mo, pathlib):
+def _(default_dirs, default_dirs_ready, mo, pathlib):
+    reuse_start = default_dirs.reuse if default_dirs_ready else pathlib.Path.home()
+    original_start = (
+        default_dirs.original if default_dirs_ready else pathlib.Path.home()
+    )
     # Create file browsers for quotation detection (CSV files only)
     original_csv_browser = mo.ui.file_browser(
         selection_mode="file",
         multiple=True,
-        initial_path=pathlib.Path.home(),
+        initial_path=original_start,
         filetypes=[".csv"],
     )
 
     reuse_csv_browser = mo.ui.file_browser(
         selection_mode="file",
         multiple=True,
-        initial_path=pathlib.Path.home(),
+        initial_path=reuse_start,
         filetypes=[".csv"],
     )
     return original_csv_browser, reuse_csv_browser
@@ -171,11 +241,12 @@ def _(mo):
 
 
 @app.cell
-def _(mo, pathlib):
+def _(default_dirs, default_dirs_ready, mo, pathlib):
+    initial_dir = default_dirs.root if default_dirs_ready else pathlib.Path.home()
     select_output_dir = mo.ui.file_browser(
         selection_mode="directory",
         multiple=False,
-        initial_path=pathlib.Path.home(),
+        initial_path=initial_dir,
         filetypes=[],  # only show directories
     )
     return (select_output_dir,)
