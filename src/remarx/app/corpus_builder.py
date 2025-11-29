@@ -28,6 +28,7 @@ def _():
         create_header,
         create_temp_input,
         get_current_log_file,
+        prepare_default_corpus_directories,
     )
     from remarx.app.log_viewer import render_log_panel
     from remarx.sentence.corpus.create import create_corpus
@@ -43,6 +44,7 @@ def _():
         remarx,
         logging,
         render_log_panel,
+        prepare_default_corpus_directories,
     )
 
 
@@ -119,13 +121,109 @@ def _(mo):
 
     Select the folder where the resulting sentence corpus file should be saved.
     The output CSV file will be named based on the input file.
-
-    *To select a folder, click the file icon to the left of the folder's name.
-    A checkmark will appear when a selection is made.
-    Clicking anywhere else within the folder's row will cause the browser to navigate to this folder and subsequently display any folders *within* this folder.*
     """
     )
     return
+
+
+@app.cell
+def _(prepare_default_corpus_directories):
+    default_dirs_ready_initial, default_dirs_initial = prepare_default_corpus_directories()
+    return default_dirs_initial, default_dirs_ready_initial
+
+
+@app.cell
+def _(default_dirs_ready_initial, mo):
+    create_default_dirs_btn = mo.ui.run_button(
+        label="Create default corpus folders",
+        disabled=default_dirs_ready_initial,
+        tooltip="Create ~/remarx_corpora/original and ~/remarx_corpora/reuse",
+    )
+    return create_default_dirs_btn,
+
+
+@app.cell
+def _(mo):
+    default_folder_choice = mo.ui.radio(
+        options={
+            "the default original corpus folder": "Original corpus folder",
+            "the default reuse corpus folder": "Reuse corpus folder",
+        },
+        value="the default original corpus folder",
+        label="Choose which folder to save the current sentence corpus in:",
+    )
+    return default_folder_choice,
+
+
+@app.cell
+def _(mo):
+    custom_output_toggle = mo.ui.switch(
+        label="Use a custom output location", value=False
+    )
+    return custom_output_toggle,
+
+
+@app.cell
+def _(
+    create_default_dirs_btn,
+    custom_output_toggle,
+    default_dirs_initial,
+    default_dirs_ready_initial,
+    default_folder_choice,
+    mo,
+    prepare_default_corpus_directories,
+):
+    default_dirs = default_dirs_initial
+    default_dirs_ready = default_dirs_ready_initial
+
+    status_msg = (
+        ":white_check_mark: Default corpus folders are ready."
+        if default_dirs_ready
+        else ":x: Default corpus folders were not found."
+    )
+    _callout_kind = "success" if default_dirs_ready else "warn"
+
+    if create_default_dirs_btn.value and not default_dirs_ready_initial:
+        default_dirs_ready, default_dirs = prepare_default_corpus_directories(
+            create_if_missing=True
+        )
+        status_msg = (
+            f"Created default corpus folders under `{default_dirs.root}`"
+        )
+        _callout_kind = "success"
+
+    mo.callout(
+        mo.vstack(
+            [
+                mo.md(
+                    """
+                We recommend saving corpora inside dedicated folders under your home directory. By default, corpora are saved to these two places:
+                """
+                ),
+                mo.md(
+                    f"""
+                - **Original corpora**: `{default_dirs.original}`
+                - **Reuse corpora**: `{default_dirs.reuse}`
+                """
+                ),
+                mo.md(status_msg),
+                create_default_dirs_btn,
+                mo.md("---"),
+                mo.md("""
+                    **Option 1:** Output to default folders
+                """),
+                default_folder_choice,
+                mo.md("---"),
+                mo.md("""
+                    **Option 2:** Toggle custom output if you prefer to browse to a different folder
+                """
+                ),
+                custom_output_toggle,
+            ]
+        ),
+        kind=_callout_kind,
+    )
+    return default_dirs_ready, default_dirs
 
 
 @app.cell
@@ -140,23 +238,69 @@ def _(mo, pathlib):
 
 
 @app.cell
-def _(mo, select_output_dir):
-    output_dir = select_output_dir.value[0] if select_output_dir.value else None
-    dir_callout_mode = "success" if output_dir else "warning"
-    output_dir_msg = f"`{output_dir.path}`" if output_dir else "None selected"
-    out_callout_type = "success" if output_dir else "warn"
+def _(
+    custom_output_toggle,
+    default_dirs,
+    default_dirs_ready,
+    default_folder_choice,
+    mo,
+    pathlib,
+    select_output_dir,
+):
+    output_dir_path: pathlib.Path | None = None
+    save_callout_kind = "success"
+    callout_contents: list = []
 
+    if custom_output_toggle.value:
+        selected_dir = select_output_dir.value[0] if select_output_dir.value else None
+        output_dir_path = (
+            pathlib.Path(selected_dir.path) if selected_dir is not None else None
+        )
+        save_callout_kind = "success" if output_dir_path else "warn"
+        output_msg = (
+            f"**Save Location:** `{output_dir_path}`"
+            if output_dir_path
+            else "No custom folder selected"
+        )
+        callout_contents = [
+            mo.md("Select a custom folder to save the sentence corpus."),
+            mo.md("""
+                *To select a folder, click the file icon to the left of the folder's name.
+A checkmark will appear when a selection is made.
+Clicking anywhere else within the folder's row will cause the browser to navigate to this folder and subsequently display any folders *within* this folder.*
+            """
+            ),
+            select_output_dir,
+            mo.md(output_msg),
+        ]
+    else:
+        if default_dirs_ready:
+            target = (
+                default_dirs.original
+                if default_folder_choice.value == "the default original corpus folder"
+                else default_dirs.reuse
+            )
+            output_dir_path = target
+            callout_contents = [
+                mo.md(
+                    "The corpus will be saved under the default folders shown above."
+                ),
+                mo.md(f"**Save Location:** `{target}`"),
+            ]
+            save_callout_kind = "success"
+        else:
+            callout_contents = [
+                mo.md(
+                    "Default folders are not available. Create them above or toggle custom output to choose a location."
+                )
+            ]
+            save_callout_kind = "warn"
 
     mo.callout(
-        mo.vstack(
-            [
-                select_output_dir,
-                mo.md(f"**Save Location:** {output_dir_msg}"),
-            ],
-        ),
-        kind=out_callout_type,
+        mo.vstack(callout_contents),
+        kind=save_callout_kind,
     )
-    return (output_dir,)
+    return (output_dir_path,)
 
 
 @app.cell
@@ -180,12 +324,12 @@ def _(mo):
 
 
 @app.cell
-def _(input_file, mo, output_dir):
+def _(input_file, mo, output_dir_path):
     # Determine inputs based on file & folder selections
 
     output_csv = (
-        (output_dir.path / input_file.name).with_suffix(".csv")
-        if input_file and output_dir
+        (output_dir_path / input_file.name).with_suffix(".csv")
+        if input_file and output_dir_path
         else None
     )
 
@@ -194,13 +338,13 @@ def _(input_file, mo, output_dir):
     )
 
     dir_msg = (
-        f"`{output_dir.path}`"
-        if output_dir
+        f"`{output_dir_path}`"
+        if output_dir_path
         else f"*Please select a save location*"
     )
 
     button = mo.ui.run_button(
-        disabled=not (input_file and output_dir),
+        disabled=not (input_file and output_dir_path),
         label="Build Corpus",
         tooltip="Click to build sentence corpus",
     )
