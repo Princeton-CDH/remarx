@@ -19,7 +19,11 @@ from fastapi.responses import RedirectResponse
 from marimo._plugins.ui._impl.input import FileUploadResults
 
 import remarx
-from remarx.utils import configure_logging
+from remarx.utils import (
+    CorpusDirectories,
+    configure_logging,
+    ensure_default_corpus_directories,
+)
 
 # Server configuration
 HOST = "localhost"
@@ -125,3 +129,12 @@ def create_temp_input(
         if not temp_file.closed:
             temp_file.close()
         pathlib.Path.unlink(temp_file.name)
+
+
+def prepare_default_corpus_directories(
+    create_if_missing: bool = False,
+) -> tuple[bool, CorpusDirectories]:
+    """Ensure the default corpus directories exist and return their paths."""
+
+    ready, directories = ensure_default_corpus_directories(create=create_if_missing)
+    return ready, directories

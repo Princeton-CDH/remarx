@@ -6,7 +6,41 @@ import io
 import logging
 import pathlib
 from datetime import datetime
-from typing import TextIO
+from typing import NamedTuple, TextIO
+
+# Default corpus directory locations under the user's home directory
+DEFAULT_CORPUS_ROOT = pathlib.Path.home() / "remarx_corpora"
+DEFAULT_ORIGINAL_CORPUS_DIR = DEFAULT_CORPUS_ROOT / "original"
+DEFAULT_REUSE_CORPUS_DIR = DEFAULT_CORPUS_ROOT / "reuse"
+
+
+class CorpusDirectories(NamedTuple):
+    """Paths for the default corpus directory structure."""
+
+    root: pathlib.Path
+    original: pathlib.Path
+    reuse: pathlib.Path
+
+
+def ensure_default_corpus_directories(
+    create: bool = False,
+) -> tuple[bool, CorpusDirectories]:
+    """Return default corpus directories and optionally create them if missing."""
+
+    directories = CorpusDirectories(
+        root=DEFAULT_CORPUS_ROOT,
+        original=DEFAULT_ORIGINAL_CORPUS_DIR,
+        reuse=DEFAULT_REUSE_CORPUS_DIR,
+    )
+
+    if create:
+        for path in (directories.root, directories.original, directories.reuse):
+            path.mkdir(parents=True, exist_ok=True)
+
+    directories_ready = all(
+        path.exists() for path in (directories.original, directories.reuse)
+    )
+    return directories_ready, directories
 
 
 def configure_logging(

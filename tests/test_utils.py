@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from remarx.utils import configure_logging
+from remarx.utils import configure_logging, ensure_default_corpus_directories
 
 
 @pytest.fixture(autouse=True)
@@ -92,3 +92,45 @@ def test_configure_logging_with_stanza_log_level(tmp_path, monkeypatch):
     # Check that the stanza logger is set to DEBUG
     stanza_logger = logging.getLogger("stanza")
     assert stanza_logger.getEffectiveLevel() == logging.DEBUG
+
+
+def _patch_default_corpus_paths(monkeypatch, tmp_path):
+    root = tmp_path / "remarx_corpora"
+    monkeypatch.setattr("remarx.utils.DEFAULT_CORPUS_ROOT", root, raising=False)
+    monkeypatch.setattr(
+        "remarx.utils.DEFAULT_ORIGINAL_CORPUS_DIR",
+        root / "original",
+        raising=False,
+    )
+    monkeypatch.setattr(
+        "remarx.utils.DEFAULT_REUSE_CORPUS_DIR",
+        root / "reuse",
+        raising=False,
+    )
+    return root
+
+
+def test_ensure_default_corpus_directories_reports_missing(tmp_path, monkeypatch):
+    root = _patch_default_corpus_paths(monkeypatch, tmp_path)
+
+    ready, dirs = ensure_default_corpus_directories()
+
+    assert not ready
+    assert dirs.root == root
+    assert dirs.original == root / "original"
+    assert dirs.reuse == root / "reuse"
+    assert not dirs.original.exists()
+    assert not dirs.reuse.exists()
+
+
+def test_ensure_default_corpus_directories_creates(tmp_path, monkeypatch):
+    _patch_default_corpus_paths(monkeypatch, tmp_path)
+
+    ready, dirs = ensure_default_corpus_directories(create=True)
+
+    assert ready
+    assert dirs.original.exists()
+    assert dirs.reuse.exists()
+
+    ready_again, _ = ensure_default_corpus_directories()
+    assert ready_again
