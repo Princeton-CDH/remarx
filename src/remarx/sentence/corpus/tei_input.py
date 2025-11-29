@@ -10,11 +10,10 @@ import re
 from collections import namedtuple
 from collections.abc import Generator
 from dataclasses import dataclass, field
-from functools import cached_property
 from timeit import default_timer as time
 from typing import Any, ClassVar, NamedTuple, Self
 
-from lxml.etree import XMLSyntaxError, _Element
+from lxml.etree import XMLSyntaxError
 from neuxml import xmlmap
 
 from remarx.sentence.corpus.base_input import FileInput, SectionType
@@ -27,10 +26,11 @@ TEI_NAMESPACE = "http://www.tei-c.org/ns/1.0"
 # namespaced tags look like {http://www.tei-c.org/ns/1.0}tagname
 # create a named tuple of short tag name -> namespaced tag name
 TagNames: NamedTuple = namedtuple(
-    "TagNames", ("pb", "lb", "note", "add", "label", "ref", "div3", "text", "p")
+    "TagNames", ("pb", "lb", "note", "add", "label", "ref", "div3", "text", "p", "hi")
 )
 TEI_TAG = TagNames(**{tag: f"{{{TEI_NAMESPACE}}}{tag}" for tag in TagNames._fields})
 "Convenience access to namespaced TEI tag names"
+INLINE_MARKUP = [TEI_TAG.hi]
 
 
 class BaseTEIXmlObject(xmlmap.XmlObject):
@@ -41,206 +41,130 @@ class BaseTEIXmlObject(xmlmap.XmlObject):
 
     ROOT_NAMESPACES: ClassVar[dict[str, str]] = {"t": TEI_NAMESPACE}
 
-
-class TEIFootnote(BaseTEIXmlObject):
-    """XmlObject class for footnotes."""
-
-    line_number = xmlmap.IntegerField("./t:lb[1]/@n")
-    "Line number where this footnote begins, based on first TEI line beginning (`lb`) within this note"
-
-    # use xmlmap StringField method with normalize=True to collapse whitespace in the footnote text
-    text = xmlmap.StringField(".", normalize=True)
-    "Normalized text content for the footnote (collapses whitespace)"
+    # TODO: omit formulas, etc.
 
 
-class TEIPage(BaseTEIXmlObject):
+re_normalize_whitespace = re.compile(r"\s+")
+
+
+def normalize_whitespace(text: str) -> str:
     """
-    Custom :class:`neuxml.xmlmap.XmlObject` instance for a page
-    of content within a TEI XML document.
+    Normalize whitespace: replace multiple whitespace characters
+    in a row with a single space.
+    """
+    return re_normalize_whitespace.sub(" ", text)
+
+
+class TEIParagraph(BaseTEIXmlObject):
+    """
+    Custom :class:`neuxml.xmlmap.XmlObject` instance for a paragraph
+    (or other similar text block) within a TEI XML document. (MEGA specific)
     """
 
-    number = xmlmap.StringField("@n")
-    "page number"
-    edition = xmlmap.StringField("@ed")
-    "page edition, if any"
+    page_number = xmlmap.StringField("preceding::t:pb[not(@ed='manuscript')][1]/@n")
+    continuing_page = xmlmap.StringField(".//t:pb[not(@ed='manuscript')]/@n")
+    # page number within this paragraph, for paragraphs that cross page boundary
 
-    # page beginning tags delimit content instead of containing it;
-    # use following axis to find all text nodes following this page beginning
-    text_nodes = xmlmap.StringListField("following::text()")
-    "list of all text nodes following this tag"
-
-    # fetch footnotes after the current page break; will filter them in Python later
-    # pb is a delimiter (not a container), so "following::note" returns all later footnotes
-    following_footnotes = xmlmap.NodeListField(
-        "following::t:note[@type='footnote']", TEIFootnote
+    text_nodes = xmlmap.StringListField(
+        ".//text()[not(ancestor::t:label[@type='mpb']|ancestor::t:formula|ancestor::t:add|ancestor::t:table|ancestor::t:ref[@type='footnote'])]",
     )
-    "list of footnote elements within this page and following pages"
+    "list of text nodes in this paragraph; excludes manuscript edition content, formulas, tables, and footnote references"
 
-    next_page = xmlmap.NodeField(
-        "following::t:pb[not(@ed)][1]",
-        "self",
-    )
-    "the next standard page break after this one, or None if this is the last page"
+    line_number_by_offset: dict[int, int] = None
+    page_begin_offset: dict[int, int] = None
 
-    @staticmethod
-    def is_footnote_content(el: _Element) -> bool:
+    def get_text(self) -> (str, dict[int, int]):
         """
-        Helper function that checks if an element or any of its ancestors is footnote content.
-        """
-        if (
-            el.tag in [TEI_TAG.ref, TEI_TAG.note]
-            and el.attrib.get("type") == "footnote"
-        ):
-            return True
-        return any(
-            TEIPage.is_footnote_content(ancestor) for ancestor in el.iterancestors()
-        )
-
-    def get_page_footnotes(self) -> list[TEIFootnote]:
-        """
-        Filters footnotes to keep only the footnotes that belong to this page.
-        Only includes footnotes that occur between this pb and the next standard pb[not(@ed)].
-        """
-        page_footnotes: list[TEIFootnote] = []
-
-        for footnote in self.following_footnotes:
-            # If we have a next page and this footnote belongs to it, we're done
-            if self.next_page and footnote in self.next_page.following_footnotes:
-                break
-            page_footnotes.append(footnote)
-
-        return page_footnotes
-
-    def get_body_text_line_number(self, char_pos: int) -> int | None:
-        """
-        Return the TEI line number for the line at or before `char_pos`.
-        Returns None if no line number can be determined.
-        """
-        if not hasattr(self, "line_number_by_offset"):
-            self.get_body_text()
-
-        # When there are no line breaks with line numbers, return None
-        if not self.line_number_by_offset:
-            return None
-
-        line_number = None
-        for offset, ln in self.line_number_by_offset.items():
-            if offset > char_pos:
-                break
-            line_number = ln
-        return line_number
-
-    @staticmethod
-    def find_preceding_lb(element: _Element) -> _Element | None:
-        """
-        Find the closest preceding <lb> element for an element.
-        Needed to find the <lb/> relative to immediately following
-        inline markup, e.g. <lb n="31"/><hi>text ...</hi>
-        """
-
-        # First, iterate over preceding siblings;
-        # Limit to TEI nodes to avoid iterating over non-tag nodes like comments
-        for sibling in element.itersiblings(f"{{{TEI_NAMESPACE}}}*", preceding=True):
-            if sibling.tag == TEI_TAG.lb:
-                return sibling
-            # if we hit a preceding paragraph, stop iterating (beyond inline text)
-            if sibling.tag == TEI_TAG.p:
-                break
-
-        # if not found, try on the parent element
-        parent = element.getparent()
-        # if no parent, or hit a text element, we've gone too far; bail out
-        if parent is None or parent.tag == TEI_TAG.text:
-            return None
-        return TEIPage.find_preceding_lb(element.getparent())
-
-    def get_body_text(self) -> str:
-        """
-        Extract body text content for this page, excluding footnotes and editorial content.
+        Generate plain text for this block of text (paragraph, etc).
         While collecting the text, build a mapping of character offsets to TEI line numbers.
         """
-        body_text_parts: list[str] = []
+        text_contents: list[str] = []
         self.line_number_by_offset: dict[int, int] = {}
+        self.page_begin_offset: dict[int, str] = {}
         char_offset = 0
 
-        last_lb_el = None
-
-        for text in self.text_nodes:
+        for el in self.text_nodes:
             # text here is an lxml smart string, which preserves context
             # in the xml tree and is associated with a parent tag.
-            parent = text.getparent()
+            parent = el.getparent()
+            cleaned_text = normalize_whitespace(str(el))
 
-            # stop iterating when we hit the next page break;
-            if self.next_page and parent == self.next_page.node:
-                break
-
-            # Skip this text node if it's inside a footnote tag
-            if self.is_footnote_content(parent):
-                continue
-
-            # omit editorial content (e.g. original page numbers)
-            if (
-                parent.tag == TEI_TAG.add
-                or (parent.tag == TEI_TAG.label and parent.get("type") == "mpb")
-            ) and (text.is_text or (text.is_tail and text.strip() == "")):
-                # omit if text is inside an editorial tag (is_text)
-                # OR if text comes immediately after (is_tail) and is whitespace only
-                continue
-
-            cleaned_text = re.sub(r"\s*\n\s*", "\n", str(text))
-
-            # Use lstrip() to strip leading whitespace from the very first text fragment
-            # before concatenation to avoid counting leading newlines toward `char_offset`,
-            # skewing line lookups.
-            if not body_text_parts:
+            # strip any leading whitespace from the first text fragment
+            # to avoid including leading newlines
+            if char_offset == 0:
                 cleaned_text = cleaned_text.lstrip()
 
             # check for line begin tag; could be direct parent
             # but in cases where <lb> is immediately followed by inline markup,
             # it may be skipped due to having no tail text
-            preceding_lb = None
+            line_begin = None
+            parent = el.getparent()
+
             if parent.tag == TEI_TAG.lb:
-                preceding_lb = parent
-            else:
-                preceding_lb = self.find_preceding_lb(parent)
+                line_begin = parent
+            elif parent.tag in INLINE_MARKUP:
+                prev = parent.getprevious()
+                if prev is not None and prev.tag == TEI_TAG.lb:
+                    # NOTE: currently does not support nested inline markup
+                    line_begin = prev
 
-            if preceding_lb is not None and preceding_lb is not last_lb_el:
-                # store the line number and character offset
-                line_number = preceding_lb.get("n")
-                self.line_number_by_offset[char_offset] = (
-                    int(line_number) if line_number else None
-                )
-                # ensure text separated by <lb\> has a newline
-                # if there is a preceding text segment and it does not end
-                # with a newline, add one to the current text
-                if body_text_parts and not body_text_parts[-1].endswith("\n"):
-                    cleaned_text = f"\n{cleaned_text}"
+            # record line number at the offset where it is found
+            if line_begin is not None:
+                line_number = int(line_begin.get("n")) if line_begin.get("n") else None
+                # record character offset when line begin tag first encountered
+                if (
+                    line_number
+                    and line_number not in self.line_number_by_offset.values()
+                ):
+                    self.line_number_by_offset[char_offset] = line_number
 
-                # set this element as the last lb handled, so we don't duplicate
-                last_lb_el = preceding_lb
+                    # ensure text separated by <lb\> has whitespace
+                    # if there is a preceding text segment and it does not end
+                    # with a newline, add one to the current text
+                    if text_contents and not text_contents[-1].endswith(" "):
+                        cleaned_text = f" {cleaned_text}"
 
-            if not cleaned_text:
+            # if this paragraph wraps a page boundary, check for page begin
+            # and store character offset
+            if self.continuing_page:
+                page_begin = None
+                # look for parent of tail text or previous sibling of
+                # line break previously identified
+                if parent.tag == TEI_TAG.pb:
+                    page_begin = parent
+                elif line_begin is not None:
+                    prev = line_begin.getprevious()
+                    if prev is not None and prev.tag == TEI_TAG.pb:
+                        page_begin = prev
+
+                # if a non-manuscript edition page begin is found, store the offset
+                if page_begin is not None and page_begin.get("ed") != "manuscript":
+                    page_number = page_begin.get("n")
+                    self.page_begin_offset[char_offset] = page_number
+
+            # if cleaning resulted in empty string or whitespace only, omit
+            if cleaned_text.strip() == "":
                 continue
 
-            body_text_parts.append(cleaned_text)
+            text_contents.append(cleaned_text)
             char_offset += len(cleaned_text)
 
         # join text parts and trim trailing whitespace
-        body_text = "".join(body_text_parts).rstrip()
+        return "".join(text_contents).rstrip()
 
-        return body_text
 
-    def get_footnote_text(self) -> str:
-        """
-        Get all footnote content as a single string, with footnotes separated by double newlines.
-        """
-        return "\n\n".join(fn.text for fn in self.get_page_footnotes())
+class TEIFootnote(TEIParagraph):
+    """XmlObject class for footnotes, based on TEIParagraph."""
 
-    def __str__(self) -> str:
-        """
-        Page text contents as a string, with body text and footnotes.
-        """
-        return f"{self.get_body_text()}\n\n{self.get_footnote_text()}"
+    page_number = xmlmap.StringField("preceding::t:pb[not(@ed='manuscript')][1]/@n")
+
+    line_number = xmlmap.IntegerField("./t:lb[1]/@n")
+    "Line number where this footnote begins, based on first TEI line beginning (`lb`) within this note"
+
+    text_nodes = xmlmap.StringListField(
+        ".//text()[not(ancestor::t:label[@type='mpb' or @type='footnote']|ancestor::t:formula|ancestor::t:add|ancestor::t:table)]",
+    )
+    # same as paragraph, but omit footnote ref and exclude label type footnote
 
 
 class TEIDocument(BaseTEIXmlObject):
@@ -249,24 +173,12 @@ class TEIDocument(BaseTEIXmlObject):
     Customized for MEGA TEI XML.
     """
 
-    all_pages = xmlmap.NodeListField("//t:text//t:pb", TEIPage)
-    """List of page objects, identified by page begin tag (pb). Includes all
-    pages (standard and manuscript edition), because the XPath is significantly
-    faster without filtering."""
-
-    @cached_property
-    def pages(self) -> list[TEIPage]:
-        """
-        Standard pages for this document.  Returns a list of TEIPage objects
-        for this document, omitting any pages marked as manuscript edition.
-        """
-        # it's more efficient to filter in python than in xpath
-        return [page for page in self.all_pages if page.edition != "manuscript"]
-
-    @cached_property
-    def pages_by_number(self) -> dict[str, TEIPage]:
-        """Dictionary lookup of standard pages by page number."""
-        return {page.number: page for page in self.pages}
+    # paragraphs, headings, or anonymous blocks other than figure captions; skip editorial intro
+    text_blocks = xmlmap.NodeListField(
+        "(//t:text//t:p|//t:text//t:head)[not(ancestor::t:div[@type='editorialHead'])]|//t:text//t:ab[not(ancestor::t:figure)]",
+        TEIParagraph,
+    )
+    footnotes = xmlmap.NodeListField("//t:text//t:note[@type='footnote']", TEIFootnote)
 
     @classmethod
     def init_from_file(cls, path: pathlib.Path) -> Self:
@@ -318,40 +230,75 @@ class TEIinput(FileInput):
         page number and section type ("text" or "footnote").
         Body text is yielded once per page, while each footnote is yielded individually.
 
-        :returns: Generator with dictionaries of text content, with page number and section_type ("text" or "footnote").
+        :returns: Generator with dictionaries of text content with page number and section_type ("text" or "footnote").
         """
         # yield body text and footnotes content chunked by page with page number
         start = time()
-        for page in self.xml_doc.pages_by_number.values():
-            page_start = time()
+        self.text_line_numbers = {}
+        self.continuing_page_numbers = {}
+        total_text_blocks = 0
+        for i, text_block in enumerate(self.xml_doc.text_blocks):
+            para_start = time()
+            text = text_block.get_text()
+            if text:
+                # store the line number offsets on the input class, since
+                # xmlobject nodelist does NOT preserve non-xml object modifications
+                self.text_line_numbers[i] = text_block.line_number_by_offset
+                # for continuing pages, store offset of new page number
+                if text_block.page_begin_offset:
+                    self.continuing_page_numbers[i] = text_block.page_begin_offset
 
-            body_text = page.get_body_text()
-            if body_text:
                 yield {
-                    "text": body_text,
-                    "page_number": page.number,
+                    "text": text,
+                    "page_number": text_block.page_number,
                     "section_type": SectionType.TEXT.value,
+                    "text_index": i,
                 }
-
-            # Yield each footnote individually to enforce separate sentence segmentation
-            # so that separate footnotes cannot be combined into a single sentence
-            for footnote in page.get_page_footnotes():
-                yield {
-                    "text": footnote.text,
-                    "page_number": page.number,
-                    "section_type": SectionType.FOOTNOTE.value,
-                    "line_number": footnote.line_number,
-                }
-
-            page_elapsed_time = time() - page_start
+            para_elapsed_time = time() - para_start
             logger.debug(
-                f"Processing page {page.number} in {page_elapsed_time:.2f} seconds"
+                f"Processing page text block {i} in {para_elapsed_time:.2f} seconds"
             )
+            total_text_blocks += 1
+
+        # Yield each footnote individually to enforce separate sentence segmentation
+        # so that separate footnotes cannot be combined into a single sentence
+        total_footnotes = 0
+        for i, footnote in enumerate(self.xml_doc.footnotes):
+            fn_start = time()
+            yield {
+                "text": footnote.get_text(),
+                "page_number": footnote.page_number,
+                "section_type": SectionType.FOOTNOTE.value,
+                "line_number": footnote.line_number,
+            }
+            # for now, we use footnote starting line number
+            # for all footnote sentences, but would not be hard to adapt
+            # paragraph line number logic
+
+            fn_elapsed_time = time() - fn_start
+            logger.debug(f"Processing footnote {i} in {fn_elapsed_time:.2f} seconds")
+            total_footnotes += 1
 
         elapsed_time = time() - start
         logger.info(
-            f"Processed {self.file_name} with {len(self.xml_doc.pages)} pages in {elapsed_time:.1f} seconds"
+            f"Processed {self.file_name} with {total_text_blocks:,} text blocks and {total_footnotes:,} footnotes in {elapsed_time:.1f} seconds"
         )
+
+    def get_line_number(self, text_index: int, char_index: int) -> int | None:
+        """
+        Return the TEI line number for the specified text index and
+        character index. Returns the line number at or before `char_index`;
+        line number offsets must be populated by get_text().
+        Returns None if line number cannot be determined.
+        """
+        line_number_by_offset = self.text_line_numbers[text_index]
+
+        line_number = None
+        for offset, ln in line_number_by_offset.items():
+            if offset > char_index:
+                break
+            line_number = ln
+        return line_number
 
     def get_extra_metadata(
         self, chunk_info: dict[str, Any], char_idx: int, sentence: str
@@ -360,18 +307,28 @@ class TEIinput(FileInput):
         Calculate extra metadata including line number for a sentence in TEI documents
         based on the character position within the text chunk (page body or footnote).
 
-        :returns: Dictionary with line_number for the sentence (None if not found)
+        :returns: Dictionary with line_number for the sentence or empty dict
         """
-        # If line_number is already in chunk_info (e.g., for footnotes), use it directly
+        # If line_number is already present, no additional information is needed
+        extra_info = {}
         if "line_number" in chunk_info:
-            return {"line_number": chunk_info["line_number"]}
+            return extra_info
 
-        # Otherwise, calculate it for body text based on character position
-        page_number = chunk_info["page_number"]
-        page = self.xml_doc.pages_by_number.get(page_number)
+        # Check for text index;
+        #  if available, get line number by offset within text
+        i = chunk_info.get("text_index")
+        if i is not None:
+            extra_info["line_number"] = self.get_line_number(i, char_idx)
 
-        if page:
-            line_number = page.get_body_text_line_number(char_idx)
-            return {"line_number": line_number}
+            # check for continuing page number
+            if i in self.continuing_page_numbers:
+                page_number = None
+                for offset, page in self.continuing_page_numbers[i].items():
+                    if offset > char_idx:
+                        break
+                    page_number = page
+                # if found, override page number
+                if page_number is not None:
+                    extra_info["page_number"] = page_number
 
-        return {"line_number": None}
+        return extra_info

@@ -24,7 +24,6 @@ classifiers = [
 dependencies = [
   "ipython", # Required by transformers for trainer functionality
   "marimo>=0.13.11",
-  "marimo[lsp]", # marimo language server protocol
   "neuxml>=1",
   "numpy",
   "polars>=0.20.4",
@@ -49,6 +48,7 @@ dev = [
   "remarx[test]",
   "remarx[docs]",
   "remarx[html]",
+  "marimo[lsp]", # marimo language server protocol
 ]
 test = [
   "pytest",
@@ -68,6 +68,7 @@ html = [ "bs4" ]
 [project.scripts]
 remarx-app = "remarx.app.utils:launch_app"
 remarx-create-corpus = "remarx.sentence.corpus.create:main"
+remarx-find-quotes = "remarx.quotation.find_quotes:main"
 
 [tool.hatch.version]
 path = "src/remarx/__init__.py"

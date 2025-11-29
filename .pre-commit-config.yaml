@@ -37,7 +37,8 @@ repos:
       - id: codespell
         exclude_types: ["xml"] # ignore sample xml file
         exclude: ^profiling/ # ignore profiling directory
-        args: [--uri-ignore-words-list=archiv] # ignore German "archiv" in URLs
+        # ignore German "archiv" in URLs; ignore german content in TEI input test
+        args: [--uri-ignore-words-list=archiv, --skip=tests/test_sentence/test_corpus/test_tei_input.py]
   # Common file checks (no dependencies)
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0

@@ -22,14 +22,15 @@ from test_sentence.test_corpus.test_text_input import simple_segmenter
 FIXTURE_DIR = pathlib.Path(__file__).parent / "fixtures"
 FIXTURE_ALTO_ZIPFILE = FIXTURE_DIR / "alto_sample.zip"
 FIXTURE_ALTO_PAGE = FIXTURE_DIR / "alto_page.xml"
+FIXTURE_ALTO_PAGE_WITH_FOOTNOTES = FIXTURE_DIR / "alto_page_with_footnote.xml"
 
 # test xmlmap classes
 
 
 def test_alto_document():
     altoxml = xmlmap.load_xmlobject_from_file(FIXTURE_ALTO_PAGE, AltoDocument)
-    # sample page has 4 text blocks
-    assert len(altoxml.blocks) == 4
+    # sample page has 19 text blocks
+    assert len(altoxml.blocks) == 19
     assert isinstance(altoxml.blocks[0], TextBlock)
 
 
@@ -77,14 +78,36 @@ def test_alto_document_text_chunks():
         "Header",
         "page number",
         "text",
+        "Title",
+        "Title",
+        "author",
+        "text",
+        "Title",
         "footnote",
+        "text",
+        "Title",
+        "author",
+        "text",
+        "text",
+        "Title",
+        "section title",
+        "Title",
+        "author",
+        "text",
     ]
 
     # optionally filter by type/block tag
     content_chunks = list(altoxml.text_chunks(include={"text", "footnote"}))
-    assert len(content_chunks) == 2
-    assert content_chunks[0]["section_type"] == "text"
-    assert content_chunks[1]["section_type"] == "footnote"
+    assert len(content_chunks) == 7
+    assert [chunk["section_type"] for chunk in content_chunks] == [
+        "text",
+        "text",
+        "footnote",
+        "text",
+        "text",
+        "text",
+        "text",
+    ]
 
     # ignores irrelevant tag
     other_chunks = list(altoxml.text_chunks(include={"Header", "foo"}))
@@ -146,7 +169,7 @@ def test_alto_textblock_sorted_lines():
 def test_alto_textblock_text_content():
     altoxml = xmlmap.load_xmlobject_from_file(FIXTURE_ALTO_PAGE, AltoDocument)
 
-    alto_textblock = altoxml.blocks[3]
+    alto_textblock = next(block for block in altoxml.blocks if block.tag_id == "BT255")
     block_text = alto_textblock.text_content
     # check that we have the expected number of lines
     assert len(block_text.split("\n")) == len(alto_textblock.lines)
@@ -171,7 +194,12 @@ def test_alto_textline():
 
 
 def test_field_names():
-    assert ALTOInput.field_names == (*FileInput.field_names, "section_type")
+    assert ALTOInput.field_names == (
+        *FileInput.field_names,
+        "section_type",
+        "title",
+        "author",
+    )
 
 
 def test_altoinput_get_text(caplog):
@@ -191,7 +219,7 @@ def test_altoinput_get_text(caplog):
         "1896-97a.pdf_page_3.xml",
         "1896-97a.pdf_page_4.xml",
         "1896-97a.pdf_page_5.xml",
-        "empty_page.xml",
+        "empty_page.xml",  # now skipped entirely
         "unsorted_page.xml",
     ]
 
@@ -200,7 +228,8 @@ def test_altoinput_get_text(caplog):
     for chunk in chunks:
         chunks_by_filename[chunk["file"]].append(chunk)
 
-    assert set(chunks_by_filename.keys()) == set(expected_files)
+    # empty page should not be present since no chunks are yielded
+    assert set(chunks_by_filename.keys()) == set(expected_files) - {"empty_page.xml"}
 
     # check block tag section types for one file
     assert [
@@ -216,6 +245,22 @@ def test_altoinput_get_text(caplog):
         "langsamer und deshalb auch viel häßlicher und viel widerlicher. Und wie die"
     )
 
+    first_article = next(
+        chunk
+        for chunk in chunks_by_filename["1896-97a.pdf_page_1.xml"]
+        if chunk["section_type"] == "text"
+    )
+    assert first_article["title"] == "Arbeiter und Gewerbeausstellung."
+    assert first_article["author"] == ""
+
+    continued_article = next(
+        chunk
+        for chunk in chunks_by_filename["1896-97a.pdf_page_2.xml"]
+        if chunk["section_type"] == "text"
+    )
+    assert continued_article["title"] == first_article["title"]
+    assert continued_article["author"] == ""
+
     processing_prefix = "Processing XML file "
     processed_files = [
         record.getMessage().removeprefix(processing_prefix)
@@ -227,7 +272,8 @@ def test_altoinput_get_text(caplog):
     # last log entry should report time to process, # of files
     summary_log_message = caplog.records[-1].getMessage()
     assert summary_log_message.startswith(
-        f"Processed {FIXTURE_ALTO_ZIPFILE.name} with 7 files (7 valid ALTO)"
+        # empty file now considered invalid
+        f"Processed {FIXTURE_ALTO_ZIPFILE.name} with 7 files (6 valid ALTO)"
     )
 
 
@@ -239,6 +285,268 @@ def test_altoinput_get_text_filtered(caplog):
     assert {chunk["section_type"] for chunk in filtered_chunks} == {"text", "Title"}
 
 
+def test_altoinput_includes_title_and_author_metadata():
+    alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
+    chunks = list(alto_input.get_text())
+
+    first_text = next(
+        chunk
+        for chunk in chunks
+        if chunk["file"] == "1896-97a.pdf_page_1.xml"
+        and chunk["section_type"] == "text"
+    )
+    assert first_text["title"] == "Arbeiter und Gewerbeausstellung."
+    assert first_text["author"] == ""
+
+    marx_text = next(
+        chunk
+        for chunk in chunks
+        if chunk["file"] == "1896-97a.pdf_page_5.xml"
+        and chunk["section_type"] == "text"
+    )
+    assert (
+        marx_text["title"] == "Ein Brief von Karl Marx an I. B. v. Schweitzer über\n"
+        "Lassalleanismus und Gewerkschaftskampf."
+    )
+    assert marx_text["author"] == "Vorbemerkung."
+
+
+def test_altoinput_combines_sequential_title_author(tmp_path: pathlib.Path):
+    archive_path = tmp_path / "single_page.zip"
+    with ZipFile(archive_path, "w") as archive:
+        archive.write(FIXTURE_ALTO_PAGE, arcname="alto_page.xml")
+
+    alto_input = ALTOInput(input_file=archive_path, filter_sections=False)
+    chunks = list(alto_input.get_text())
+
+    title_chunks = [
+        chunk
+        for chunk in chunks
+        if chunk["section_type"] == "Title"
+        and chunk["title"].startswith("Ein Brief von Karl Marx")
+    ]
+    assert (
+        title_chunks[0]["title"]
+        == "Ein Brief von Karl Marx an I. B. v. Schweitzer über"
+    )
+    assert (
+        title_chunks[1]["title"]
+        == "Ein Brief von Karl Marx an I. B. v. Schweitzer über\n"
+        "Lassalleanismus und Gewerkschaftskampf."
+    )
+
+    article_chunk = next(
+        chunk
+        for chunk in chunks
+        if chunk["section_type"] == "text"
+        and chunk["text"].startswith("Im Nachlass von Karl Marx")
+    )
+    assert (
+        article_chunk["title"]
+        == "Ein Brief von Karl Marx an I. B. v. Schweitzer über\n"
+        "Lassalleanismus und Gewerkschaftskampf."
+    )
+    assert article_chunk["author"] == "Vorbemerkung."
+
+    intro_text_chunk = next(
+        chunk
+        for chunk in chunks
+        if chunk["section_type"] == "text"
+        and chunk["text"].startswith(
+            "Die naturalistische Hochfluth ist vorüber"  # codespell:ignore
+        )
+    )
+    assert intro_text_chunk["title"].startswith(
+        "Der zweite, weit interessantere Band enthält nicht mehr gewöhnliche Salon"
+    )
+
+    split_title_chunk = next(
+        chunk
+        for chunk in chunks
+        if chunk["section_type"] == "Title"
+        and chunk["text"].startswith(
+            "Die nächsten Aufgaben der deutschen Gewerkschafts-"
+        )
+    )
+    assert (
+        split_title_chunk["title"]
+        == "Die nächsten Aufgaben der deutschen Gewerkschafts-\nbewegung."
+    )
+
+    split_article_chunk = next(
+        chunk
+        for chunk in chunks
+        if chunk["section_type"] == "text"
+        and chunk["text"].startswith("Ein altes Thema! So wird Mancher")
+    )
+    assert (
+        split_article_chunk["title"]
+        == "Die nächsten Aufgaben der deutschen Gewerkschafts-\nbewegung."
+    )
+    assert split_article_chunk["author"] == "Von G. Mauerer."
+
+
+def test_altoinput_resets_metadata_on_blank_blocks(tmp_path: pathlib.Path):
+    archive_path = tmp_path / "fixture_page.zip"
+    with ZipFile(archive_path, "w") as archive:
+        archive.write(FIXTURE_ALTO_PAGE, arcname="alto_page.xml")
+
+    alto_input = ALTOInput(input_file=archive_path, filter_sections=False)
+    chunks = list(alto_input.get_text())
+
+    section_title_chunk = next(
+        chunk
+        for chunk in chunks
+        if chunk["section_type"] == "section title" and chunk["text"] == "Feuilleton."
+    )
+    assert section_title_chunk["title"] == ""
+    assert section_title_chunk["author"] == ""
+
+    new_article_chunk = next(
+        chunk
+        for chunk in chunks
+        if chunk["section_type"] == "text"
+        and chunk["text"].startswith("(Nachdruck verboten.)")
+    )
+    assert new_article_chunk["title"] == "Kämpfe."
+    assert (
+        new_article_chunk["author"]
+        == "Von August Strindberg. Deutsch von Gustav Lichtenstein."
+    )
+
+
+def test_altoinput_preserves_title_through_blank_blocks(tmp_path: pathlib.Path):
+    archive_path = tmp_path / "alto_fixture.zip"
+    with ZipFile(archive_path, "w") as archive:
+        archive.write(FIXTURE_ALTO_PAGE, arcname="alto_page.xml")
+
+    alto_input = ALTOInput(input_file=archive_path, filter_sections=False)
+    chunks = list(alto_input.get_text())
+
+    first_article_chunk = next(
+        chunk
+        for chunk in chunks
+        if chunk["section_type"] == "text"
+        and chunk["text"].startswith("Im Nachlass von Karl Marx")
+    )
+    assert (
+        first_article_chunk["title"]
+        == "Ein Brief von Karl Marx an I. B. v. Schweitzer über\n"
+        "Lassalleanismus und Gewerkschaftskampf."
+    )
+    assert first_article_chunk["author"] == "Vorbemerkung."
+
+    mid_article_chunk = next(
+        chunk
+        for chunk in chunks
+        if chunk["section_type"] == "text"
+        and chunk["text"].startswith("Die naturalistische Hochfluth")
+    )
+    assert mid_article_chunk["title"].startswith(
+        "Der zweite, weit interessantere Band enthält"
+    )
+
+    section_chunk = next(
+        chunk
+        for chunk in chunks
+        if chunk["section_type"] == "section title" and chunk["text"] == "Feuilleton."
+    )
+    assert section_chunk["title"] == ""
+    assert section_chunk["author"] == ""
+
+    new_article_body = next(
+        chunk
+        for chunk in chunks
+        if chunk["section_type"] == "text"
+        and chunk["text"].startswith("(Nachdruck verboten.)")
+    )
+    assert new_article_body["title"] == "Kämpfe."
+    assert (
+        new_article_body["author"]
+        == "Von August Strindberg. Deutsch von Gustav Lichtenstein."
+    )
+
+
+def test_footnotes_inherit_article_metadata(tmp_path: pathlib.Path):
+    archive_path = tmp_path / "alto_footnote_fixture.zip"
+    with ZipFile(archive_path, "w") as archive:
+        archive.write(
+            FIXTURE_ALTO_PAGE_WITH_FOOTNOTES, arcname="alto_page_with_footnote.xml"
+        )
+
+    alto_input = ALTOInput(input_file=archive_path)
+    chunks = list(alto_input.get_text())
+
+    # Find the footnote chunk
+    footnote_chunk = next(
+        chunk for chunk in chunks if chunk["section_type"] == "footnote"
+    )
+    assert footnote_chunk["title"] == "Ein Brief von Karl Marx an J. B. v. Schweitzer."
+    assert footnote_chunk["author"] == "Der Herausgeber."
+    assert "Historisch" in footnote_chunk["text"]
+    assert "Manuskript" in footnote_chunk["text"]
+
+    # Verify that text blocks also have the same metadata
+    text_chunk = next(chunk for chunk in chunks if chunk["section_type"] == "text")
+    assert text_chunk["title"] == "Ein Brief von Karl Marx an J. B. v. Schweitzer."
+    assert text_chunk["author"] == "Der Herausgeber."
+
+
+def test_update_article_metadata_sequences():
+    alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
+    # initialize fields as get_text would
+    alto_input._current_title = ""
+    alto_input._current_author = ""
+    alto_input._collecting_title = False
+    alto_input._collecting_author = False
+    alto_input._pending_title_reset = False
+
+    def apply(section: str, text: str) -> None:
+        alto_input._update_article_metadata(section, text)
+
+    apply("Title", "Article A")
+    assert alto_input._current_title == "Article A"
+    assert alto_input._current_author == ""
+
+    apply("Title", "Subtitle")
+    assert alto_input._current_title == "Article A\nSubtitle"
+
+    apply("author", "Von Foo")
+    assert alto_input._current_author == "Von Foo"
+
+    apply("author", "Aus Bar")
+    assert alto_input._current_author == "Von Foo\nAus Bar"
+
+    apply("text", "Body text.")
+    assert alto_input._current_title.startswith("Article A")
+
+    # blank title should not immediately clear metadata
+    apply("Title", "")
+    assert alto_input._current_title.startswith("Article A")
+
+    # next non-title block clears metadata
+    apply("section title", "Feuilleton.")
+    assert alto_input._current_title == ""
+    assert alto_input._current_author == ""
+
+    apply("Title", "Article B")
+    assert alto_input._current_title == "Article B"
+    assert alto_input._current_author == ""
+
+    apply("author", "Von Example")
+    assert alto_input._current_author == "Von Example"
+
+    # blank title followed immediately by author should keep metadata
+    apply("Title", "")
+    apply("author", "Von Tail Author")
+    assert alto_input._current_title == "Article B"
+    assert alto_input._current_author == "Von Tail Author"
+
+    # blank author clears current author metadata
+    apply("author", "")
+    assert alto_input._current_author == ""
+
+
 def test_altoinput_warn_no_text(caplog):
     alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
     with caplog.at_level(logging.WARNING, logger="remarx.sentence.corpus.alto_input"):
@@ -246,7 +554,7 @@ def test_altoinput_warn_no_text(caplog):
 
     warning_messages = [record.getMessage() for record in caplog.records]
     assert any(
-        message == "No text lines found in ALTO XML file: empty_page.xml"
+        message == "No text lines in ALTO XML file: empty_page.xml"
         for message in warning_messages
     )
 
@@ -335,8 +643,8 @@ def test_get_sentences_sequential(mock_segment_text: Mock):
     sentences = list(alto_input.get_sentences())
     num_sentences = len(sentences)
     # currently with this fixture data and simple segmenter,
-    # and filtering by section type expect 16 sentences
-    assert num_sentences == 20
+    # and filtering by section type expect 18 sentences
+    assert num_sentences == 18
 
     # sentence indexes should start at 0 and continue across all sentences
     indexes = [sentence["sent_index"] for sentence in sentences]
