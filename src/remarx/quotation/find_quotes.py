@@ -22,6 +22,7 @@ def run_find_quotes(
     reuse_corpus: pathlib.Path,
     output_path: pathlib.Path,
     *,
+    consolidate: bool = True,
     benchmark: bool = False,
 ) -> pathlib.Path:
     """Run quotation detection and write results into the output directory."""
@@ -33,9 +34,11 @@ def run_find_quotes(
     logger.info("Output file: %s", output_path)
 
     find_quote_pairs(
-        original_corpus=original_corpus,
+        # for now, pass single file as a list; in future, support multifile
+        original_corpus=[original_corpus],
         reuse_corpus=reuse_corpus,
         out_csv=output_path,
+        consolidate=consolidate,
         benchmark=benchmark,
     )
 
@@ -63,6 +66,13 @@ def main() -> None:
         help="Path where the quote pairs CSV will be written",
     )
     parser.add_argument(
+        "--consolidate",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Consolidate quotes that are sequential in both corpora (on by default).",
+    )
+
+    parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
@@ -84,6 +94,7 @@ def main() -> None:
         original_corpus=args.original_corpus,
         reuse_corpus=args.reuse_corpus,
         output_path=args.output_path,
+        consolidate=args.consolidate,
         benchmark=args.benchmark,
     )
 
