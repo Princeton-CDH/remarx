@@ -133,11 +133,14 @@ def _(get_default_corpus_path):
 
 
 @app.cell
-def _(default_dirs_ready_initial, mo):
+def _(default_dirs_initial, default_dirs_ready_initial, mo):
     create_default_dirs_btn = mo.ui.run_button(
         label="Create default corpus folders",
         disabled=default_dirs_ready_initial,
-        tooltip="Create ~/remarx-data/corpora/original and ~/remarx-data/corpora/reuse",
+        tooltip=(
+            f"Create `{default_dirs_initial.original}` and "
+            f"`{default_dirs_initial.reuse}`"
+        ),
     )
     return create_default_dirs_btn,
 
