@@ -10,12 +10,12 @@
 
 - Add consolidation logic to group quotes that are sequential in both original and reuse texts
     - Quote consolidation is enabled by default but configurable in both app and command line script
-- Now supports multiple original sentence corpora as input
 
 ### Scripts
 
 - Add `xquery` directory with instructions and XQuery files for investigating
     & reporting on continuing paragraph and footnote content in MEGA TEI
+- Quote finder CLI script now accepts either a single corpus CSV or a directory of corpora, and defaults to `~/remarx-data/corpora/original` when no original path is provided
 
 ## 0.4.0
 
