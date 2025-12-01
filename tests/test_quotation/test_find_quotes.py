@@ -81,3 +81,84 @@ def test_main_check_paths(
         assert (
             captured.err == f"Error: output directory {output.parent} does not exist\n"
         )
+
+
+@patch("remarx.quotation.find_quotes.configure_logging")
+@patch("remarx.quotation.find_quotes.find_quote_pairs")
+def test_main_default_original_directory(
+    mock_find_quote_pairs, mock_configure_logging, tmp_path, monkeypatch
+):
+    default_dir = tmp_path / "default"
+    default_dir.mkdir()
+    default_file = default_dir / "default.csv"
+    default_file.touch()
+    monkeypatch.setattr(
+        find_quotes, "DEFAULT_ORIGINAL_CORPUS_DIR", default_dir, raising=False
+    )
+
+    reuse_input = tmp_path / "reuse.csv"
+    reuse_input.touch()
+    output = tmp_path / "pairs.csv"
+
+    args = ["remarx-find-quotes", str(reuse_input), str(output)]
+    with patch("sys.argv", args):
+        find_quotes.main()
+
+    mock_find_quote_pairs.assert_called_with(
+        original_corpus=[default_file],
+        reuse_corpus=reuse_input,
+        out_csv=output,
+        consolidate=True,
+        benchmark=False,
+    )
+
+
+@patch("remarx.quotation.find_quotes.configure_logging")
+@patch("remarx.quotation.find_quotes.find_quote_pairs")
+def test_main_original_directory(
+    mock_find_quote_pairs, mock_configure_logging, tmp_path
+):
+    orig_dir = tmp_path / "originals"
+    orig_dir.mkdir()
+    file_a = orig_dir / "a.csv"
+    file_b = orig_dir / "b.csv"
+    file_a.touch()
+    file_b.touch()
+    reuse_input = tmp_path / "reuse.csv"
+    reuse_input.touch()
+    output = tmp_path / "pairs.csv"
+
+    args = ["remarx-find-quotes", str(orig_dir), str(reuse_input), str(output)]
+    with patch("sys.argv", args):
+        find_quotes.main()
+
+    expected_files = sorted([file_a, file_b])
+    mock_find_quote_pairs.assert_called_with(
+        original_corpus=expected_files,
+        reuse_corpus=reuse_input,
+        out_csv=output,
+        consolidate=True,
+        benchmark=False,
+    )
+
+
+@patch("remarx.quotation.find_quotes.configure_logging")
+@patch("remarx.quotation.find_quotes.find_quote_pairs")
+def test_main_original_directory_without_csv(
+    mock_find_quote_pairs, mock_configure_logging, tmp_path, capsys
+):
+    orig_dir = tmp_path / "originals"
+    orig_dir.mkdir()
+    reuse_input = tmp_path / "reuse.csv"
+    reuse_input.touch()
+    output = tmp_path / "pairs.csv"
+
+    args = ["remarx-find-quotes", str(orig_dir), str(reuse_input), str(output)]
+    with patch("sys.argv", args), pytest.raises(SystemExit):
+        find_quotes.main()
+
+    captured = capsys.readouterr()
+    assert (
+        captured.err == f"Error: directory {orig_dir} does not contain any CSV files\n"
+    )
+    mock_find_quote_pairs.assert_not_called()

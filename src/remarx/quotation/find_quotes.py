@@ -17,7 +17,6 @@ from remarx.quotation.pairs import find_quote_pairs
 from remarx.utils import configure_logging
 
 logger = logging.getLogger(__name__)
-# Keep CLI default in sync with the Marimo app: fall back to the same starting dir.
 DEFAULT_ORIGINAL_CORPUS_DIR = pathlib.Path.home() / "remarx-data/corpora/original"
 
 
@@ -144,8 +143,7 @@ def main() -> None:
 
     positional_paths = [pathlib.Path(p) for p in args.paths]
     if len(positional_paths) == 2:
-        # When no original path is provided, fall back to the default directory so the CLI
-        # mirrors the Marimo app behavior instead of forcing the user to repeat the same path.
+        # When no original path is provided, fall back to the default directory
         reuse_corpus, output_path = positional_paths
         logger.info(
             "No original corpora specified; defaulting to %s",
