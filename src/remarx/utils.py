@@ -21,6 +21,11 @@ class CorpusDirectories(NamedTuple):
     original: pathlib.Path
     reuse: pathlib.Path
 
+    def ready(self) -> bool:
+        """Return True if both default corpus directories already exist."""
+
+        return all(path.exists() for path in (self.original, self.reuse))
+
 
 def ensure_default_corpus_directories(
     create: bool = False,
@@ -37,10 +42,7 @@ def ensure_default_corpus_directories(
         for path in (directories.root, directories.original, directories.reuse):
             path.mkdir(parents=True, exist_ok=True)
 
-    directories_ready = all(
-        path.exists() for path in (directories.original, directories.reuse)
-    )
-    return directories_ready, directories
+    return directories.ready(), directories
 
 
 def configure_logging(

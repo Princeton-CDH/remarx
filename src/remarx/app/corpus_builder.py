@@ -28,23 +28,23 @@ def _():
         create_header,
         create_temp_input,
         get_current_log_file,
-        prepare_default_corpus_directories,
     )
     from remarx.app.log_viewer import render_log_panel
     from remarx.sentence.corpus.create import create_corpus
     from remarx.sentence.corpus import FileInput
+    from remarx.utils import ensure_default_corpus_directories
     return (
         FileInput,
         create_corpus,
         create_header,
         create_temp_input,
         get_current_log_file,
+        ensure_default_corpus_directories,
         mo,
         pathlib,
         remarx,
         logging,
         render_log_panel,
-        prepare_default_corpus_directories,
     )
 
 
@@ -127,8 +127,8 @@ def _(mo):
 
 
 @app.cell
-def _(prepare_default_corpus_directories):
-    default_dirs_ready_initial, default_dirs_initial = prepare_default_corpus_directories()
+def _(ensure_default_corpus_directories):
+    default_dirs_ready_initial, default_dirs_initial = ensure_default_corpus_directories()
     return default_dirs_initial, default_dirs_ready_initial
 
 
@@ -171,7 +171,7 @@ def _(
     default_dirs_ready_initial,
     default_folder_choice,
     mo,
-    prepare_default_corpus_directories,
+    ensure_default_corpus_directories,
 ):
     default_dirs = default_dirs_initial
     default_dirs_ready = default_dirs_ready_initial
@@ -184,7 +184,7 @@ def _(
     _callout_kind = "success" if default_dirs_ready else "warn"
 
     if create_default_dirs_btn.value and not default_dirs_ready_initial:
-        default_dirs_ready, default_dirs = prepare_default_corpus_directories(
+        default_dirs_ready, default_dirs = ensure_default_corpus_directories(
             create_if_missing=True
         )
         status_msg = (
