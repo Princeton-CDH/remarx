@@ -77,12 +77,6 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    if not args.original_corpus.is_file():
-        parser.error(f"Original corpus file does not exist: {args.original_corpus}")
-
-    if not args.reuse_corpus.is_file():
-        parser.error(f"Reuse corpus file does not exist: {args.reuse_corpus}")
-
     log_level = logging.DEBUG if args.verbose else logging.INFO
     configure_logging(sys.stdout, log_level=log_level)
 
