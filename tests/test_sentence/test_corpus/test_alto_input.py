@@ -221,28 +221,7 @@ def test_altoinput_get_text(caplog):
         chunk["section_type"] for chunk in chunks_by_filename["1896-97a.pdf_page_1.xml"]
     ] == ["Issue details", "Title", "text"]
 
-    # Inspect text/title propagation for a few cases using fixture-derived expectations
-    first_page_texts = chunks_by_filename["1896-97a.pdf_page_1.xml"]
-    first_page_title = next(
-        chunk["text"] for chunk in first_page_texts if chunk["section_type"] == "Title"
-    )
-    first_article = next(
-        chunk for chunk in first_page_texts if chunk["section_type"] == "text"
-    )
-    assert first_article["title"] == first_page_title
-    assert first_article["author"] == ""
-
-    # Next page should use whatever title/author appears on that page (may be absent)
-    second_page_texts = chunks_by_filename["1896-97a.pdf_page_2.xml"]
-    continued_article = next(
-        chunk for chunk in second_page_texts if chunk["section_type"] == "text"
-    )
-    page2_title_blocks = [
-        chunk["text"] for chunk in second_page_texts if chunk["section_type"] == "Title"
-    ]
-    expected_title = page2_title_blocks[-1] if page2_title_blocks else ""
-    assert continued_article["title"] == expected_title
-    assert continued_article["author"] == ""
+    # title/author metadata tested separately below
 
     processing_prefix = "Processing XML file "
     processed_files = [
@@ -266,6 +245,64 @@ def test_altoinput_get_text_filtered(caplog):
     filtered_chunks = alto_input.get_text()
     # this sample does not include any footnote blocks; only text + Title
     assert {chunk["section_type"] for chunk in filtered_chunks} == {"text", "Title"}
+
+
+def test_altoinput_update_current_metadata():
+    alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
+    alto_input.current_metadata = {}
+    alto_doc = xmlmap.load_xmlobject_from_file(FIXTURE_ALTO_METADATA, AltoDocument)
+
+    # page text blocks start with Header, page number, then Title.
+    # update metadata starting with title and all following blocks
+    alto_input.update_current_metadata(alto_doc.sorted_blocks[2:])
+    assert (
+        alto_input.current_metadata["title"]
+        == "Ein Brief von Karl Marx an I. B. v. Schweitzer über\n"
+        + "Lassalleanismus und Gewerkschaftskampf."
+    )
+    assert alto_input.current_metadata["author"] == "Vorbemerkung."
+
+    # if update is called  but no content is found, title/author are cleared
+    alto_input.update_current_metadata(alto_doc.sorted_blocks[-1:])
+    assert alto_input.current_metadata["title"] == ""
+    assert alto_input.current_metadata["author"] == ""
+
+    # test with other alto fixture document, which contains multiple title groups
+    alto_doc = xmlmap.load_xmlobject_from_file(FIXTURE_ALTO_PAGE, AltoDocument)
+
+    # first title / author section starts at block index 3
+    alto_input.update_current_metadata(alto_doc.sorted_blocks[3:])
+    assert (
+        alto_input.current_metadata["title"]
+        == "Ein Brief von Karl Marx an I. B. v. Schweitzer über "
+        + "Lassalleanismus und Gewerkschaftskampf."
+    )
+    assert alto_input.current_metadata["author"] == "Vorbemerkung."
+
+    # second title / author section starts at block index 7
+    alto_input.update_current_metadata(alto_doc.sorted_blocks[7:])
+    assert (
+        alto_input.current_metadata["title"]
+        == "Der zweite, weit interessantere Band enthält nicht mehr gewöhnliche Salon⸗"
+        + "\nkritiken."
+    )
+    assert alto_input.current_metadata["author"] == ""
+
+    # third title/author section starts at block index 10
+    alto_input.update_current_metadata(alto_doc.sorted_blocks[10:])
+    assert (
+        alto_input.current_metadata["title"]
+        == "Die nächsten Aufgaben der deutschen Gewerkschafts-\nbewegung."
+    )
+    assert alto_input.current_metadata["author"] == "Von G. Mauerer."
+
+    # last title/author section starts at third from last block
+    alto_input.update_current_metadata(alto_doc.sorted_blocks[-3:])
+    assert alto_input.current_metadata["title"] == "Kämpfe."
+    assert (
+        alto_input.current_metadata["author"]
+        == "Von August Strindberg. Deutsch von Gustav Lichtenstein."
+    )
 
 
 def test_altoinput_includes_title_and_author_metadata():
@@ -294,191 +331,29 @@ def test_altoinput_includes_title_and_author_metadata():
     assert marx_text["author"] == "Vorbemerkung."
 
 
-def test_altoinput_combines_sequential_title_author(tmp_path: pathlib.Path):
-    archive_path = tmp_path / "single_page.zip"
+def test_footnotes_inherit_article_metadata(tmp_path: pathlib.Path):
+    archive_path = tmp_path / "alto_footnote_fixture.zip"
     with ZipFile(archive_path, "w") as archive:
-        archive.write(FIXTURE_ALTO_PAGE, arcname="alto_page.xml")
-
-    alto_input = ALTOInput(input_file=archive_path, filter_sections=False)
-    chunks = list(alto_input.get_text())
-
-    title_chunks = [
-        chunk
-        for chunk in chunks
-        if chunk["section_type"] == "Title"
-        and chunk["title"].startswith("Ein Brief von Karl Marx")
-    ]
-    # Titles should accumulate across consecutive Title blocks on the same page
-    aggregated_title = "Ein Brief von Karl Marx an I. B. v. Schweitzer über\nLassalleanismus und Gewerkschaftskampf."
-    assert max(len(chunk["title"]) for chunk in title_chunks) == len(aggregated_title)
-
-    article_chunk = next(
-        chunk
-        for chunk in chunks
-        if chunk["section_type"] == "text"
-        and chunk["text"].startswith("Im Nachlass von Karl Marx")
-    )
-    assert (
-        article_chunk["title"]
-        == "Ein Brief von Karl Marx an I. B. v. Schweitzer über\n"
-        "Lassalleanismus und Gewerkschaftskampf."
-    )
-    assert article_chunk["author"] == "Vorbemerkung."
-
-    intro_text_chunk = next(
-        chunk
-        for chunk in chunks
-        if chunk["section_type"] == "text"
-        and chunk["text"].startswith(
-            "Die naturalistische Hochfluth ist vorüber"  # codespell:ignore
+        archive.write(
+            FIXTURE_ALTO_PAGE_WITH_FOOTNOTES, arcname="alto_page_with_footnote.xml"
         )
-    )
-    assert intro_text_chunk["title"].startswith(
-        "Der zweite, weit interessantere Band enthält nicht mehr gewöhnliche Salon"
-    )
 
-    split_title_chunk = next(
-        chunk
-        for chunk in chunks
-        if chunk["section_type"] == "Title"
-        and chunk["text"].startswith(
-            "Die nächsten Aufgaben der deutschen Gewerkschafts-"
-        )
-    )
-    assert (
-        split_title_chunk["title"]
-        == "Die nächsten Aufgaben der deutschen Gewerkschafts-\nbewegung."
-    )
-
-    split_article_chunk = next(
-        chunk
-        for chunk in chunks
-        if chunk["section_type"] == "text"
-        and chunk["text"].startswith("Ein altes Thema! So wird Mancher")
-    )
-    assert (
-        split_article_chunk["title"]
-        == "Die nächsten Aufgaben der deutschen Gewerkschafts-\nbewegung."
-    )
-    assert split_article_chunk["author"] == "Von G. Mauerer."
-
-
-def test_altoinput_resets_metadata_on_blank_blocks(tmp_path: pathlib.Path):
-    archive_path = tmp_path / "fixture_page.zip"
-    with ZipFile(archive_path, "w") as archive:
-        archive.write(FIXTURE_ALTO_PAGE, arcname="alto_page.xml")
-
-    alto_input = ALTOInput(input_file=archive_path, filter_sections=False)
+    alto_input = ALTOInput(input_file=archive_path)
     chunks = list(alto_input.get_text())
 
-    section_title_chunk = next(
-        chunk
-        for chunk in chunks
-        if chunk["section_type"] == "section title" and chunk["text"] == "Feuilleton."
+    # Find the first footnote chunk
+    footnote_chunk = next(
+        chunk for chunk in chunks if chunk["section_type"] == "footnote"
     )
-    assert section_title_chunk["title"] == ""
-    assert section_title_chunk["author"] == ""
+    assert footnote_chunk["title"] == "Ein Brief von Karl Marx an J. B. v. Schweitzer."
+    assert footnote_chunk["author"] == "Der Herausgeber."
+    assert "Historisch" in footnote_chunk["text"]
+    assert "Manuskript" in footnote_chunk["text"]
 
-    new_article_chunk = next(
-        chunk
-        for chunk in chunks
-        if chunk["section_type"] == "text"
-        and chunk["text"].startswith("(Nachdruck verboten.)")
-    )
-    assert new_article_chunk["title"] == "Kämpfe."
-    assert (
-        new_article_chunk["author"]
-        == "Von August Strindberg. Deutsch von Gustav Lichtenstein."
-    )
-
-
-def test_altoinput_preserves_title_through_blank_blocks(tmp_path: pathlib.Path):
-    archive_path = tmp_path / "alto_fixture.zip"
-    with ZipFile(archive_path, "w") as archive:
-        archive.write(FIXTURE_ALTO_PAGE, arcname="alto_page.xml")
-
-    alto_input = ALTOInput(input_file=archive_path, filter_sections=False)
-    chunks = list(alto_input.get_text())
-
-    first_article_chunk = next(
-        chunk
-        for chunk in chunks
-        if chunk["section_type"] == "text"
-        and chunk["text"].startswith("Im Nachlass von Karl Marx")
-    )
-    assert (
-        first_article_chunk["title"]
-        == "Ein Brief von Karl Marx an I. B. v. Schweitzer über "
-        "Lassalleanismus und Gewerkschaftskampf."
-    )
-    assert first_article_chunk["author"] == "Vorbemerkung."
-
-    mid_article_chunk = next(
-        chunk
-        for chunk in chunks
-        if chunk["section_type"] == "text"
-        and chunk["text"].startswith("Die naturalistische Hochfluth")
-    )
-    assert mid_article_chunk["title"].startswith(
-        "Der zweite, weit interessantere Band enthält"
-    )
-
-    section_chunk = next(
-        chunk
-        for chunk in chunks
-        if chunk["section_type"] == "section title" and chunk["text"] == "Feuilleton."
-    )
-    assert section_chunk["title"] == ""
-    assert section_chunk["author"] == ""
-
-    new_article_body = next(
-        chunk
-        for chunk in chunks
-        if chunk["section_type"] == "text"
-        and chunk["text"].startswith("(Nachdruck verboten.)")
-    )
-    assert new_article_body["title"] == "Kämpfe."
-    assert (
-        new_article_body["author"]
-        == "Von August Strindberg. Deutsch von Gustav Lichtenstein."
-    )
-
-
-# def test_footnotes_inherit_article_metadata(tmp_path: pathlib.Path):
-#     archive_path = tmp_path / "alto_footnote_fixture.zip"
-#     with ZipFile(archive_path, "w") as archive:
-#         archive.write(
-#             FIXTURE_ALTO_PAGE_WITH_FOOTNOTES, arcname="alto_page_with_footnote.xml"
-#         )
-
-#     alto_input = ALTOInput(input_file=archive_path)
-#     chunks = list(alto_input.get_text())
-
-#     # Find the footnote chunk
-#     footnote_chunk = next(
-#         chunk for chunk in chunks if chunk["section_type"] == "footnote"
-#     )
-#     assert footnote_chunk["title"] == "Ein Brief von Karl Marx an J. B. v. Schweitzer."
-#     assert footnote_chunk["author"] == "Der Herausgeber."
-#     assert "Historisch" in footnote_chunk["text"]
-#     assert "Manuskript" in footnote_chunk["text"]
-
-#     # Verify that text blocks also have the same metadata
-#     text_chunk = next(chunk for chunk in chunks if chunk["section_type"] == "text")
-#     assert text_chunk["title"] == "Ein Brief von Karl Marx an J. B. v. Schweitzer."
-#     assert text_chunk["author"] == "Der Herausgeber."
-
-
-# def test_collect_article_metadata_sequences():
-#     alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
-#     alto_doc = xmlmap.load_xmlobject_from_file(FIXTURE_ALTO_METADATA, AltoDocument)
-#     metadata = alto_input._collect_article_metadata(alto_doc)
-#     # First non-title/non-author block should reuse the aggregated title/author for that page
-#     text_block_meta = metadata[max(idx for idx in metadata if idx >= 2)]
-#     assert text_block_meta["title"].startswith(
-#         "Ein Brief von Karl Marx an I. B. v. Schweitzer über"
-#     )
-#     assert "Vorbemerkung." in text_block_meta["author"]
+    # Verify that text blocks also have the same metadata
+    text_chunk = next(chunk for chunk in chunks if chunk["section_type"] == "text")
+    assert text_chunk["title"] == "Ein Brief von Karl Marx an J. B. v. Schweitzer."
+    assert text_chunk["author"] == "Der Herausgeber."
 
 
 def test_altoinput_footnotes_emitted_last(tmp_path: pathlib.Path):

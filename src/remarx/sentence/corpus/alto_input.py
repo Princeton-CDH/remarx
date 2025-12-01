@@ -277,6 +277,9 @@ class ALTOInput(FileInput):
                 title_lines.append(block.text_content.strip())
             elif block.tag == "author":
                 author_lines.append(block.text_content.strip())
+            elif block.tag == "page number":
+                # skip but don't stop looking for title/author
+                continue
             else:
                 # non-title/non-author block indicates end of article metadata
                 break
