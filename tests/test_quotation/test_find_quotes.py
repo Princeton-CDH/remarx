@@ -162,3 +162,32 @@ def test_main_original_directory_without_csv(
         captured.err == f"Error: directory {orig_dir} does not contain any CSV files\n"
     )
     mock_find_quote_pairs.assert_not_called()
+
+
+@patch("remarx.quotation.find_quotes.configure_logging")
+@patch("remarx.quotation.find_quotes.find_quote_pairs")
+def test_main_too_few_paths(mock_find_quote_pairs, mock_configure_logging, capsys):
+    with (
+        patch("sys.argv", ["remarx-find-quotes", "only_one_path"]),
+        pytest.raises(SystemExit),
+    ):
+        find_quotes.main()
+    assert "reuse corpus and output path are required" in capsys.readouterr().err
+    mock_find_quote_pairs.assert_not_called()
+
+
+@patch("remarx.quotation.find_quotes.configure_logging")
+@patch("remarx.quotation.find_quotes.find_quote_pairs")
+def test_main_too_many_paths(
+    mock_find_quote_pairs, mock_configure_logging, tmp_path, capsys
+):
+    args = ["remarx-find-quotes", "a", "b", "c", "d"]
+    with patch("sys.argv", args), pytest.raises(SystemExit):
+        find_quotes.main()
+    assert "Error: specify at most one original corpus" in capsys.readouterr().err
+    mock_find_quote_pairs.assert_not_called()
+
+
+def test_list_original_corpora_empty():
+    with pytest.raises(ValueError, match="no original corpora were provided"):
+        find_quotes._list_original_corpora([])
