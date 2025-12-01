@@ -33,17 +33,6 @@ class AltoXmlObject(xmlmap.XmlObject):
     ROOT_NAMESPACES: ClassVar[dict[str, str]] = {"alto": ALTO_NAMESPACE_V4}
 
 
-class AltoTag(AltoXmlObject):
-    """
-    Class to for Alto tags. Used to map tag id to tag label.
-    """
-
-    id = xmlmap.StringField("@ID")
-    "tag id (`@ID` attribute)"
-    label = xmlmap.StringField("@LABEL")
-    "tag label (`@LABEL` attribute)"
-
-
 class AltoBlock(AltoXmlObject):
     """
     Base class for an ALTO element with position information.
@@ -75,7 +64,7 @@ class TextBlock(AltoBlock):
     lines = xmlmap.NodeListField("alto:TextLine", TextLine)
     tag_id = xmlmap.StringField("@TAGREFS")
     # map tag container to allow lookup of tag label by tag id
-    tags = xmlmap.NodeField("ancestor::alto:alto/alto:Tags", xmlmap.XmlObject)
+    _tags = xmlmap.NodeField("ancestor::alto:alto/alto:Tags", xmlmap.XmlObject)
 
     @cached_property
     def sorted_lines(self) -> list[TextLine]:
@@ -104,7 +93,7 @@ class TextBlock(AltoBlock):
             return None
         # return the label for the alto tag that matches the current tag id
         # XPath is relative to top level alto:Tags
-        return self.tags.node.xpath(
+        return self._tags.node.xpath(
             f'alto:OtherTag[@ID="{self.tag_id}"]/@LABEL',
             namespaces=self.ROOT_NAMESPACES,
         )[0]  # xpath returns a list; return first value only
@@ -117,7 +106,6 @@ class AltoDocument(AltoXmlObject):
 
     blocks = xmlmap.NodeListField(".//alto:TextBlock", TextBlock)
     lines = xmlmap.NodeListField(".//alto:TextLine", TextLine)
-    _tags = xmlmap.NodeListField("alto:Tags/alto:OtherTag", AltoTag)
 
     def is_alto(self) -> bool:
         """
@@ -130,14 +118,6 @@ class AltoDocument(AltoXmlObject):
             root_element.namespace == ALTO_NAMESPACE_V4
             and root_element.localname == "alto"
         )
-
-    # TODO: maybe no longer needed?
-    @cached_property
-    def tags(self) -> dict[str, str]:
-        """
-        Dictionary of block-level tags; key is id, value is label.
-        """
-        return {tag.id: tag.label for tag in self._tags}
 
     @cached_property
     def sorted_blocks(self) -> list[TextBlock]:
@@ -169,7 +149,7 @@ class AltoDocument(AltoXmlObject):
         # based on block-level semantic tagging
         for block in self.sorted_blocks:
             # use tag for section type, if set; if unset, assume text
-            section = self.tags.get(block.tag_id) or SectionType.TEXT.value
+            section = block.tag or SectionType.TEXT.value
             # if include list is specified and section is not in it, skip;
             # currently includes if section type is unset
             if include is not None and section is not None and section not in include:
