@@ -3,6 +3,7 @@ import io
 import logging
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -94,28 +95,22 @@ def test_configure_logging_with_stanza_log_level(tmp_path, monkeypatch):
     assert stanza_logger.getEffectiveLevel() == logging.DEBUG
 
 
-def _patch_default_corpus_paths(monkeypatch, tmp_path):
+@pytest.fixture
+def patched_default_corpus_paths(tmp_path):
     data_root = tmp_path / "remarx-data"
     corpora_root = data_root / "corpora"
-    monkeypatch.setattr("remarx.utils.DEFAULT_DATA_ROOT", data_root, raising=False)
-    monkeypatch.setattr("remarx.utils.DEFAULT_CORPUS_ROOT", corpora_root, raising=False)
-    monkeypatch.setattr(
-        "remarx.utils.DEFAULT_ORIGINAL_CORPUS_DIR",
-        corpora_root / "original",
-        raising=False,
-    )
-    monkeypatch.setattr(
-        "remarx.utils.DEFAULT_REUSE_CORPUS_DIR",
-        corpora_root / "reuse",
-        raising=False,
-    )
-    return corpora_root
+    with (
+        patch("remarx.utils.DEFAULT_DATA_ROOT", data_root),
+        patch("remarx.utils.DEFAULT_CORPUS_ROOT", corpora_root),
+        patch("remarx.utils.DEFAULT_ORIGINAL_CORPUS_DIR", corpora_root / "original"),
+        patch("remarx.utils.DEFAULT_REUSE_CORPUS_DIR", corpora_root / "reuse"),
+    ):
+        yield corpora_root
 
 
-def test_get_default_corpus_path_reports_missing(tmp_path, monkeypatch):
-    root = _patch_default_corpus_paths(monkeypatch, tmp_path)
-
+def test_get_default_corpus_path_reports_missing(patched_default_corpus_paths):
     ready, dirs = get_default_corpus_path()
+    root = patched_default_corpus_paths
 
     assert not ready
     assert dirs.root == root
@@ -125,9 +120,7 @@ def test_get_default_corpus_path_reports_missing(tmp_path, monkeypatch):
     assert not dirs.reuse.exists()
 
 
-def test_get_default_corpus_path_creates(tmp_path, monkeypatch):
-    _patch_default_corpus_paths(monkeypatch, tmp_path)
-
+def test_get_default_corpus_path_creates(patched_default_corpus_paths):
     ready, dirs = get_default_corpus_path(create=True)
 
     assert ready
