@@ -40,6 +40,12 @@ class CorpusPath:
 
         return all(path.exists() for path in (self.original, self.reuse))
 
+    def ensure_directories(self) -> None:
+        """Create the corpus directories if they do not exist."""
+
+        for path in (self.root, self.original, self.reuse):
+            path.mkdir(parents=True, exist_ok=True)
+
 
 def get_default_corpus_path(
     create: bool = False,
@@ -49,8 +55,7 @@ def get_default_corpus_path(
     directories = CorpusPath()
 
     if create:
-        for path in (directories.root, directories.original, directories.reuse):
-            path.mkdir(parents=True, exist_ok=True)
+        directories.ensure_directories()
 
     return directories.ready(), directories
 
