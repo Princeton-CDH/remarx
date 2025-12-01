@@ -65,15 +65,15 @@ def _(get_current_log_file, logging):
 
 @app.cell
 def _(get_default_corpus_path):
-    default_dirs_ready_initial, default_dirs_initial = get_default_corpus_path()
-    return default_dirs_ready_initial, default_dirs_initial
+    _ready, default_dirs_initial = get_default_corpus_path()
+    return (default_dirs_initial,)
 
 
 @app.cell
-def _(default_dirs_initial, default_dirs_ready_initial, mo):
+def _(default_dirs_initial, mo):
     create_dirs_btn = mo.ui.run_button(
         label="Create default corpus folders",
-        disabled=default_dirs_ready_initial,
+        disabled=default_dirs_initial.ready(),
         tooltip=(
             f"Create `{default_dirs_initial.original}` and "
             f"`{default_dirs_initial.reuse}`"
@@ -108,14 +108,11 @@ def _(mo):
 def _(
     create_dirs_btn,
     default_dirs_initial,
-    default_dirs_ready_initial,
     handle_default_corpus_creation,
     mo,
 ):
     default_dirs_ready, default_dirs, status_msg, callout_kind = (
-        handle_default_corpus_creation(
-            create_dirs_btn, default_dirs_initial, default_dirs_ready_initial
-        )
+        handle_default_corpus_creation(create_dirs_btn, default_dirs_initial)
     )
 
     mo.callout(

@@ -130,12 +130,13 @@ def _(mo):
 
 @app.cell
 def _(get_default_corpus_path):
-    default_dirs_ready_initial, default_dirs_initial = get_default_corpus_path()
-    return default_dirs_initial, default_dirs_ready_initial
+    _ready, default_dirs_initial = get_default_corpus_path()
+    return (default_dirs_initial,)
 
 
 @app.cell
-def _(default_dirs_initial, default_dirs_ready_initial, mo):
+def _(default_dirs_initial, mo):
+    default_dirs_ready_initial = default_dirs_initial.ready()
     create_default_dirs_btn = mo.ui.run_button(
         label="Create default corpus folders",
         disabled=default_dirs_ready_initial,
@@ -173,7 +174,6 @@ def _(
     create_default_dirs_btn,
     custom_output_toggle,
     default_dirs_initial,
-    default_dirs_ready_initial,
     default_folder_choice,
     handle_default_corpus_creation,
     mo,
@@ -188,7 +188,6 @@ def _(
         handle_default_corpus_creation(
             create_default_dirs_btn,
             default_dirs_initial,
-            default_dirs_ready_initial,
         )
     )
 

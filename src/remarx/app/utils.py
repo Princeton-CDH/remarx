@@ -130,7 +130,6 @@ def create_temp_input(
 def handle_default_corpus_creation(
     button: mo.ui.run_button,
     default_dirs_initial: CorpusPath,
-    default_dirs_ready_initial: bool,
     *,
     ready_message: str = ":white_check_mark: Default corpus folders are ready.",
     missing_message: str = ":x: Default corpus folders were not found.",
@@ -142,6 +141,7 @@ def handle_default_corpus_creation(
     """
 
     default_dirs = default_dirs_initial
+    default_dirs_ready_initial = default_dirs_initial.ready()
     default_dirs_ready = default_dirs_ready_initial
 
     status_msg = ready_message if default_dirs_ready_initial else missing_message
