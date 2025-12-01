@@ -28,6 +28,7 @@ def _():
         create_header,
         create_temp_input,
         get_current_log_file,
+        handle_default_corpus_creation,
     )
     from remarx.app.log_viewer import render_log_panel
     from remarx.sentence.corpus.create import create_corpus
@@ -39,6 +40,7 @@ def _():
         create_header,
         create_temp_input,
         get_current_log_file,
+        handle_default_corpus_creation,
         get_default_corpus_path,
         mo,
         pathlib,
@@ -173,33 +175,22 @@ def _(
     default_dirs_initial,
     default_dirs_ready_initial,
     default_folder_choice,
+    handle_default_corpus_creation,
     mo,
-    get_default_corpus_path,
 ):
-    default_dirs = default_dirs_initial
-    default_dirs_ready = default_dirs_ready_initial
-
     folder_choice_display = (
         default_folder_choice
         if not custom_output_toggle.value
         else default_folder_choice.style(pointer_events="none", opacity=0.6)
     )
 
-    status_msg = (
-        ":white_check_mark: Default corpus folders are ready."
-        if default_dirs_ready
-        else ":x: Default corpus folders were not found."
+    default_dirs_ready, default_dirs, status_msg, _callout_kind = (
+        handle_default_corpus_creation(
+            create_default_dirs_btn,
+            default_dirs_initial,
+            default_dirs_ready_initial,
+        )
     )
-    _callout_kind = "success" if default_dirs_ready else "warn"
-
-    if create_default_dirs_btn.value and not default_dirs_ready_initial:
-        default_dirs_ready, default_dirs = get_default_corpus_path(
-            create_if_missing=True
-        )
-        status_msg = (
-            f"Created default corpus folders under `{default_dirs.root}`"
-        )
-        _callout_kind = "success"
 
     mo.callout(
         mo.vstack(

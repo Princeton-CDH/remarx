@@ -28,7 +28,7 @@ class CorpusPath:
 
     def __post_init__(self) -> None:
         """Populate unset directories using defaults under the data root."""
-        base_root = self.root or DEFAULT_CORPUS_ROOT
+        base_root = (self.root or DEFAULT_CORPUS_ROOT).expanduser()
         object.__setattr__(self, "root", base_root)
         if self.original is None:
             object.__setattr__(self, "original", base_root / "original")
