@@ -179,6 +179,12 @@ def _(
     default_dirs = default_dirs_initial
     default_dirs_ready = default_dirs_ready_initial
 
+    folder_choice_display = (
+        default_folder_choice
+        if not custom_output_toggle.value
+        else default_folder_choice.style(pointer_events="none", opacity=0.6)
+    )
+
     status_msg = (
         ":white_check_mark: Default corpus folders are ready."
         if default_dirs_ready
@@ -215,7 +221,7 @@ def _(
                 mo.md("""
                     **Option 1:** Output to default folders
                 """),
-                default_folder_choice,
+                folder_choice_display,
                 mo.md("---"),
                 mo.md("""
                     **Option 2:** Toggle custom output if you prefer to browse to a different folder
