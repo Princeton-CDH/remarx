@@ -184,6 +184,7 @@ def test_field_names():
         "section_type",
         "title",
         "author",
+        "page_number",
     )
 
 
