@@ -5,21 +5,35 @@ Utility functions for the remarx package
 import io
 import logging
 import pathlib
+from dataclasses import dataclass
 from datetime import datetime
-from typing import NamedTuple, TextIO
+from typing import TextIO
 
-# Default corpus directory locations under the user's home directory
-DEFAULT_CORPUS_ROOT = pathlib.Path.home() / "remarx_corpora"
+# Default data directory under the user's home directory
+DEFAULT_DATA_ROOT = pathlib.Path.home() / "remarx-data"
+
+# Default corpus directory locations within the data directory
+DEFAULT_CORPUS_ROOT = DEFAULT_DATA_ROOT / "corpora"
 DEFAULT_ORIGINAL_CORPUS_DIR = DEFAULT_CORPUS_ROOT / "original"
 DEFAULT_REUSE_CORPUS_DIR = DEFAULT_CORPUS_ROOT / "reuse"
 
 
-class CorpusDirectories(NamedTuple):
+@dataclass(slots=True)
+class CorpusPath:
     """Paths for the default corpus directory structure."""
 
-    root: pathlib.Path
-    original: pathlib.Path
-    reuse: pathlib.Path
+    root: pathlib.Path | None = None
+    original: pathlib.Path | None = None
+    reuse: pathlib.Path | None = None
+
+    def __post_init__(self) -> None:
+        """Populate unset directories using defaults under the data root."""
+        base_root = self.root or DEFAULT_CORPUS_ROOT
+        object.__setattr__(self, "root", base_root)
+        if self.original is None:
+            object.__setattr__(self, "original", base_root / "original")
+        if self.reuse is None:
+            object.__setattr__(self, "reuse", base_root / "reuse")
 
     def ready(self) -> bool:
         """Return True if both default corpus directories already exist."""
@@ -29,14 +43,10 @@ class CorpusDirectories(NamedTuple):
 
 def ensure_default_corpus_directories(
     create: bool = False,
-) -> tuple[bool, CorpusDirectories]:
+) -> tuple[bool, CorpusPath]:
     """Return default corpus directories and optionally create them if missing."""
 
-    directories = CorpusDirectories(
-        root=DEFAULT_CORPUS_ROOT,
-        original=DEFAULT_ORIGINAL_CORPUS_DIR,
-        reuse=DEFAULT_REUSE_CORPUS_DIR,
-    )
+    directories = CorpusPath()
 
     if create:
         for path in (directories.root, directories.original, directories.reuse):

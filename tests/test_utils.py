@@ -95,19 +95,21 @@ def test_configure_logging_with_stanza_log_level(tmp_path, monkeypatch):
 
 
 def _patch_default_corpus_paths(monkeypatch, tmp_path):
-    root = tmp_path / "remarx_corpora"
-    monkeypatch.setattr("remarx.utils.DEFAULT_CORPUS_ROOT", root, raising=False)
+    data_root = tmp_path / "remarx-data"
+    corpora_root = data_root / "corpora"
+    monkeypatch.setattr("remarx.utils.DEFAULT_DATA_ROOT", data_root, raising=False)
+    monkeypatch.setattr("remarx.utils.DEFAULT_CORPUS_ROOT", corpora_root, raising=False)
     monkeypatch.setattr(
         "remarx.utils.DEFAULT_ORIGINAL_CORPUS_DIR",
-        root / "original",
+        corpora_root / "original",
         raising=False,
     )
     monkeypatch.setattr(
         "remarx.utils.DEFAULT_REUSE_CORPUS_DIR",
-        root / "reuse",
+        corpora_root / "reuse",
         raising=False,
     )
-    return root
+    return corpora_root
 
 
 def test_ensure_default_corpus_directories_reports_missing(tmp_path, monkeypatch):

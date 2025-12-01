@@ -137,7 +137,7 @@ def _(default_dirs_ready_initial, mo):
     create_default_dirs_btn = mo.ui.run_button(
         label="Create default corpus folders",
         disabled=default_dirs_ready_initial,
-        tooltip="Create ~/remarx_corpora/original and ~/remarx_corpora/reuse",
+        tooltip="Create ~/remarx-data/corpora/original and ~/remarx-data/corpora/reuse",
     )
     return create_default_dirs_btn,
 

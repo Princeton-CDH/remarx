@@ -47,7 +47,7 @@ uv run remarx-app
 
 ### Default corpus directories
 
-Both the Sentence Corpus Builder and Quote Finder notebooks default to the folders `~/remarx_corpora/original` and `~/remarx_corpora/reuse` for saving and selecting sentence corpora. If the folders don't exist yet, the notebooks will prompt you to create them.
+Both the Sentence Corpus Builder and Quote Finder notebooks default to the folders `~/remarx-data/corpora/original` and `~/remarx-data/corpora/reuse` for saving and selecting sentence corpora. If the folders don't exist yet, the notebooks will prompt you to create them.
 
 ### Closing quote finder app
 
