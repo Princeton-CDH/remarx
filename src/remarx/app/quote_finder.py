@@ -31,13 +31,13 @@ def _():
     )
 
     from remarx.sentence.corpus import FileInput
-    from remarx.utils import ensure_default_corpus_directories
+    from remarx.utils import get_default_corpus_path
     from remarx.quotation.pairs import find_quote_pairs
     return (
         create_header,
         find_quote_pairs,
         get_current_log_file,
-        ensure_default_corpus_directories,
+        get_default_corpus_path,
         logging,
         mo,
         pathlib,
@@ -62,8 +62,8 @@ def _(get_current_log_file, logging):
 
 
 @app.cell
-def _(ensure_default_corpus_directories):
-    default_dirs_ready_initial, default_dirs_initial = ensure_default_corpus_directories()
+def _(get_default_corpus_path):
+    default_dirs_ready_initial, default_dirs_initial = get_default_corpus_path()
     return default_dirs_ready_initial, default_dirs_initial
 
 
@@ -105,7 +105,7 @@ def _(
     default_dirs_initial,
     default_dirs_ready_initial,
     mo,
-    ensure_default_corpus_directories,
+    get_default_corpus_path,
 ):
     default_dirs = default_dirs_initial
     default_dirs_ready = default_dirs_ready_initial
@@ -118,7 +118,7 @@ def _(
     callout_kind = "success" if default_dirs_ready_initial else "warn"
 
     if create_dirs_btn.value and not default_dirs_ready_initial:
-        default_dirs_ready, default_dirs = ensure_default_corpus_directories(
+        default_dirs_ready, default_dirs = get_default_corpus_path(
             create_if_missing=True
         )
         status_msg = (

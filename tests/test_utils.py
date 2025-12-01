@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from remarx.utils import configure_logging, ensure_default_corpus_directories
+from remarx.utils import configure_logging, get_default_corpus_path
 
 
 @pytest.fixture(autouse=True)
@@ -112,10 +112,10 @@ def _patch_default_corpus_paths(monkeypatch, tmp_path):
     return corpora_root
 
 
-def test_ensure_default_corpus_directories_reports_missing(tmp_path, monkeypatch):
+def test_get_default_corpus_path_reports_missing(tmp_path, monkeypatch):
     root = _patch_default_corpus_paths(monkeypatch, tmp_path)
 
-    ready, dirs = ensure_default_corpus_directories()
+    ready, dirs = get_default_corpus_path()
 
     assert not ready
     assert dirs.root == root
@@ -125,14 +125,14 @@ def test_ensure_default_corpus_directories_reports_missing(tmp_path, monkeypatch
     assert not dirs.reuse.exists()
 
 
-def test_ensure_default_corpus_directories_creates(tmp_path, monkeypatch):
+def test_get_default_corpus_path_creates(tmp_path, monkeypatch):
     _patch_default_corpus_paths(monkeypatch, tmp_path)
 
-    ready, dirs = ensure_default_corpus_directories(create=True)
+    ready, dirs = get_default_corpus_path(create=True)
 
     assert ready
     assert dirs.original.exists()
     assert dirs.reuse.exists()
 
-    ready_again, _ = ensure_default_corpus_directories()
+    ready_again, _ = get_default_corpus_path()
     assert ready_again

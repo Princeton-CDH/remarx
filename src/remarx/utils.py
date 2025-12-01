@@ -41,7 +41,7 @@ class CorpusPath:
         return all(path.exists() for path in (self.original, self.reuse))
 
 
-def ensure_default_corpus_directories(
+def get_default_corpus_path(
     create: bool = False,
 ) -> tuple[bool, CorpusPath]:
     """Return default corpus directories and optionally create them if missing."""
