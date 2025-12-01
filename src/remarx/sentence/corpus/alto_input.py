@@ -74,6 +74,8 @@ class TextBlock(AltoBlock):
 
     lines = xmlmap.NodeListField("alto:TextLine", TextLine)
     tag_id = xmlmap.StringField("@TAGREFS")
+    # map tag container to allow lookup of tag label by tag id
+    tags = xmlmap.NodeField("ancestor::alto:alto/alto:Tags", xmlmap.XmlObject)
 
     @cached_property
     def sorted_lines(self) -> list[TextLine]:
@@ -91,6 +93,21 @@ class TextBlock(AltoBlock):
         each line within this block, sorted by vertical position.
         """
         return "\n".join([line.text_content for line in self.sorted_lines])
+
+    @property
+    def tag(self) -> str | None:
+        """
+        Tag label; looked up based on `tag_id` in document list of tags.
+        Assumes singular tag and tag id.
+        """
+        if self.tag_id is None:
+            return None
+        # return the label for the alto tag that matches the current tag id
+        # XPath is relative to top level alto:Tags
+        return self.tags.node.xpath(
+            f'alto:OtherTag[@ID="{self.tag_id}"]/@LABEL',
+            namespaces=self.ROOT_NAMESPACES,
+        )[0]  # xpath returns a list; return first value only
 
 
 class AltoDocument(AltoXmlObject):
@@ -114,6 +131,7 @@ class AltoDocument(AltoXmlObject):
             and root_element.localname == "alto"
         )
 
+    # TODO: maybe no longer needed?
     @cached_property
     def tags(self) -> dict[str, str]:
         """
@@ -121,7 +139,7 @@ class AltoDocument(AltoXmlObject):
         """
         return {tag.id: tag.label for tag in self._tags}
 
-    @property
+    @cached_property
     def sorted_blocks(self) -> list[TextBlock]:
         """
         Returns a list of TextBlocks for this page, sorted by vertical position.
@@ -193,6 +211,11 @@ class ALTOInput(FileInput):
         num_valid_files = 0
         include_sections = self.default_include if self.filter_sections else None
 
+        # metadata is collected and updated as we iterate through pages
+        self.current_metadata: dict[str, str] = {}
+        # footnotes are collected and yielded last
+        footnote_chunks: list[dict[str, str]] = []
+
         start = time()
         with ZipFile(self.input_file) as archive:
             # iterate over all files in the zipfile;
@@ -211,33 +234,41 @@ class ALTOInput(FileInput):
                     f"{base_filename}: {len(alto_xmlobj.blocks)} blocks, {len(alto_xmlobj.lines)} lines"
                 )
 
-                # pre-compute metadata to apply to each block so that it can be merged
-                # as we iterate and while footnotes are buffered
-                metadata_by_block = self._collect_article_metadata(alto_xmlobj)
-                footnote_chunks: list[dict[str, str]] = []
+                # only collect metadata once per file / page
+                collected_metadata = False
 
                 for idx, block in enumerate(alto_xmlobj.sorted_blocks):
-                    section = alto_xmlobj.tags.get(block.tag_id, SectionType.TEXT.value)
+                    # use block tag label as section;
+                    # use text as a fallback for blocks with no tag
+                    section = block.tag or SectionType.TEXT.value
+
+                    # section type of author or title indicates new article
+                    # only collect once per page
+                    if not collected_metadata and section in ["author", "Title"]:
+                        # collect metadata using this block and following
+                        self.update_current_metadata(alto_xmlobj.sorted_blocks[idx:])
+                        # set flag that metadata has been collected
+                        collected_metadata = True
+
                     block_text = block.text_content
                     chunk = {
                         "text": block_text,
                         "section_type": section,
                         "file": base_filename,  # use the base xml file for consistency
-                    } | metadata_by_block.get(idx, {"title": "", "author": ""})
+                    } | self.current_metadata
 
                     # Apply section filtering up front
                     if include_sections is not None and section not in include_sections:
                         continue
 
-                    # Buffer footnotes so they are emitted after the body text
+                    # Collect footnotes and yield after all body text
                     if section == "footnote":
                         footnote_chunks.append(chunk)
-                        continue
+                    else:
+                        yield chunk
 
-                    yield chunk
-
-                # Emit buffered footnotes at the end
-                yield from footnote_chunks
+            # yield footnotes
+            yield from footnote_chunks
 
         elapsed_time = time() - start
         logger.info(
@@ -247,6 +278,35 @@ class ALTOInput(FileInput):
         # error if no valid files were found
         if num_valid_files == 0:
             raise ValueError(f"No valid ALTO XML files found in {self.file_name}")
+
+    def update_current_metadata(self, blocks: list[TextBlock]) -> None:
+        """Update current article metadata."""
+        # iterate over blocks and update article metadata
+        # bail out when we get a non-title block
+
+        # reset title/author metadata when at the beginning of a new article
+        self.current_metadata.update({"title": "", "author": ""})
+
+        # accumulate consecutive title blocks to preserve multi-line headings
+        title_lines: list[str] = []
+        # accumulate consecutive author blocks
+        author_lines: list[str] = []
+
+        for block in blocks:
+            if block.tag == "Title":
+                title_lines.append(block.text_content.strip())
+            elif block.tag == "author":
+                author_lines.append(block.text_content.strip())
+            else:
+                # non-title/non-author block indicates end of article metadata
+                break
+
+        self.current_metadata.update(
+            {
+                "title": " ".join(title_lines).strip(),
+                "author": " ".join(author_lines).strip(),
+            }
+        )
 
     def check_zipfile_path(
         self, zip_filepath: ZipInfo, zip_archive: ZipFile
@@ -288,71 +348,3 @@ class ALTOInput(FileInput):
             return
 
         return alto_xmlobj
-
-    def _collect_article_metadata(
-        self, alto_xmlobj: AltoDocument
-    ) -> dict[int, dict[str, str]]:
-        """
-        Collect title/author metadata once per page and return a mapping of block
-        index -> metadata to merge into emitted chunks. Title/author blocks are
-        concatenated when consecutive so that multi-line headings/authors are preserved.
-
-        Doing this up front avoids fragile per-block state and supports buffering
-        footnotes (which still need the correct article metadata) before yielding.
-        """
-        current_title = ""
-        current_author = ""
-        metadata_by_block: dict[int, dict[str, str]] = {}
-        blocks = alto_xmlobj.sorted_blocks
-
-        def get_section(block: TextBlock) -> str:
-            return alto_xmlobj.tags.get(block.tag_id) or SectionType.TEXT.value
-
-        i = 0
-        while i < len(blocks):
-            section = get_section(blocks[i])
-
-            if section == "Title":
-                # accumulate consecutive title blocks to preserve multi-line headings
-                title_lines: list[str] = []
-                j = i
-                while j < len(blocks) and get_section(blocks[j]) == "Title":
-                    text_clean = (blocks[j].text_content or "").strip()
-                    if text_clean:
-                        title_lines.append(text_clean)
-                    j += 1
-                current_title = "\n".join(title_lines)
-                # new title resets author context
-                current_author = ""
-                # apply the updated metadata to all title blocks in this run
-                for k in range(i, j):
-                    metadata_by_block[k] = {
-                        "title": current_title,
-                        "author": current_author,
-                    }
-                i = j
-                continue
-
-            if section == "author":
-                # accumulate consecutive author blocks
-                author_lines: list[str] = []
-                j = i
-                while j < len(blocks) and get_section(blocks[j]) == "author":
-                    text_clean = (blocks[j].text_content or "").strip()
-                    if text_clean:
-                        author_lines.append(text_clean)
-                    j += 1
-                current_author = "\n".join(author_lines)
-                for k in range(i, j):
-                    metadata_by_block[k] = {
-                        "title": current_title,
-                        "author": current_author,
-                    }
-                i = j
-                continue
-
-            # For any other section, apply the current running metadata
-            metadata_by_block[i] = {"title": current_title, "author": current_author}
-            i += 1
-
-        return metadata_by_block
