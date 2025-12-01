@@ -3,6 +3,7 @@ Functionality related to parsing ALTO XML content packaged within a zipfile,
 with the goal of creating a sentence corpus with associated metadata from ALTO.
 """
 
+import contextlib
 import logging
 import pathlib
 from collections.abc import Generator
@@ -169,6 +170,7 @@ class ALTOInput(FileInput):
         "section_type",
         "title",
         "author",
+        "page_number",
     )
     "List of field names for sentences originating from ALTO XML content."
 
@@ -213,6 +215,9 @@ class ALTOInput(FileInput):
                 logger.debug(
                     f"{base_filename}: {len(alto_xmlobj.blocks)} blocks, {len(alto_xmlobj.lines)} lines"
                 )
+                # clear page number from current metadata if set
+                with contextlib.suppress(KeyError):
+                    del self.current_metadata["page_number"]
 
                 # only collect metadata once per file / page
                 collected_metadata = False
@@ -221,6 +226,9 @@ class ALTOInput(FileInput):
                     # use block tag label as section;
                     # use text as a fallback for blocks with no tag
                     section = block.tag or SectionType.TEXT.value
+                    # add page number to metadata if found
+                    if section == "page number":
+                        self.current_metadata["page_number"] = block.text_content
 
                     # section type of author or title indicates new article
                     # only collect once per page
