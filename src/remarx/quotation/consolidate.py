@@ -42,16 +42,16 @@ def identify_sequences(df: pl.DataFrame, field: str, group_field: str) -> pl.Dat
             ).alias(f"{field}_sequential")
         )
         .with_columns(
-            # create a group field; name based on input field
+            # create a group field; name based on input field and group
             # - if row is not part of a sequence OR is the first in a sequence
             #   (i.e., does not match expected following value), then
-            #   set group id to field value
+            #   set group id to field value AND group field value, to ensure uniqueness
             # - use forward fill to propagate first value for all rows in a sequence
             pl.when(
                 ~pl.col(f"{field}_sequential")
                 | pl.col(field).ne_missing(pl.col("seq_follow"))
             )
-            .then(pl.col(field))
+            .then(pl.concat_str([pl.col(field), pl.col(group_field)], separator=":"))
             .otherwise(pl.lit(None))
             .alias(f"{field}_group")
             .forward_fill(),
@@ -92,7 +92,7 @@ def consolidate_quotes(df: pl.DataFrame) -> pl.DataFrame:
 
     # first identify sequential reuse sentences
     df_seq = identify_sequences(
-        df.sort("reuse_sent_index"), "reuse_sent_index", "reuse_file"
+        df.sort("reuse_file", "reuse_sent_index"), "reuse_sent_index", "reuse_file"
     )
     # filter to groups that are sequential - candidates for consolidating further
     df_reuse_sequential = df_seq.filter(pl.col("reuse_sent_index_sequential"))
@@ -103,7 +103,9 @@ def consolidate_quotes(df: pl.DataFrame) -> pl.DataFrame:
         f"Identified {total_reuse_seqs:,} groups of sequential sentences in reuse text ({df.height:,} total rows)"
     )
     df_reuse_sequential = identify_sequences(
-        df_reuse_sequential, "original_sent_index", "original_file"
+        df_reuse_sequential.sort("original_file", "original_sent_index"),
+        "original_sent_index",
+        "original_file",
     )
 
     aggregate_fields = []

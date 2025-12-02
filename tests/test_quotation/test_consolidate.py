@@ -8,15 +8,12 @@ def test_identify_sequences():
     # create a dataframe with one column; start with sequential values
     df = pl.DataFrame(
         data={
-            "idx": [
-                1,
-                2,
-                3,
-            ],
+            "idx": [1, 2, 3],
             "group": ["a", "a", "a"],
         }
     )
     df_seq = identify_sequences(df, "idx", "group")
+    print(df_seq)
     # adds a group field based on the specified field
     assert "idx_group" in df_seq.columns
     assert "idx_sequential" in df_seq.columns
@@ -24,34 +21,34 @@ def test_identify_sequences():
     assert len(df_seq.columns) == len(df.columns) + 2  #  two new columns
 
     # in this case, all rows are in a single sequence, starting with idx 1
-    assert all(df_seq["idx_group"].eq(1))
+    assert all(df_seq["idx_group"].eq("1:a"))
     # all are sequential
     assert all(df_seq["idx_sequential"].eq(True))
 
     # test with a subset that is sequential
     df = pl.DataFrame(data={"idx": [1, 3, 4, 5, 7], "group": ["a", "a", "a", "a", "a"]})
     df_seq = identify_sequences(df, "idx", "group")
-    assert df_seq["idx_group"].to_list() == [1, 3, 3, 3, 7]
+    assert df_seq["idx_group"].to_list() == [f"{n}:a" for n in [1, 3, 3, 3, 7]]
     assert df_seq["idx_sequential"].to_list() == [False, True, True, True, False]
 
     # test with non sequential
     df = pl.DataFrame(data={"idx": [2, 4, 6, 8], "group": ["a", "a", "a", "a"]})
     df_seq = identify_sequences(df, "idx", "group")
-    assert df_seq["idx_group"].to_list() == [2, 4, 6, 8]
+    assert df_seq["idx_group"].to_list() == [f"{n}:a" for n in [2, 4, 6, 8]]
     # none are sequential
     assert all(df_seq["idx_sequential"].eq(False))
 
     # test sequential but different groups
     df = pl.DataFrame(data={"idx": [1, 2, 3], "group": ["a", "b", "c"]})
     df_seq = identify_sequences(df, "idx", "group")
-    assert df_seq["idx_group"].to_list() == [1, 2, 3]
+    assert df_seq["idx_group"].to_list() == ["1:a", "2:b", "3:c"]
     # none are sequential
     assert all(df_seq["idx_sequential"].eq(False))
 
     # sequential with groups - one grouped sequence
     df = pl.DataFrame(data={"idx": [1, 2, 3], "group": ["a", "a", "b"]})
     df_seq = identify_sequences(df, "idx", "group")
-    assert df_seq["idx_group"].to_list() == [1, 1, 3]
+    assert df_seq["idx_group"].to_list() == ["1:a", "1:a", "3:b"]
     # first two are part of a sequence
     assert df_seq["idx_sequential"].to_list() == [True, True, False]
 
