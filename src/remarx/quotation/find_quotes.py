@@ -17,6 +17,34 @@ from remarx.utils import configure_logging
 logger = logging.getLogger(__name__)
 
 
+def run_find_quotes(
+    original_corpus: pathlib.Path,
+    reuse_corpus: pathlib.Path,
+    output_path: pathlib.Path,
+    *,
+    consolidate: bool = True,
+    benchmark: bool = False,
+) -> pathlib.Path:
+    """Run quotation detection and write results into the output directory."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    logger.info("Running quotation detection")
+    logger.info("Original corpus: %s", original_corpus)
+    logger.info("Reuse corpus: %s", reuse_corpus)
+    logger.info("Output file: %s", output_path)
+
+    find_quote_pairs(
+        # for now, pass single file as a list; in future, support multifile
+        original_corpus=[original_corpus],
+        reuse_corpus=reuse_corpus,
+        out_csv=output_path,
+        consolidate=consolidate,
+        benchmark=benchmark,
+    )
+
+    return output_path
+
+
 def main() -> None:
     """Command-line access to quotation detection for sentence corpora."""
     parser = argparse.ArgumentParser(
@@ -62,23 +90,10 @@ def main() -> None:
     log_level = logging.DEBUG if args.verbose else logging.INFO
     configure_logging(sys.stdout, log_level=log_level)
 
-    # check input files (possibly multiples in future...)
-    for input_file in [args.original_corpus, args.reuse_corpus]:
-        if not input_file.is_file():
-            print(f"Error: input file {input_file} does not exist", file=sys.stderr)
-            sys.exit(1)
-    # check output path directory exists
-    if not args.output_path.parent.is_dir():
-        print(
-            f"Error: output directory {args.output_path.parent} does not exist",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
-    find_quote_pairs(
+    run_find_quotes(
         original_corpus=args.original_corpus,
         reuse_corpus=args.reuse_corpus,
-        out_csv=args.output_path,
+        output_path=args.output_path,
         consolidate=args.consolidate,
         benchmark=args.benchmark,
     )

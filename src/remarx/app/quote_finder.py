@@ -297,7 +297,7 @@ def _(
         spinner_msg = f"Finding quote pairs between {original_file.path.name} and {reuse_file.path.name}"
         with mo.status.spinner(title=spinner_msg) as _spinner:
             find_quote_pairs(
-                original_corpus=original_file.path,
+                original_corpus=[original_file.path],
                 reuse_corpus=reuse_file.path,
                 out_csv=output_csv,
                 show_progress_bar=False,

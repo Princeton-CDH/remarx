@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 0.5.0
+## 0.5.0.dev
 
 ### Sentence corpus creation
 
@@ -10,9 +10,8 @@
 ### Quotation detection
 
 - Add consolidation logic to group quotes that are sequential in both original and reuse texts
-    - Quote consolidation is enabled by default but configurable:
-        - `remarx-find-quotes` script has a boolean parameter (`--no-consolidate`)
-        - App now has a toggle to control consolidation; enabled by default
+    - Quote consolidation is enabled by default but configurable in both app and command line script
+- Now supports multiple original sentence corpora as input
 
 ### Scripts
 
@@ -39,7 +38,7 @@
 
 ### Quotation detection
 
-- Add the `remarx-find-quotes` CLI script to run the quote finder, with a `--benchmark` flag to collect performance metrics
+- Add the `find_quotes.py` CLI script to run the quote finder, with a `--benchmark` flag to collect performance metrics
 
 ### Application
 
