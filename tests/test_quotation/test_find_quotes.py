@@ -18,7 +18,12 @@ def test_main(mock_find_quote_pairs, mock_configure_logging, tmp_path):
     # output = tmp_path / "out" / "pairs.csv"
     output = tmp_path / "pairs.csv"
     # default options
-    args = ["remarx-find-quotes", str(orig_input), str(reuse_input), str(output)]
+    args = [
+        "remarx-find-quotes",
+        str(orig_input),
+        str(reuse_input),
+        str(output),
+    ]
     with patch("sys.argv", args):
         find_quotes.main()
 
@@ -59,7 +64,12 @@ def test_main_check_paths(
     orig_input = tmp_path / "orig.csv"
     reuse_input = tmp_path / "reuse.csv"
     output = tmp_path / "out" / "pairs.csv"
-    args = ["remarx-find-quotes", str(orig_input), str(reuse_input), str(output)]
+    args = [
+        "remarx-find-quotes",
+        str(orig_input),
+        str(reuse_input),
+        str(output),
+    ]
     with patch("sys.argv", args):
         # input files and output directory do not exist
         with pytest.raises(SystemExit):
@@ -131,7 +141,12 @@ def test_main_original_directory(
     reuse_input.touch()
     output = tmp_path / "pairs.csv"
 
-    args = ["remarx-find-quotes", str(orig_dir), str(reuse_input), str(output)]
+    args = [
+        "remarx-find-quotes",
+        str(orig_dir),
+        str(reuse_input),
+        str(output),
+    ]
     with patch("sys.argv", args):
         find_quotes.main()
 
@@ -161,7 +176,12 @@ def test_main_original_directory_without_csv(
     reuse_input.touch()
     output = tmp_path / "pairs.csv"
 
-    args = ["remarx-find-quotes", str(orig_dir), str(reuse_input), str(output)]
+    args = [
+        "remarx-find-quotes",
+        str(orig_dir),
+        str(reuse_input),
+        str(output),
+    ]
     with patch("sys.argv", args), pytest.raises(SystemExit):
         find_quotes.main()
 
@@ -186,14 +206,34 @@ def test_main_too_few_paths(mock_find_quote_pairs, mock_configure_logging, capsy
 
 @patch("remarx.quotation.find_quotes.configure_logging")
 @patch("remarx.quotation.find_quotes.find_quote_pairs")
-def test_main_too_many_paths(
-    mock_find_quote_pairs, mock_configure_logging, tmp_path, capsys
+def test_main_multiple_original_files(
+    mock_find_quote_pairs, mock_configure_logging, tmp_path
 ):
-    args = ["remarx-find-quotes", "a", "b", "c", "d"]
-    with patch("sys.argv", args), pytest.raises(SystemExit):
+    orig_input = tmp_path / "orig.csv"
+    second_input = tmp_path / "orig2.csv"
+    orig_input.touch()
+    second_input.touch()
+    reuse_input = tmp_path / "reuse.csv"
+    reuse_input.touch()
+    output = tmp_path / "pairs.csv"
+
+    args = [
+        "remarx-find-quotes",
+        str(orig_input),
+        str(second_input),
+        str(reuse_input),
+        str(output),
+    ]
+    with patch("sys.argv", args):
         find_quotes.main()
-    assert "Error: specify at most one original corpus" in capsys.readouterr().err
-    mock_find_quote_pairs.assert_not_called()
+
+    mock_find_quote_pairs.assert_called_with(
+        original_corpus=[orig_input, second_input],
+        reuse_corpus=reuse_input,
+        out_csv=output,
+        consolidate=True,
+        benchmark=False,
+    )
 
 
 def test_gather_csv_files_errors(tmp_path):

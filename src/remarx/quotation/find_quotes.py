@@ -88,8 +88,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Find quotation pairs between sentence corpora",
         epilog=(
-            "Usage: remarx-find-quotes [ORIGINAL | ORIGINAL_DIR] REUSE OUTPUT. "
-            "Provide one original corpus CSV file or directory before the reuse corpus. "
+            "Usage: remarx-find-quotes [ORIGINAL ... | ORIGINAL_DIR ...] REUSE OUTPUT. "
+            "List zero or more original corpus CSV files or directories before the reuse corpus. "
             "If omitted, the default path will be used."
         ),
     )
@@ -98,8 +98,8 @@ def main() -> None:
         nargs="+",
         metavar="PATH",
         help=(
-            "Paths to corpora. Specify zero or one original corpus CSV file or "
-            "directory followed by the reuse corpus CSV and output file."
+            "Paths to corpora. Specify any number of original corpus CSV files or directories "
+            "followed by the reuse corpus CSV and output file."
         ),
     )
     parser.add_argument(
@@ -130,24 +130,17 @@ def main() -> None:
     if len(args.paths) < 2:
         parser.error("reuse corpus and output path are required")
 
-    if len(args.paths) > 3:
-        _error_exit(
-            "Error: specify at most one original corpus (file or directory) followed by reuse corpus and output path"
-        )
-
     positional_paths = [pathlib.Path(p) for p in args.paths]
-    if len(positional_paths) == 2:
-        # When no original path is provided, fall back to the default directory
-        reuse_corpus, output_path = positional_paths
+    reuse_corpus = positional_paths[-2]
+    output_path = positional_paths[-1]
+    original_inputs = positional_paths[:-2]
+
+    if not original_inputs:
         logger.info(
             "No original corpora specified; defaulting to %s",
             DEFAULT_CORPUS_DIRS.original,
         )
         original_inputs = [DEFAULT_CORPUS_DIRS.original]
-    else:
-        original_inputs = [positional_paths[0]]
-        reuse_corpus = positional_paths[1]
-        output_path = positional_paths[2]
 
     try:
         original_corpora = gather_csv_files(original_inputs)
