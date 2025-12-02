@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
-from remarx.utils import configure_logging, get_default_corpus_path
+from remarx.utils import CorpusPath, configure_logging, get_default_corpus_path
 
 
 @pytest.fixture(autouse=True)
@@ -127,3 +127,22 @@ def test_get_default_corpus_path_creates(patched_default_corpus_paths):
 
     ready_again, _ = get_default_corpus_path()
     assert ready_again
+
+
+def test_corpus_path_ready_and_ensure_directories(patched_default_corpus_paths):
+    root = patched_default_corpus_paths
+    dirs = CorpusPath()
+
+    assert dirs.root == root
+    assert not dirs.ready()
+
+    assert not dirs.root.exists()
+    assert not dirs.original.exists()
+    assert not dirs.reuse.exists()
+
+    dirs.ensure_directories()
+
+    assert dirs.ready()
+    assert dirs.root.exists()
+    assert dirs.original.exists()
+    assert dirs.reuse.exists()
