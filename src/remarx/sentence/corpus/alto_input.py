@@ -171,6 +171,7 @@ class ALTOInput(FileInput):
         "title",
         "author",
         "page_number",
+        "page_file",
     )
     "List of field names for sentences originating from ALTO XML content."
 
@@ -242,7 +243,9 @@ class ALTOInput(FileInput):
                     chunk = {
                         "text": block_text,
                         "section_type": section,
-                        "file": base_filename,  # use the base xml file for consistency
+                        # include page file but don't override main file name,
+                        # which is needed for quote consolidation
+                        "page_file": base_filename,
                     } | self.current_metadata
 
                     # Apply section filtering up front

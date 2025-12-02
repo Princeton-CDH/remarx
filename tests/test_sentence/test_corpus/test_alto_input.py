@@ -185,6 +185,7 @@ def test_field_names():
         "title",
         "author",
         "page_number",
+        "page_file",
     )
 
 
@@ -212,7 +213,7 @@ def test_altoinput_get_text(caplog):
     # distinct filenames should match expected file list
     chunks_by_filename = defaultdict(list)
     for chunk in chunks:
-        chunks_by_filename[chunk["file"]].append(chunk)
+        chunks_by_filename[chunk["page_file"]].append(chunk)
 
     # empty page should not be present since no chunks are yielded
     assert set(chunks_by_filename.keys()) == set(expected_files) - {"empty_page.xml"}
@@ -310,10 +311,11 @@ def test_altoinput_includes_title_and_author_metadata():
     alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
     chunks = list(alto_input.get_text())
 
+    # get first text section from page 1 file
     first_text = next(
         chunk
         for chunk in chunks
-        if chunk["file"] == "1896-97a.pdf_page_1.xml"
+        if chunk["page_file"] == "1896-97a.pdf_page_1.xml"
         and chunk["section_type"] == "text"
     )
     assert first_text["title"] == "Arbeiter und Gewerbeausstellung."
@@ -325,7 +327,7 @@ def test_altoinput_includes_title_and_author_metadata():
     marx_text = next(
         chunk
         for chunk in chunks
-        if chunk["file"] == "1896-97a.pdf_page_5.xml"
+        if chunk["page_file"] == "1896-97a.pdf_page_5.xml"
         and chunk["section_type"] == "text"
     )
     assert (
