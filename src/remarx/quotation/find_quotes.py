@@ -11,8 +11,6 @@ import logging
 import pathlib
 import sys
 
-from natsort import natsorted
-
 from remarx.quotation.pairs import find_quote_pairs
 from remarx.utils import configure_logging
 
@@ -20,8 +18,8 @@ logger = logging.getLogger(__name__)
 DEFAULT_ORIGINAL_CORPUS_DIR = pathlib.Path.home() / "remarx-data/corpora/original"
 
 
-def _list_original_corpora(original_inputs: list[pathlib.Path]) -> list[pathlib.Path]:
-    """Return all original corpus CSV files, expanding a directory when needed."""
+def gather_csv_files(original_inputs: list[pathlib.Path]) -> list[pathlib.Path]:
+    """Return original corpus CSV files and raise ValueError for missing paths or empty directories."""
 
     resolved_inputs: list[pathlib.Path] = []
     for input_path in original_inputs:
@@ -30,11 +28,7 @@ def _list_original_corpora(original_inputs: list[pathlib.Path]) -> list[pathlib.
 
         if input_path.is_dir():
             # Allow users to point at a directory of corpora
-            csv_files = natsorted(
-                file_path
-                for file_path in input_path.iterdir()
-                if file_path.is_file() and file_path.suffix.lower() == ".csv"
-            )
+            csv_files = list(input_path.glob("**/*.csv"))
             if not csv_files:
                 raise ValueError(
                     f"Error: directory {input_path} does not contain any CSV files"
@@ -156,7 +150,7 @@ def main() -> None:
         output_path = positional_paths[2]
 
     try:
-        original_corpora = _list_original_corpora(original_inputs)
+        original_corpora = gather_csv_files(original_inputs)
     except ValueError as err:
         _error_exit(str(err))
 
