@@ -135,14 +135,19 @@ def test_main_original_directory(
     with patch("sys.argv", args):
         find_quotes.main()
 
-    expected_files = sorted([file_a, file_b])
-    mock_find_quote_pairs.assert_called_with(
-        original_corpus=expected_files,
-        reuse_corpus=reuse_input,
-        out_csv=output,
-        consolidate=True,
-        benchmark=False,
-    )
+    # Verify the function was called with the correct arguments
+    # Note: original_corpus order may vary, so we check that all expected files are present
+    assert mock_find_quote_pairs.called
+    call_args = mock_find_quote_pairs.call_args
+    assert call_args.kwargs["reuse_corpus"] == reuse_input
+    assert call_args.kwargs["out_csv"] == output
+    assert call_args.kwargs["consolidate"] is True
+    assert call_args.kwargs["benchmark"] is False
+
+    # Check that both expected files are in the original_corpus, regardless of order
+    actual_files = set(call_args.kwargs["original_corpus"])
+    expected_files = {file_a, file_b}
+    assert actual_files == expected_files
 
 
 @patch("remarx.quotation.find_quotes.configure_logging")
