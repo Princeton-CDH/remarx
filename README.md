@@ -45,6 +45,10 @@ To launch the remarx quote finder application run the `remarx-app` command:
 uv run remarx-app
 ```
 
+### Default corpus directories
+
+For convenience, we suggest saving and selecting corpus files from a standard location under your home directory: `~/remarx-data/corpora/original` and `~/remarx-data/corpora/reuse`. Both the Sentence Corpus Builder and Quote Finder portions of the app default to these folders (with an option to override) and prompt you to create them if they don't exist.
+
 ### Closing quote finder app
 
 The app will not close automatically when you close the browser window or tab.

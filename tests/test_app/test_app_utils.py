@@ -1,6 +1,7 @@
 import csv
 import logging
 import os
+import pathlib
 from datetime import datetime
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
@@ -17,11 +18,13 @@ from remarx.app.utils import (
     create_header,
     create_temp_input,
     get_current_log_file,
+    handle_default_corpus_creation,
     launch_app,
     lifespan,
     redirect_root,
     summarize_corpus_selection,
 )
+from remarx.utils import CorpusPath
 
 
 @patch("remarx.app.utils.uvicorn.run")
@@ -73,6 +76,31 @@ def test_create_temp_input(mock_upload):
         # catch thrown exception
         pass
     assert not tf.is_file()
+
+
+@patch("remarx.app.utils.FileUploadResults")
+@patch("remarx.app.utils.tempfile.NamedTemporaryFile")
+def test_create_temp_input_file_not_closed(mock_named_temp, mock_upload, tmp_path):
+    """If the temp file reports closed=False, finally should close and unlink it."""
+    # Create mock "upload" object
+    mock_upload.name = "file.txt"
+    mock_upload.contents = b"bytes"
+
+    # Simple mock file object returned by NamedTemporaryFile
+    mock_file = Mock()
+    temp_path = tmp_path / "temp.csv"
+    temp_path.touch()  # Create the file so unlink has something to delete
+    mock_file.name = str(temp_path)
+    mock_file.closed = False
+    mock_named_temp.return_value = mock_file
+
+    with create_temp_input(mock_upload) as p:
+        assert pathlib.Path(mock_file.name) == p
+        mock_file.write.assert_called_once_with(b"bytes")
+
+    # finally block: if not closed, close() is called and file is unlinked
+    assert mock_file.close.called
+    assert not temp_path.exists()
 
 
 @patch("remarx.app.utils.mo.vstack")
@@ -218,3 +246,45 @@ def test_launch_app_logging(tmp_path, monkeypatch):
     log_text = log_files[-1].read_text()
     assert "Remarx application starting" in log_text
     assert "Logs are being written to:" in log_text
+
+
+@patch("remarx.app.utils.get_default_corpus_path")
+def test_handle_default_corpus_creation_button_clicked(mock_get_default, tmp_path):
+    """Button click should trigger directory creation via get_default_corpus_path."""
+    button = Mock()
+    button.value = True
+
+    # Initial dirs not ready
+    initial = CorpusPath(root=tmp_path)
+    assert not initial.ready()  # Verify precondition
+
+    # Mock created dirs returned from get_default_corpus_path(create=True)
+    created = CorpusPath(root=tmp_path)
+    mock_get_default.return_value = (True, created)
+
+    ready, dirs, status_msg, kind = handle_default_corpus_creation(button, initial)
+
+    mock_get_default.assert_called_once_with(create=True)
+    assert ready is True
+    assert dirs == created
+    assert "Created default corpus folders" in status_msg
+    assert kind == "success"
+
+
+@patch("remarx.app.utils.get_default_corpus_path")
+def test_handle_default_corpus_creation_dirs_exist(mock_get_default, tmp_path):
+    """If dirs already exist and button not clicked, initial state is returned."""
+    button = Mock()
+    button.value = False
+
+    initial = CorpusPath(root=tmp_path)
+    initial.ensure_directories()
+    assert initial.ready()  # Verify precondition
+
+    ready, dirs, status_msg, kind = handle_default_corpus_creation(button, initial)
+
+    mock_get_default.assert_not_called()  # Should not be called when dirs exist
+    assert ready is True
+    assert dirs == initial
+    assert ":white_check_mark:" in status_msg
+    assert kind == "success"

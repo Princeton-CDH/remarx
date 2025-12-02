@@ -3,6 +3,7 @@ Functionality related to parsing ALTO XML content packaged within a zipfile,
 with the goal of creating a sentence corpus with associated metadata from ALTO.
 """
 
+import contextlib
 import logging
 import pathlib
 from collections.abc import Generator
@@ -31,17 +32,6 @@ class AltoXmlObject(xmlmap.XmlObject):
 
     # alto namespace v4; we may eventually need to support other versions
     ROOT_NAMESPACES: ClassVar[dict[str, str]] = {"alto": ALTO_NAMESPACE_V4}
-
-
-class AltoTag(AltoXmlObject):
-    """
-    Class to for Alto tags. Used to map tag id to tag label.
-    """
-
-    id = xmlmap.StringField("@ID")
-    "tag id (`@ID` attribute)"
-    label = xmlmap.StringField("@LABEL")
-    "tag label (`@LABEL` attribute)"
 
 
 class AltoBlock(AltoXmlObject):
@@ -74,6 +64,8 @@ class TextBlock(AltoBlock):
 
     lines = xmlmap.NodeListField("alto:TextLine", TextLine)
     tag_id = xmlmap.StringField("@TAGREFS")
+    # map tag container to allow lookup of tag label by tag id
+    _tags = xmlmap.NodeField("ancestor::alto:alto/alto:Tags", xmlmap.XmlObject)
 
     @cached_property
     def sorted_lines(self) -> list[TextLine]:
@@ -92,6 +84,21 @@ class TextBlock(AltoBlock):
         """
         return "\n".join([line.text_content for line in self.sorted_lines])
 
+    @property
+    def tag(self) -> str | None:
+        """
+        Tag label; looked up based on `tag_id` in document list of tags.
+        Assumes singular tag and tag id.
+        """
+        if self.tag_id is None:
+            return None
+        # return the label for the alto tag that matches the current tag id
+        # XPath is relative to top level alto:Tags
+        return self._tags.node.xpath(
+            f'alto:OtherTag[@ID="{self.tag_id}"]/@LABEL',
+            namespaces=self.ROOT_NAMESPACES,
+        )[0]  # xpath returns a list; return first value only
+
 
 class AltoDocument(AltoXmlObject):
     """
@@ -100,7 +107,6 @@ class AltoDocument(AltoXmlObject):
 
     blocks = xmlmap.NodeListField(".//alto:TextBlock", TextBlock)
     lines = xmlmap.NodeListField(".//alto:TextLine", TextLine)
-    _tags = xmlmap.NodeListField("alto:Tags/alto:OtherTag", AltoTag)
 
     def is_alto(self) -> bool:
         """
@@ -115,13 +121,6 @@ class AltoDocument(AltoXmlObject):
         )
 
     @cached_property
-    def tags(self) -> dict[str, str]:
-        """
-        Dictionary of block-level tags; key is id, value is label.
-        """
-        return {tag.id: tag.label for tag in self._tags}
-
-    @property
     def sorted_blocks(self) -> list[TextBlock]:
         """
         Returns a list of TextBlocks for this page, sorted by vertical position.
@@ -151,7 +150,7 @@ class AltoDocument(AltoXmlObject):
         # based on block-level semantic tagging
         for block in self.sorted_blocks:
             # use tag for section type, if set; if unset, assume text
-            section = self.tags.get(block.tag_id) or SectionType.TEXT.value
+            section = block.tag or SectionType.TEXT.value
             # if include list is specified and section is not in it, skip;
             # currently includes if section type is unset
             if include is not None and section is not None and section not in include:
@@ -171,6 +170,7 @@ class ALTOInput(FileInput):
         "section_type",
         "title",
         "author",
+        "page_number",
     )
     "List of field names for sentences originating from ALTO XML content."
 
@@ -193,18 +193,10 @@ class ALTOInput(FileInput):
         num_valid_files = 0
         include_sections = self.default_include if self.filter_sections else None
 
-        # track article metadata across pages; metadata is updated while iterating
-        # through blocks and reused for footnotes or later sentences. The
-        # _collecting_title/_collecting_author flags record cases where consecutive
-        # blocks on the same page contribute to a single field (common in DNZ,
-        # where titles or author lines are split across multiple TextBlocks).
-        self._current_title = ""
-        self._current_author = ""
-        self._collecting_title = False
-        self._collecting_author = False
-        # set when we encounter a blank title block; cleared once we know whether
-        # the blank block marked the start of a new article
-        self._pending_title_reset = False
+        # metadata is collected and updated as we iterate through pages
+        self.current_metadata: dict[str, str] = {}
+        # footnotes are collected and yielded last
+        footnote_chunks: list[dict[str, str]] = []
 
         start = time()
         with ZipFile(self.input_file) as archive:
@@ -223,26 +215,48 @@ class ALTOInput(FileInput):
                 logger.debug(
                     f"{base_filename}: {len(alto_xmlobj.blocks)} blocks, {len(alto_xmlobj.lines)} lines"
                 )
+                # clear page number from current metadata if set
+                with contextlib.suppress(KeyError):
+                    del self.current_metadata["page_number"]
 
-                # ensure block-level continuation state resets between files
-                self._collecting_title = False
-                self._collecting_author = False
-                self._pending_title_reset = False
+                # only collect metadata once per file / page
+                collected_metadata = False
 
-                for block in alto_xmlobj.sorted_blocks:
-                    section = alto_xmlobj.tags.get(block.tag_id, SectionType.TEXT.value)
+                for idx, block in enumerate(alto_xmlobj.sorted_blocks):
+                    # use block tag label as section;
+                    # use text as a fallback for blocks with no tag
+                    section = block.tag or SectionType.TEXT.value
+                    # add page number to metadata if found
+                    if section == "page number":
+                        self.current_metadata["page_number"] = block.text_content
+
+                    # section type of author or title indicates new article
+                    # only collect once per page
+                    if not collected_metadata and section in ["author", "Title"]:
+                        # collect metadata using this block and following
+                        self.update_current_metadata(alto_xmlobj.sorted_blocks[idx:])
+                        # set flag that metadata has been collected
+                        collected_metadata = True
+
                     block_text = block.text_content
-                    self._update_article_metadata(section, block_text)
+                    chunk = {
+                        "text": block_text,
+                        "section_type": section,
+                        "file": base_filename,  # use the base xml file for consistency
+                    } | self.current_metadata
 
-                    if include_sections is None or section in include_sections:
-                        yield {
-                            "text": block_text,
-                            "section_type": section,
-                            "title": self._current_title,
-                            "author": self._current_author,
-                            # use the base xml file as filename here, rather than zipfile for all
-                            "file": base_filename,
-                        }
+                    # Apply section filtering up front
+                    if include_sections is not None and section not in include_sections:
+                        continue
+
+                    # Collect footnotes and yield after all body text
+                    if section == "footnote":
+                        footnote_chunks.append(chunk)
+                    else:
+                        yield chunk
+
+            # yield footnotes
+            yield from footnote_chunks
 
         elapsed_time = time() - start
         logger.info(
@@ -252,6 +266,38 @@ class ALTOInput(FileInput):
         # error if no valid files were found
         if num_valid_files == 0:
             raise ValueError(f"No valid ALTO XML files found in {self.file_name}")
+
+    def update_current_metadata(self, blocks: list[TextBlock]) -> None:
+        """Update current article metadata."""
+        # iterate over blocks and update article metadata
+        # bail out when we get a non-title block
+
+        # reset title/author metadata when at the beginning of a new article
+        self.current_metadata.update({"title": "", "author": ""})
+
+        # accumulate consecutive title blocks to preserve multi-line headings
+        title_lines: list[str] = []
+        # accumulate consecutive author blocks
+        author_lines: list[str] = []
+
+        for block in blocks:
+            if block.tag == "Title":
+                title_lines.append(block.text_content.strip())
+            elif block.tag == "author":
+                author_lines.append(block.text_content.strip())
+            elif block.tag == "page number":
+                # skip but don't stop looking for title/author
+                continue
+            else:
+                # non-title/non-author block indicates end of article metadata
+                break
+
+        self.current_metadata.update(
+            {
+                "title": " ".join(title_lines).strip(),
+                "author": " ".join(author_lines).strip(),
+            }
+        )
 
     def check_zipfile_path(
         self, zip_filepath: ZipInfo, zip_archive: ZipFile
@@ -293,80 +339,3 @@ class ALTOInput(FileInput):
             return
 
         return alto_xmlobj
-
-    def _update_article_metadata(
-        self, section: str | None, block_text: str | None
-    ) -> None:
-        """
-        Update running title and author metadata based on the current block label.
-
-        NOTE: Some DNZ articles include trailing signatures or initials without
-        ALTO author tags; those cases are not yet supported since there is no
-        structured signal to retroactively update metadata for prior text blocks.
-        TODO: capture trailing author initials when the ALTO tagging provides a reliable signal.
-        """
-        # Examples of unsupported trailing author cases:
-        # - text block ending with "Oskar Geck." on 1896-97a.pdf_page_124.xml
-        # - closing "Dr. B." line on 1896-97a.pdf_page_253.xml
-
-        section = section or SectionType.TEXT.value
-        text_clean = (block_text or "").strip()
-
-        if section == "Title":
-            self._collecting_author = False
-
-            if text_clean:
-                if self._pending_title_reset:
-                    self._reset_article_metadata()
-                    self._pending_title_reset = False
-
-                if self._collecting_title and self._current_title:
-                    self._current_title = f"{self._current_title}\n{text_clean}"
-                else:
-                    # start a new title; reset author since author metadata follows title
-                    self._current_title = text_clean
-                    self._current_author = ""
-                self._collecting_title = True
-            else:
-                # blank title blocks indicate the start of a new article unless the
-                # following block provides author metadata
-                self._collecting_title = False
-                self._pending_title_reset = True
-            return
-
-        if section == "author":
-            self._collecting_title = False
-            # author blocks finalize title aggregation; metadata now applies to body/footnotes
-
-            if self._pending_title_reset:
-                # blank title immediately followed by author indicates the metadata
-                # belongs to the existing article; do not reset
-                self._pending_title_reset = False
-
-            if text_clean:
-                if self._collecting_author and self._current_author:
-                    self._current_author = f"{self._current_author}\n{text_clean}"
-                else:
-                    self._current_author = text_clean
-                self._collecting_author = True
-            else:
-                # blank author blocks indicate lack of author metadata for this article
-                self._current_author = ""
-                self._collecting_author = False
-
-            return
-
-        # any other section: conclude any title/author collection and apply pending resets
-        if self._pending_title_reset:
-            self._reset_article_metadata()
-            self._pending_title_reset = False
-
-        self._collecting_title = False
-        self._collecting_author = False
-
-    def _reset_article_metadata(self) -> None:
-        """
-        Clear currently collected title/author metadata when a new article boundary is detected.
-        """
-        self._current_title = ""
-        self._current_author = ""

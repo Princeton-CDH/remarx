@@ -1,10 +1,12 @@
 # CHANGELOG
 
-## 0.5.0
+## 0.5.0.dev
 
 ### Sentence corpus creation
 
-- ALTO-generated corpora now include per-sentence `title` and `author` metadata derived from ALTO block tags
+- ALTO input refinements:
+    - ALTO-based sentence corpora now include `title`, `author`, and `page_number` based on block tags
+    - Footnotes now follow all main body content, with correct title, author, and page number metadata
 
 ### Quotation detection
 
@@ -41,11 +43,12 @@
 
 ### Quotation detection
 
-- Add the `remarx-find-quotes` CLI script to run the quote finder, with a `--benchmark` flag to collect performance metrics
+- Add the `find_quotes.py` CLI script to run the quote finder, with a `--benchmark` flag to collect performance metrics
 
 ### Application
 
 - Display logging output in real-time to show progress when building corpus
+- Configured default `~/remarx-data/corpora/original` and `~/remarx-data/corpora/reuse` folders, including in-app prompts to create them and default file browser locations when saving or selecting corpora
 
 ## [0.3.0] - 2025-10-27
 
