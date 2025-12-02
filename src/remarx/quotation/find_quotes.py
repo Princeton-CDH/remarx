@@ -12,10 +12,10 @@ import pathlib
 import sys
 
 from remarx.quotation.pairs import find_quote_pairs
-from remarx.utils import configure_logging
+from remarx.utils import configure_logging, get_default_corpus_path
 
 logger = logging.getLogger(__name__)
-DEFAULT_ORIGINAL_CORPUS_DIR = pathlib.Path.home() / "remarx-data/corpora/original"
+_, DEFAULT_CORPUS_DIRS = get_default_corpus_path()
 
 
 def gather_csv_files(original_inputs: list[pathlib.Path]) -> list[pathlib.Path]:
@@ -141,9 +141,9 @@ def main() -> None:
         reuse_corpus, output_path = positional_paths
         logger.info(
             "No original corpora specified; defaulting to %s",
-            DEFAULT_ORIGINAL_CORPUS_DIR,
+            DEFAULT_CORPUS_DIRS.original,
         )
-        original_inputs = [DEFAULT_ORIGINAL_CORPUS_DIR]
+        original_inputs = [DEFAULT_CORPUS_DIRS.original]
     else:
         original_inputs = [positional_paths[0]]
         reuse_corpus = positional_paths[1]
