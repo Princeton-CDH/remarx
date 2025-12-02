@@ -225,6 +225,7 @@ def test_main_multiple_original_files(
         "remarx-find-quotes",
         "-o",
         str(orig_input),
+        "-o",
         str(second_input),
         str(reuse_input),
         str(output),

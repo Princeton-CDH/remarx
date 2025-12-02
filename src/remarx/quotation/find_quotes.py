@@ -3,7 +3,17 @@ Command-line script to identify sentence-level quotation pairs between corpora.
 
 Example Usage:
 
-    `remarx-find-quotes original_sentences.csv reuse_sentences.csv output.csv`
+    # Single original corpus
+    `remarx-find-quotes -o original_sentences.csv reuse_sentences.csv output.csv`
+
+    # Multiple original corpora (use separate -o flags)
+    `remarx-find-quotes -o original1.csv -o original2.csv reuse_sentences.csv output.csv`
+
+    # Directory of original corpora
+    `remarx-find-quotes -o /path/to/originals reuse_sentences.csv output.csv`
+
+    # Use default original directory (omit -o flag)
+    `remarx-find-quotes reuse_sentences.csv output.csv`
 """
 
 import argparse
@@ -88,20 +98,21 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Find quotation pairs between sentence corpora",
         epilog=(
-            "Usage: remarx-find-quotes [-o ORIGINAL ...] REUSE OUTPUT. "
-            "Repeat -o/--original for each file or directory. If omitted, the default originals directory is used."
+            "Usage: remarx-find-quotes [-o ORIGINAL] ... REUSE OUTPUT.\n"
+            "Repeat -o/--original for each file or directory (e.g., -o file1.csv -o file2.csv).\n"
+            "If omitted, the default originals directory is used."
         ),
     )
     parser.add_argument(
         "-o",
         "--original",
-        nargs="*",
         action="append",
+        type=pathlib.Path,
         metavar="PATH",
         default=[],
         help=(
-            "Original corpus CSV file(s) or directories. Provide one or more paths per flag; "
-            "repeat the flag to add more groups."
+            "Original corpus CSV file or directory. Repeat -o/--original for each file or directory "
+            "(e.g., -o file1.csv -o file2.csv). If omitted, the default originals directory is used."
         ),
     )
     parser.add_argument(
@@ -139,9 +150,7 @@ def main() -> None:
     log_level = logging.DEBUG if args.verbose else logging.INFO
     configure_logging(sys.stdout, log_level=log_level)
 
-    original_inputs = [
-        pathlib.Path(path) for group in args.original for path in (group or [])
-    ]
+    original_inputs = args.original
     reuse_corpus = args.reuse_corpus
     output_path = args.output_path
 
