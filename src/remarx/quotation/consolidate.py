@@ -72,6 +72,11 @@ def consolidate_quotes(df: pl.DataFrame) -> pl.DataFrame:
     If required fields are not present, raises `polars.exceptions.ColumnNotFoundError`.
     Raises `ValueError` when called on an empty dataframe.
 
+    Consolidation only occurs when:
+    - Sentences are sequential in both reuse and original corpora
+    - All sentences within a sequence belong to a single reuse corpus and original corpus
+      (seemingly sequential sentences that span multiple files are not consolidated)
+
     DataFrame is expected to include standard quote pair fields; for consolidated
     quotes, fields are aggregated as follows:
         - `match_score` average across the group
@@ -84,7 +89,6 @@ def consolidate_quotes(df: pl.DataFrame) -> pl.DataFrame:
     """
     if df.is_empty():
         raise ValueError("Cannot consolidate quotes in empty DataFrame")
-
 
     # first identify sequential reuse sentences
     df_seq = identify_sequences(
