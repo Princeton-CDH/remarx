@@ -17,6 +17,13 @@ from remarx.utils import configure_logging
 logger = logging.getLogger(__name__)
 
 
+def _error_exit(message: str) -> None:
+    """Log error, write to stderr, and exit."""
+    logger.error(message)
+    sys.stderr.write(f"{message}\n")
+    raise SystemExit(1)
+
+
 def run_find_quotes(
     original_corpus: pathlib.Path,
     reuse_corpus: pathlib.Path,
@@ -89,6 +96,18 @@ def main() -> None:
 
     log_level = logging.DEBUG if args.verbose else logging.INFO
     configure_logging(sys.stdout, log_level=log_level)
+
+    # Validate input paths exist
+    if not args.original_corpus.exists():
+        _error_exit(f"Error: input file {args.original_corpus} does not exist")
+
+    if not args.reuse_corpus.exists():
+        _error_exit(f"Error: input file {args.reuse_corpus} does not exist")
+
+    # Validate output directory exists
+    output_dir = args.output_path.parent
+    if not output_dir.exists():
+        _error_exit(f"Error: output directory {output_dir} does not exist")
 
     run_find_quotes(
         original_corpus=args.original_corpus,
