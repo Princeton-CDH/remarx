@@ -27,11 +27,11 @@ class CorpusPath:
     def __post_init__(self) -> None:
         """Populate unset directories using defaults under the data root."""
         base_root = (self.root or DEFAULT_CORPUS_ROOT).expanduser()
-        object.__setattr__(self, "root", base_root)
+        self.root = base_root
         if self.original is None:
-            object.__setattr__(self, "original", base_root / "original")
+            self.original = base_root / "original"
         if self.reuse is None:
-            object.__setattr__(self, "reuse", base_root / "reuse")
+            self.reuse = base_root / "reuse"
 
     def ready(self) -> bool:
         """Return True if both default corpus directories already exist."""
