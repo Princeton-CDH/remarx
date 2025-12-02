@@ -15,6 +15,9 @@ DEFAULT_DATA_ROOT = pathlib.Path.home() / "remarx-data"
 # Default corpus directory locations within the data directory
 DEFAULT_CORPUS_ROOT = DEFAULT_DATA_ROOT / "corpora"
 
+# Default quote finder output directory
+DEFAULT_QUOTE_OUTPUT_ROOT = DEFAULT_DATA_ROOT / "quote-finder-output"
+
 
 @dataclass(slots=True)
 class CorpusPath:
@@ -62,6 +65,25 @@ def get_default_corpus_path(
         directories.ensure_directories()
 
     return directories.ready(), directories
+
+
+def get_default_quote_output_path(
+    create: bool = False,
+) -> tuple[bool, pathlib.Path]:
+    """
+    Return the default quote finder output directory path and optionally create it if missing.
+
+    :param create: If True, create the directory if it doesn't exist
+    :returns: Tuple of (ready flag, path to quote output directory)
+    """
+    quote_output_path = DEFAULT_QUOTE_OUTPUT_ROOT.expanduser()
+    ready = quote_output_path.exists()
+
+    if create and not ready:
+        quote_output_path.mkdir(parents=True, exist_ok=True)
+        ready = True
+
+    return ready, quote_output_path
 
 
 def configure_logging(

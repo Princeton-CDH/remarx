@@ -33,13 +33,14 @@ def _():
     )
 
     from remarx.sentence.corpus import FileInput
-    from remarx.utils import get_default_corpus_path
+    from remarx.utils import get_default_corpus_path, get_default_quote_output_path
     from remarx.quotation.pairs import find_quote_pairs
     return (
         create_header,
         find_quote_pairs,
         get_current_log_file,
         get_default_corpus_path,
+        get_default_quote_output_path,
         handle_default_corpus_creation,
         logging,
         mo,
@@ -113,7 +114,7 @@ def _(
     handle_default_corpus_creation,
     mo,
 ):
-    default_dirs_ready, default_dirs, status_msg, callout_kind = (
+    default_dirs_ready, default_dirs, corpus_status_msg, corpus_callout_kind = (
         handle_default_corpus_creation(create_dirs_btn, default_dirs_initial)
     )
 
@@ -129,13 +130,13 @@ def _(
                 - **Reuse corpora**: `{default_dirs.reuse}`
                 """
                 ),
-                mo.md(status_msg),
+                mo.md(corpus_status_msg),
                 create_dirs_btn,
             ]
         ),
-        kind=callout_kind,
+        kind=corpus_callout_kind,
     )
-    return default_dirs_ready, default_dirs
+    return default_dirs, default_dirs_ready
 
 
 
@@ -248,17 +249,87 @@ def _(mo):
 
     Select the folder where the resulting quote pairs file should be saved.
     The output CSV file will be named based on the input files.
-
-    *To select a folder, click the file icon to the left of the folder's name.
-    A checkmark will appear when a selection is made.
-    Clicking anywhere else within the folder's row will cause the browser to navigate to this folder and subsequently display any folders *within* this folder.*
     """)
     return
 
 
 @app.cell
-def _(default_dirs, default_dirs_ready, mo, pathlib):
-    initial_dir = default_dirs.root if default_dirs_ready else pathlib.Path.home()
+def _(get_default_quote_output_path):
+    _ready, default_quote_output_initial = get_default_quote_output_path()
+    return (default_quote_output_initial,)
+
+
+@app.cell
+def _(default_quote_output_initial, mo):
+    create_quote_output_btn = mo.ui.run_button(
+        label="Create default quote output folder",
+        disabled=default_quote_output_initial.exists(),
+        tooltip=f"Create `{default_quote_output_initial}`",
+    )
+    return create_quote_output_btn,
+
+
+@app.cell
+def _(mo):
+    custom_output_toggle = mo.ui.switch(
+        label="Use a custom output location", value=False
+    )
+    return custom_output_toggle,
+
+
+@app.cell
+def _(create_quote_output_btn, custom_output_toggle, default_quote_output_initial, get_default_quote_output_path, mo):
+    # Always initialize variables
+    default_quote_output_ready_initial = default_quote_output_initial.exists()
+    default_quote_output = default_quote_output_initial
+    default_quote_output_ready = default_quote_output_ready_initial
+
+    # Initialize status message and callout kind unconditionally
+    quote_output_status_msg = (
+        ":white_check_mark: Default quote output folder is ready."
+        if default_quote_output_ready_initial
+        else ":x: Default quote output folder was not found."
+    )
+    quote_output_callout_kind = "success" if default_quote_output_ready_initial else "warn"
+
+    # Update if button was clicked and folder didn't exist
+    if create_quote_output_btn.value and not default_quote_output_ready_initial:
+        default_quote_output_ready, default_quote_output = get_default_quote_output_path(
+            create=True
+        )
+        quote_output_status_msg = f"Created default quote output folder at `{default_quote_output}`"
+        quote_output_callout_kind = "success"
+
+    mo.callout(
+        mo.vstack(
+            [
+                mo.md("""
+                By default, quote pair outputs are saved to the default quote output folder if it exists.
+                """),
+                mo.md(f"**Default location:** `{default_quote_output}`"),
+                mo.md(quote_output_status_msg),
+                create_quote_output_btn,
+                mo.md("---"),
+                mo.md("""
+                    **Option 1:** Output to default folder (recommended)
+                """),
+                mo.md("---"),
+                mo.md("""
+                    **Option 2:** Toggle custom output if you prefer to browse to a different folder
+                """),
+                custom_output_toggle,
+            ]
+        ),
+        kind=quote_output_callout_kind,
+    )
+    return default_quote_output, default_quote_output_ready
+
+
+@app.cell
+def _(default_quote_output, default_quote_output_ready, mo, pathlib):
+    initial_dir = (
+        default_quote_output if default_quote_output_ready else pathlib.Path.home()
+    )
     select_output_dir = mo.ui.file_browser(
         selection_mode="directory",
         multiple=False,
@@ -269,21 +340,63 @@ def _(default_dirs, default_dirs_ready, mo, pathlib):
 
 
 @app.cell
-def _(mo, select_output_dir):
-    output_dir = select_output_dir.value[0] if select_output_dir.value else None
-    output_dir_msg = f"`{output_dir.path}`" if output_dir else "None selected"
-    out_callout_type = "success" if output_dir else "warn"
+def _(
+    custom_output_toggle,
+    default_quote_output,
+    default_quote_output_ready,
+    mo,
+    pathlib,
+    select_output_dir,
+):
+    output_dir_path: pathlib.Path | None = None
+    save_callout_kind = "success"
+    callout_contents: list = []
+
+    if custom_output_toggle.value:
+        selected_dir = select_output_dir.value[0] if select_output_dir.value else None
+        output_dir_path = (
+            pathlib.Path(selected_dir.path) if selected_dir is not None else None
+        )
+        save_callout_kind = "success" if output_dir_path else "warn"
+        output_msg = (
+            f"**Save Location:** `{output_dir_path}`"
+            if output_dir_path
+            else "No custom folder selected"
+        )
+        callout_contents = [
+            mo.md("Select a custom folder to save the quote pairs."),
+            mo.md("""
+                *To select a folder, click the file icon to the left of the folder's name.
+A checkmark will appear when a selection is made.
+Clicking anywhere else within the folder's row will cause the browser to navigate to this folder and subsequently display any folders *within* this folder.*
+            """
+            ),
+            select_output_dir,
+            mo.md(output_msg),
+        ]
+    else:
+        if default_quote_output_ready:
+            output_dir_path = default_quote_output
+            callout_contents = [
+                mo.md(
+                    "The quote pairs will be saved under the default folder shown above."
+                ),
+                mo.md(f"**Save Location:** `{default_quote_output}`"),
+            ]
+            save_callout_kind = "success"
+        else:
+            callout_contents = [
+                mo.md(
+                    "Default folder is not available. Create it above or toggle custom output to choose a location."
+                )
+            ]
+            save_callout_kind = "warn"
 
     mo.callout(
-        mo.vstack(
-            [
-                select_output_dir,
-                mo.md(f"**Save Location:** {output_dir_msg}\n"),
-            ],
-        ),
-        kind=out_callout_type,
+        mo.vstack(callout_contents),
+        kind=save_callout_kind,
     )
-    return (output_dir,)
+    return (output_dir_path,)
 
 
 @app.cell
@@ -315,17 +428,17 @@ def _(mo):
 
 
 @app.cell
-def _(consolidate_quotes, mo, original_csvs, output_dir, reuse_csvs):
+def _(consolidate_quotes, mo, original_csvs, output_dir_path, reuse_csvs):
     # Determine inputs based on file & folder selections
     original_file = original_csvs[0] if original_csvs else None
     reuse_file = reuse_csvs[0] if reuse_csvs else None
 
     output_csv = None
-    if original_file and reuse_file and output_dir:
+    if original_file and reuse_file and output_dir_path:
         output_filename = (
             f"quote_pairs_{original_file.path.stem}_{reuse_file.path.stem}.csv"
         )
-        output_csv = output_dir.path / output_filename
+        output_csv = output_dir_path / output_filename
 
     original_file_msg = (
         f"`{original_file.path.name}`"
@@ -340,11 +453,11 @@ def _(consolidate_quotes, mo, original_csvs, output_dir, reuse_csvs):
     )
 
     dir_msg = (
-        f"`{output_dir.path}`" if output_dir else "*Please select a save location*"
+        f"`{output_dir_path}`" if output_dir_path else "*Please select a save location*"
     )
 
     button = mo.ui.run_button(
-        disabled=not (original_file and reuse_file and output_dir),
+        disabled=not (original_file and reuse_file and output_dir_path),
         label="Find Quote Pairs",
         tooltip="Click to find quote pairs",
     )
