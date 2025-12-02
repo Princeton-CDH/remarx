@@ -1,4 +1,8 @@
+import csv
 import logging
+import os
+from datetime import datetime
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import marimo
@@ -16,6 +20,7 @@ from remarx.app.utils import (
     launch_app,
     lifespan,
     redirect_root,
+    summarize_corpus_selection,
 )
 
 
@@ -123,6 +128,50 @@ async def test_redirect_root():
 
     assert response.status_code == 302
     assert response.headers["location"] == "/corpus-builder"
+
+
+def test_summarize_corpus_selection_with_sections(tmp_path):
+    csv_path = tmp_path / "corpus.csv"
+    with csv_path.open("w", newline="", encoding="utf-8") as fh:
+        writer = csv.writer(fh)
+        writer.writerow(["sent_id", "text", "section_type"])
+        writer.writerow(["1", "foo", "text"])
+        writer.writerow(["2", "bar", "footnote"])
+        writer.writerow(["3", "baz", "text"])
+
+    timestamp = 1_234_567_890
+    os.utime(csv_path, (timestamp, timestamp))
+
+    selection = SimpleNamespace(path=csv_path)
+    summary = summarize_corpus_selection(selection)
+
+    assert summary == {
+        "corpus": csv_path.name,
+        "total_lines": 3,
+        "body_text_lines": 2,
+        "footnote_lines": 1,
+        "last_updated": datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S"),
+    }
+
+
+def test_summarize_corpus_selection_without_sections(tmp_path):
+    csv_path = tmp_path / "no_sections.csv"
+    with csv_path.open("w", newline="", encoding="utf-8") as fh:
+        writer = csv.writer(fh)
+        writer.writerow(["sent_id", "text"])
+        writer.writerow(["1", "foo"])
+        writer.writerow(["2", "bar"])
+
+    summary = summarize_corpus_selection(SimpleNamespace(path=csv_path))
+
+    assert summary["total_lines"] == 2
+    assert summary["body_text_lines"] == 2
+    assert summary["footnote_lines"] == 0
+
+
+def test_summarize_corpus_selection_invalid_path(tmp_path):
+    missing = tmp_path / "missing.csv"
+    assert summarize_corpus_selection(SimpleNamespace(path=missing)) is None
 
 
 def test_get_current_log_file(tmp_path):

@@ -9,8 +9,11 @@ import tempfile
 import webbrowser
 from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager
+from datetime import datetime
+from typing import Protocol, runtime_checkable
 
 import marimo as mo
+import polars as pl
 import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
@@ -102,6 +105,13 @@ def create_header() -> None:
     )
 
 
+@runtime_checkable
+class _HasPath(Protocol):
+    """Protocol for objects that expose a filesystem path via a ``path`` attribute."""
+
+    path: str | pathlib.Path | None
+
+
 @contextlib.contextmanager
 def create_temp_input(
     file_upload: FileUploadResults,
@@ -125,3 +135,54 @@ def create_temp_input(
         if not temp_file.closed:
             temp_file.close()
         pathlib.Path.unlink(temp_file.name)
+
+
+def summarize_corpus_selection(
+    selection: _HasPath | str | pathlib.Path | None,
+) -> dict[str, int | str] | None:
+    """
+    Summarize a sentence corpus CSV selected in the UI.
+
+    Accepts either a file-browser selection (with a ``path`` attribute) or a
+    filesystem path and returns corpus statistics that can be displayed in the
+    Marimo table.
+    """
+
+    path_value = getattr(selection, "path", selection)
+    if path_value is None:
+        return None
+
+    path = pathlib.Path(path_value)
+    if not path.is_file():
+        return None
+
+    # Use lazy scanning so even large corpora only require lightweight
+    # aggregations while collecting summary statistics.
+    corpus = pl.scan_csv(path, infer_schema_length=0)
+    total_sentences = corpus.select(pl.len()).collect().item()
+
+    if "section_type" in corpus.collect_schema():
+        counts = (
+            corpus.group_by("section_type").agg(pl.len().alias("sentences")).collect()
+        )
+        body_sentences = int(
+            counts.filter(pl.col("section_type") == "text")["sentences"].sum()
+        )
+        footnote_sentences = int(
+            counts.filter(pl.col("section_type") == "footnote")["sentences"].sum()
+        )
+    else:
+        body_sentences = total_sentences
+        footnote_sentences = 0
+
+    last_updated = datetime.fromtimestamp(path.stat().st_mtime).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+
+    return {
+        "corpus": path.name,
+        "total_lines": int(total_sentences),
+        "body_text_lines": body_sentences,
+        "footnote_lines": footnote_sentences,
+        "last_updated": last_updated,
+    }
