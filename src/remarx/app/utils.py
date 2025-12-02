@@ -19,7 +19,7 @@ from fastapi.responses import RedirectResponse
 from marimo._plugins.ui._impl.input import FileUploadResults
 
 import remarx
-from remarx.utils import configure_logging
+from remarx.utils import CorpusPath, configure_logging, get_default_corpus_path
 
 # Server configuration
 HOST = "localhost"
@@ -125,3 +125,31 @@ def create_temp_input(
         if not temp_file.closed:
             temp_file.close()
         pathlib.Path.unlink(temp_file.name)
+
+
+def handle_default_corpus_creation(
+    button: mo.ui.run_button,
+    default_dirs_initial: CorpusPath,
+    *,
+    ready_message: str = ":white_check_mark: Default corpus folders are ready.",
+    missing_message: str = ":x: Default corpus folders were not found.",
+) -> tuple[bool, CorpusPath, str, str]:
+    """
+    Update default corpus directory state based on the create button.
+
+    :returns: Tuple of (ready flag, directories object, status message, callout kind)
+    """
+
+    default_dirs = default_dirs_initial
+    default_dirs_ready_initial = default_dirs_initial.ready()
+    default_dirs_ready = default_dirs_ready_initial
+
+    status_msg = ready_message if default_dirs_ready_initial else missing_message
+    callout_kind = "success" if default_dirs_ready_initial else "warn"
+
+    if button.value and not default_dirs_ready_initial:
+        default_dirs_ready, default_dirs = get_default_corpus_path(create=True)
+        status_msg = f"Created default corpus folders under `{default_dirs.root}`"
+        callout_kind = "success"
+
+    return default_dirs_ready, default_dirs, status_msg, callout_kind

@@ -28,14 +28,18 @@ def _():
         create_header,
         create_temp_input,
         get_current_log_file,
+        handle_default_corpus_creation,
     )
 
     from remarx.sentence.corpus import FileInput
+    from remarx.utils import get_default_corpus_path
     from remarx.quotation.pairs import find_quote_pairs
     return (
         create_header,
         find_quote_pairs,
         get_current_log_file,
+        get_default_corpus_path,
+        handle_default_corpus_creation,
         logging,
         mo,
         pathlib,
@@ -60,6 +64,25 @@ def _(get_current_log_file, logging):
 
 
 @app.cell
+def _(get_default_corpus_path):
+    _ready, default_dirs_initial = get_default_corpus_path()
+    return (default_dirs_initial,)
+
+
+@app.cell
+def _(default_dirs_initial, mo):
+    create_dirs_btn = mo.ui.run_button(
+        label="Create default corpus folders",
+        disabled=default_dirs_initial.ready(),
+        tooltip=(
+            f"Create `{default_dirs_initial.original}` and "
+            f"`{default_dirs_initial.reuse}`"
+        ),
+    )
+    return create_dirs_btn,
+
+
+@app.cell
 def _(mo):
     mo.md(r"""
     ## :mag: Quotation Finder
@@ -81,21 +104,57 @@ def _(mo):
     """)
     return
 
+@app.cell
+def _(
+    create_dirs_btn,
+    default_dirs_initial,
+    handle_default_corpus_creation,
+    mo,
+):
+    default_dirs_ready, default_dirs, status_msg, callout_kind = (
+        handle_default_corpus_creation(create_dirs_btn, default_dirs_initial)
+    )
+
+    mo.callout(
+        mo.vstack(
+            [
+                mo.md("""
+                By default, these two folders are used as the default location for selecting original and reuse sentence corpora if default corpus folders were created.
+                """),
+                mo.md(
+                    f"""
+                - **Original corpora**: `{default_dirs.original}`
+                - **Reuse corpora**: `{default_dirs.reuse}`
+                """
+                ),
+                mo.md(status_msg),
+                create_dirs_btn,
+            ]
+        ),
+        kind=callout_kind,
+    )
+    return default_dirs_ready, default_dirs
+
+
 
 @app.cell
-def _(mo, pathlib):
+def _(default_dirs, default_dirs_ready, mo, pathlib):
+    reuse_start = default_dirs.reuse if default_dirs_ready else pathlib.Path.home()
+    original_start = (
+        default_dirs.original if default_dirs_ready else pathlib.Path.home()
+    )
     # Create file browsers for quotation detection (CSV files only)
     original_csv_browser = mo.ui.file_browser(
         selection_mode="file",
         multiple=True,
-        initial_path=pathlib.Path.home(),
+        initial_path=original_start,
         filetypes=[".csv"],
     )
 
     reuse_csv_browser = mo.ui.file_browser(
         selection_mode="file",
         multiple=True,
-        initial_path=pathlib.Path.home(),
+        initial_path=reuse_start,
         filetypes=[".csv"],
     )
     return original_csv_browser, reuse_csv_browser
@@ -171,11 +230,12 @@ def _(mo):
 
 
 @app.cell
-def _(mo, pathlib):
+def _(default_dirs, default_dirs_ready, mo, pathlib):
+    initial_dir = default_dirs.root if default_dirs_ready else pathlib.Path.home()
     select_output_dir = mo.ui.file_browser(
         selection_mode="directory",
         multiple=False,
-        initial_path=pathlib.Path.home(),
+        initial_path=initial_dir,
         filetypes=[],  # only show directories
     )
     return (select_output_dir,)
@@ -297,7 +357,7 @@ def _(
         spinner_msg = f"Finding quote pairs between {original_file.path.name} and {reuse_file.path.name}"
         with mo.status.spinner(title=spinner_msg) as _spinner:
             find_quote_pairs(
-                original_corpus=original_file.path,
+                original_corpus=[original_file.path],
                 reuse_corpus=reuse_file.path,
                 out_csv=output_csv,
                 show_progress_bar=False,
