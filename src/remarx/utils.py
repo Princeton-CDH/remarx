@@ -25,7 +25,13 @@ class CorpusPath:
     reuse: pathlib.Path | None = None
 
     def __post_init__(self) -> None:
-        """Populate unset directories using defaults under the data root."""
+        """
+        Populate unset directories using the default data root, expanding "~"
+        or "~user" values with `pathlib.Path.expanduser()` so shell-style root
+        paths are accepted. Callers can override any directory; otherwise the
+        root defaults to `DEFAULT_CORPUS_ROOT` under `remarx-data` and the
+        `original` and `reuse` directories live as its subfolders.
+        """
         base_root = (self.root or DEFAULT_CORPUS_ROOT).expanduser()
         self.root = base_root
         if self.original is None:
