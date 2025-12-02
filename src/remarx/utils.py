@@ -14,8 +14,6 @@ DEFAULT_DATA_ROOT = pathlib.Path.home() / "remarx-data"
 
 # Default corpus directory locations within the data directory
 DEFAULT_CORPUS_ROOT = DEFAULT_DATA_ROOT / "corpora"
-DEFAULT_ORIGINAL_CORPUS_DIR = DEFAULT_CORPUS_ROOT / "original"
-DEFAULT_REUSE_CORPUS_DIR = DEFAULT_CORPUS_ROOT / "reuse"
 
 
 @dataclass(slots=True)
