@@ -20,6 +20,7 @@ def test_main(mock_find_quote_pairs, mock_configure_logging, tmp_path):
     # default options
     args = [
         "remarx-find-quotes",
+        "-o",
         str(orig_input),
         str(reuse_input),
         str(output),
@@ -66,6 +67,7 @@ def test_main_check_paths(
     output = tmp_path / "out" / "pairs.csv"
     args = [
         "remarx-find-quotes",
+        "-o",
         str(orig_input),
         str(reuse_input),
         str(output),
@@ -143,6 +145,7 @@ def test_main_original_directory(
 
     args = [
         "remarx-find-quotes",
+        "-o",
         str(orig_dir),
         str(reuse_input),
         str(output),
@@ -178,6 +181,7 @@ def test_main_original_directory_without_csv(
 
     args = [
         "remarx-find-quotes",
+        "-o",
         str(orig_dir),
         str(reuse_input),
         str(output),
@@ -200,7 +204,7 @@ def test_main_too_few_paths(mock_find_quote_pairs, mock_configure_logging, capsy
         pytest.raises(SystemExit),
     ):
         find_quotes.main()
-    assert "reuse corpus and output path are required" in capsys.readouterr().err
+    assert "required: output_path" in capsys.readouterr().err
     mock_find_quote_pairs.assert_not_called()
 
 
@@ -219,6 +223,7 @@ def test_main_multiple_original_files(
 
     args = [
         "remarx-find-quotes",
+        "-o",
         str(orig_input),
         str(second_input),
         str(reuse_input),

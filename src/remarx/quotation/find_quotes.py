@@ -88,19 +88,31 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Find quotation pairs between sentence corpora",
         epilog=(
-            "Usage: remarx-find-quotes [ORIGINAL ... | ORIGINAL_DIR ...] REUSE OUTPUT. "
-            "List zero or more original corpus CSV files or directories before the reuse corpus. "
-            "If omitted, the default path will be used."
+            "Usage: remarx-find-quotes [-o ORIGINAL ...] REUSE OUTPUT. "
+            "Repeat -o/--original for each file or directory. If omitted, the default originals directory is used."
         ),
     )
     parser.add_argument(
-        "paths",
-        nargs="+",
+        "-o",
+        "--original",
+        nargs="*",
+        action="append",
         metavar="PATH",
+        default=[],
         help=(
-            "Paths to corpora. Specify any number of original corpus CSV files or directories "
-            "followed by the reuse corpus CSV and output file."
+            "Original corpus CSV file(s) or directories. Provide one or more paths per flag; "
+            "repeat the flag to add more groups."
         ),
+    )
+    parser.add_argument(
+        "reuse_corpus",
+        type=pathlib.Path,
+        help="Path to the reuse sentence corpus CSV",
+    )
+    parser.add_argument(
+        "output_path",
+        type=pathlib.Path,
+        help="Path where the quote pairs CSV will be written",
     )
     parser.add_argument(
         "--consolidate",
@@ -127,13 +139,11 @@ def main() -> None:
     log_level = logging.DEBUG if args.verbose else logging.INFO
     configure_logging(sys.stdout, log_level=log_level)
 
-    if len(args.paths) < 2:
-        parser.error("reuse corpus and output path are required")
-
-    positional_paths = [pathlib.Path(p) for p in args.paths]
-    reuse_corpus = positional_paths[-2]
-    output_path = positional_paths[-1]
-    original_inputs = positional_paths[:-2]
+    original_inputs = [
+        pathlib.Path(path) for group in args.original for path in (group or [])
+    ]
+    reuse_corpus = args.reuse_corpus
+    output_path = args.output_path
 
     if not original_inputs:
         logger.info(
