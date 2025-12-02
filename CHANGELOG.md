@@ -42,6 +42,7 @@
 ### Application
 
 - Display logging output in real-time to show progress when building corpus
+- Configured default `~/remarx-data/corpora/original` and `~/remarx-data/corpora/reuse` folders, including in-app prompts to create them and default file browser locations when saving or selecting corpora
 
 ## [0.3.0] - 2025-10-27
 

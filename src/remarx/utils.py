@@ -5,8 +5,63 @@ Utility functions for the remarx package
 import io
 import logging
 import pathlib
+from dataclasses import dataclass
 from datetime import datetime
 from typing import TextIO
+
+# Default data directory under the user's home directory
+DEFAULT_DATA_ROOT = pathlib.Path.home() / "remarx-data"
+
+# Default corpus directory locations within the data directory
+DEFAULT_CORPUS_ROOT = DEFAULT_DATA_ROOT / "corpora"
+
+
+@dataclass(slots=True)
+class CorpusPath:
+    """Paths for the default corpus directory structure."""
+
+    root: pathlib.Path | None = None
+    original: pathlib.Path | None = None
+    reuse: pathlib.Path | None = None
+
+    def __post_init__(self) -> None:
+        """
+        Populate unset directories using the default data root, expanding "~"
+        or "~user" values with `pathlib.Path.expanduser()` so shell-style root
+        paths are accepted. Callers can override any directory; otherwise the
+        root defaults to `DEFAULT_CORPUS_ROOT` under `remarx-data` and the
+        `original` and `reuse` directories live as its subfolders.
+        """
+        base_root = (self.root or DEFAULT_CORPUS_ROOT).expanduser()
+        self.root = base_root
+        if self.original is None:
+            self.original = base_root / "original"
+        if self.reuse is None:
+            self.reuse = base_root / "reuse"
+
+    def ready(self) -> bool:
+        """Return True if both default corpus directories already exist."""
+
+        return all(path.exists() for path in (self.original, self.reuse))
+
+    def ensure_directories(self) -> None:
+        """Create the corpus directories if they do not exist."""
+
+        for path in (self.root, self.original, self.reuse):
+            path.mkdir(parents=True, exist_ok=True)
+
+
+def get_default_corpus_path(
+    create: bool = False,
+) -> tuple[bool, CorpusPath]:
+    """Return default corpus directories and optionally create them if missing."""
+
+    directories = CorpusPath()
+
+    if create:
+        directories.ensure_directories()
+
+    return directories.ready(), directories
 
 
 def configure_logging(
