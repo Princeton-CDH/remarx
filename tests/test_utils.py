@@ -129,6 +129,16 @@ def test_get_default_corpus_path_creates(patched_default_corpus_paths):
     assert ready_again
 
 
+def test_corpus_path_post_init_sets_defaults(patched_default_corpus_paths):
+    """Test that __post_init__ sets original and reuse when they are None."""
+    root = patched_default_corpus_paths
+    dirs = CorpusPath()
+
+    assert dirs.original == root / "original"
+    assert dirs.reuse == root / "reuse"
+    assert dirs.root == root
+
+
 def test_corpus_path_ready_and_ensure_directories(patched_default_corpus_paths):
     root = patched_default_corpus_paths
     dirs = CorpusPath()
