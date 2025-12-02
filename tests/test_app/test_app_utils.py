@@ -202,6 +202,10 @@ def test_summarize_corpus_selection_invalid_path(tmp_path):
     assert summarize_corpus_selection(SimpleNamespace(path=missing)) is None
 
 
+def test_summarize_corpus_selection_none_path():
+    assert summarize_corpus_selection(SimpleNamespace(path=None)) is None
+
+
 def test_get_current_log_file(tmp_path):
     logger = logging.getLogger()
     original_handlers = logger.handlers[:]

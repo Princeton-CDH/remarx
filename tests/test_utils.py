@@ -7,7 +7,12 @@ from unittest.mock import patch
 
 import pytest
 
-from remarx.utils import CorpusPath, configure_logging, get_default_corpus_path
+from remarx.utils import (
+    CorpusPath,
+    configure_logging,
+    get_default_corpus_path,
+    get_default_quote_output_path,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -156,3 +161,15 @@ def test_corpus_path_ready_and_ensure_directories(patched_default_corpus_paths):
     assert dirs.root.exists()
     assert dirs.original.exists()
     assert dirs.reuse.exists()
+
+
+def test_get_default_quote_output_path_creates(tmp_path):
+    data_root = tmp_path / "remarx-data"
+    quote_output_root = data_root / "quote-finder-output"
+    with (
+        patch("remarx.utils.DEFAULT_DATA_ROOT", data_root),
+        patch("remarx.utils.DEFAULT_QUOTE_OUTPUT_ROOT", quote_output_root),
+    ):
+        ready, path = get_default_quote_output_path(create=True)
+        assert ready
+        assert path.exists()
