@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 0.5.0.dev
+## 0.5.0
 
 ### Sentence corpus creation
 
@@ -16,8 +16,9 @@
     - Quote consolidation is enabled by default but configurable in both app and command line script
     - Quotes are only consolidated for sequential sentences from a single source file
 - Now supports multiple original sentence corpora as input
+    - `remarx-find-quotes` script accepts one or more CSV files or directories of CSVs for original corpora; uses default original corpus location when no original path is specified
 
-### Scripts
+### Non-package scripts
 
 - Add `xquery` directory with instructions and XQuery files for investigating
     & reporting on continuing paragraph and footnote content in MEGA TEI
@@ -42,7 +43,7 @@
 
 ### Quotation detection
 
-- Add the `find_quotes.py` CLI script to run the quote finder, with a `--benchmark` flag to collect performance metrics
+- Add `remarx-find-quotes` script to run the quote finder, with a `--benchmark` option to collect performance metrics
 
 ### Application
 
