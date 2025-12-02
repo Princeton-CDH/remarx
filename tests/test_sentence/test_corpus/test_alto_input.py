@@ -318,7 +318,10 @@ def test_altoinput_includes_title_and_author_metadata():
     )
     assert first_text["title"] == "Arbeiter und Gewerbeausstellung."
     assert first_text["author"] == ""
+    # first page does not have a page number block
+    assert "page_number" not in first_text
 
+    # get the first text chunk from page 5 file
     marx_text = next(
         chunk
         for chunk in chunks
@@ -330,9 +333,11 @@ def test_altoinput_includes_title_and_author_metadata():
         "Lassalleanismus und Gewerkschaftskampf."
     )
     assert marx_text["author"] == "Vorbemerkung."
+    # page_5.xml has a text block marked as page number with text content 5
+    assert marx_text["page_number"] == "5"
 
 
-def test_footnotes_inherit_article_metadata(tmp_path: pathlib.Path):
+def test_footnotes_include_metadata(tmp_path: pathlib.Path):
     archive_path = tmp_path / "alto_footnote_fixture.zip"
     with ZipFile(archive_path, "w") as archive:
         archive.write(
@@ -348,6 +353,7 @@ def test_footnotes_inherit_article_metadata(tmp_path: pathlib.Path):
     )
     assert footnote_chunk["title"] == "Ein Brief von Karl Marx an J. B. v. Schweitzer."
     assert footnote_chunk["author"] == "Der Herausgeber."
+    assert footnote_chunk["page_number"] == "9"
     assert "Historisch" in footnote_chunk["text"]
     assert "Manuskript" in footnote_chunk["text"]
 
@@ -355,6 +361,7 @@ def test_footnotes_inherit_article_metadata(tmp_path: pathlib.Path):
     text_chunk = next(chunk for chunk in chunks if chunk["section_type"] == "text")
     assert text_chunk["title"] == "Ein Brief von Karl Marx an J. B. v. Schweitzer."
     assert text_chunk["author"] == "Der Herausgeber."
+    assert text_chunk["page_number"] == "9"
 
 
 def test_altoinput_footnotes_emitted_last(tmp_path: pathlib.Path):
