@@ -175,10 +175,10 @@ def test_summarize_corpus_selection_with_sections(tmp_path):
 
     assert summary == {
         "corpus": csv_path.name,
-        "total_lines": 3,
-        "body_text_lines": 2,
-        "footnote_lines": 1,
-        "last_updated": datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S"),
+        "total lines": 3,
+        "body text lines": 2,
+        "footnote lines": 1,
+        "last updated": datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S"),
     }
 
 
@@ -192,9 +192,9 @@ def test_summarize_corpus_selection_without_sections(tmp_path):
 
     summary = summarize_corpus_selection(SimpleNamespace(path=csv_path))
 
-    assert summary["total_lines"] == 2
-    assert summary["body_text_lines"] == 2
-    assert summary["footnote_lines"] == 0
+    assert summary["total lines"] == 2
+    assert summary["body text lines"] == 2
+    assert summary["footnote lines"] == 0
 
 
 def test_summarize_corpus_selection_invalid_path(tmp_path):

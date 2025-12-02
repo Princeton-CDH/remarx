@@ -181,10 +181,10 @@ def summarize_corpus_selection(
 
     return {
         "corpus": path.name,
-        "total_lines": int(total_sentences),
-        "body_text_lines": body_sentences,
-        "footnote_lines": footnote_sentences,
-        "last_updated": last_updated,
+        "total lines": int(total_sentences),
+        "body text lines": body_sentences,
+        "footnote lines": footnote_sentences,
+        "last updated": last_updated,
     }
 
 

@@ -164,16 +164,20 @@ def _(default_dirs, default_dirs_ready, mo, pathlib):
 
 
 @app.cell
-def _(mo, original_csv_browser, reuse_csv_browser):
+def _(mo, original_csv_browser, pathlib, reuse_csv_browser):
     # Process file selections for quotation detection
-    original_csvs = original_csv_browser.value or []
+    original_selections = original_csv_browser.value or []
     reuse_csvs = reuse_csv_browser.value or []
 
+    # Convert file browser selections to paths for original corpora
+    original_csvs = [pathlib.Path(_sel.path) for _sel in original_selections]
+
     original_msg = (
-        f"{len(original_csvs)} files selected"
+        f"{len(original_csvs)} file{'s' if len(original_csvs) > 1 else ''} selected"
         if original_csvs
         else "No original text files selected"
     )
+
     reuse_msg = (
         f"{len(reuse_csvs)} files selected"
         if reuse_csvs
@@ -218,28 +222,63 @@ def _(mo, original_csv_browser, reuse_csv_browser):
 
 
 @app.cell
-def _(mo, original_csvs, summarize_corpus_selection):
-    summaries = [
-        s for s in (summarize_corpus_selection(sel) for sel in original_csvs) if s
-    ]
+def _(mo, original_csvs, pathlib, summarize_corpus_selection):
+    original_summaries = []
+    for csv_path in original_csvs:
+        # summarize_corpus_selection expects an object with a path attribute or a path
+        # Create a simple object with path attribute
+        _selection_obj = type('obj', (object,), {'path': csv_path})()
+        _summary = summarize_corpus_selection(_selection_obj)
+        if _summary:
+            original_summaries.append(_summary)
 
-    if summaries:
-        content = mo.vstack(
+    if original_summaries:
+        original_content = mo.vstack(
             [
                 mo.md("#### Selected Original Corpora"),
                 mo.ui.table(
-                    summaries,
-                    page_size=min(10, len(summaries)),
+                    original_summaries,
+                    page_size=min(10, len(original_summaries)),
                     selection=None,  # display only
                     show_download=False,  # hide download control
                 ).style(max_height="260px", overflow="auto"),
             ]
         )
     else:
-        content = mo.callout("No original corpora selected yet.", kind="info")
+        original_content = mo.callout("No original corpora selected yet.", kind="info")
 
-    content
-    return (summaries,)
+    original_content
+    return (original_summaries,)
+
+
+@app.cell
+def _(mo, pathlib, reuse_csvs, summarize_corpus_selection):
+    reuse_summaries = []
+    for _selection in reuse_csvs:
+        # reuse_csvs contains file browser selection objects with a path attribute
+        _sel_path = pathlib.Path(_selection.path)
+        if _sel_path.is_file() and _sel_path.suffix == ".csv":
+            _summary = summarize_corpus_selection(_selection)
+            if _summary:
+                reuse_summaries.append(_summary)
+
+    if reuse_summaries:
+        reuse_content = mo.vstack(
+            [
+                mo.md("#### Selected Reuse Corpora"),
+                mo.ui.table(
+                    reuse_summaries,
+                    page_size=min(10, len(reuse_summaries)),
+                    selection=None,  # display only
+                    show_download=False,  # hide download control
+                ).style(max_height="260px", overflow="auto"),
+            ]
+        )
+    else:
+        reuse_content = mo.callout("No reuse corpora selected yet.", kind="info")
+
+    reuse_content
+    return (reuse_summaries,)
 
 
 @app.cell
@@ -428,27 +467,35 @@ def _(mo):
 
 
 @app.cell
-def _(consolidate_quotes, mo, original_csvs, output_dir_path, reuse_csvs):
+def _(consolidate_quotes, mo, original_csvs, output_dir_path, pathlib, reuse_csvs):
     # Determine inputs based on file & folder selections
-    original_file = original_csvs[0] if original_csvs else None
+    # original_csvs is now a list of pathlib.Path objects
+    # reuse_csvs is still a list of file browser selection objects
     reuse_file = reuse_csvs[0] if reuse_csvs else None
+    reuse_file_path = pathlib.Path(reuse_file.path) if reuse_file else None
 
     output_csv = None
-    if original_file and reuse_file and output_dir_path:
-        output_filename = (
-            f"quote_pairs_{original_file.path.stem}_{reuse_file.path.stem}.csv"
-        )
+    if original_csvs and reuse_file_path and output_dir_path:
+        # Create output filename based on reuse file and number of original files
+        if len(original_csvs) == 1:
+            output_filename = (
+                f"quote_pairs_{original_csvs[0].stem}_{reuse_file_path.stem}.csv"
+            )
+        else:
+            output_filename = (
+                f"quote_pairs_{len(original_csvs)}_originals_{reuse_file_path.stem}.csv"
+            )
         output_csv = output_dir_path / output_filename
 
     original_file_msg = (
-        f"`{original_file.path.name}`"
-        if original_file
-        else "*Please select an original corpus file*"
+        f"{len(original_csvs)} file{'s' if len(original_csvs) > 1 else ''}"
+        if original_csvs
+        else "*Please select original corpus file(s)*"
     )
 
     reuse_file_msg = (
-        f"`{reuse_file.path.name}`"
-        if reuse_file
+        f"`{reuse_file_path.name}`"
+        if reuse_file_path
         else "*Please select a reuse corpus file*"
     )
 
@@ -457,7 +504,7 @@ def _(consolidate_quotes, mo, original_csvs, output_dir_path, reuse_csvs):
     )
 
     button = mo.ui.run_button(
-        disabled=not (original_file and reuse_file and output_dir_path),
+        disabled=not (original_csvs and reuse_file_path and output_dir_path),
         label="Find Quote Pairs",
         tooltip="Click to find quote pairs",
     )
@@ -477,7 +524,7 @@ def _(consolidate_quotes, mo, original_csvs, output_dir_path, reuse_csvs):
             ]
         ),
     )
-    return button, original_file, output_csv, reuse_file
+    return button, output_csv, reuse_file_path
 
 
 @app.cell
@@ -486,19 +533,23 @@ def _(
     consolidate_quotes,
     find_quote_pairs,
     mo,
-    original_file,
+    original_csvs,
     output_csv,
-    reuse_file,
+    reuse_file_path,
 ):
     # Find Quote Pairs
     finding_msg = 'Click "Find Quote Pairs" button to start'
 
     if button.value:
-        spinner_msg = f"Finding quote pairs between {original_file.path.name} and {reuse_file.path.name}"
+        _original_count = len(original_csvs)
+        if _original_count == 1:
+            spinner_msg = f"Finding quote pairs between {original_csvs[0].name} and {reuse_file_path.name}"
+        else:
+            spinner_msg = f"Finding quote pairs between {_original_count} original files and {reuse_file_path.name}"
         with mo.status.spinner(title=spinner_msg) as _spinner:
             find_quote_pairs(
-                original_corpus=[original_file.path],
-                reuse_corpus=reuse_file.path,
+                original_corpus=original_csvs,
+                reuse_corpus=reuse_file_path,
                 out_csv=output_csv,
                 show_progress_bar=False,
                 consolidate=consolidate_quotes.value,
