@@ -4,8 +4,9 @@
 
 ### Sentence corpus creation
 
-- ALTO-generated corpora now include per-sentence `title` and `author` metadata derived from ALTO block tags
-- Buffered ALTO footnotes while iterating the blocks and emitted footnotes at the end
+- ALTO input refinements:
+    - ALTO-based sentence corpora now include `title`, `author`, and `page_number` based on block tags
+    - Footnotes now follow all main body content, with correct title, author, and page number metadata
 
 ### Quotation detection
 
