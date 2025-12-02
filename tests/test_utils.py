@@ -102,8 +102,6 @@ def patched_default_corpus_paths(tmp_path):
     with (
         patch("remarx.utils.DEFAULT_DATA_ROOT", data_root),
         patch("remarx.utils.DEFAULT_CORPUS_ROOT", corpora_root),
-        patch("remarx.utils.DEFAULT_ORIGINAL_CORPUS_DIR", corpora_root / "original"),
-        patch("remarx.utils.DEFAULT_REUSE_CORPUS_DIR", corpora_root / "reuse"),
     ):
         yield corpora_root
 
