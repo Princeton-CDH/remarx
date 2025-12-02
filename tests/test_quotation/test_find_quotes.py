@@ -188,6 +188,15 @@ def test_main_too_many_paths(
     mock_find_quote_pairs.assert_not_called()
 
 
-def test_list_original_corpora_empty():
-    with pytest.raises(ValueError, match="no original corpora were provided"):
-        find_quotes._list_original_corpora([])
+def test_gather_csv_files_errors(tmp_path):
+    missing = tmp_path / "missing.csv"
+    with pytest.raises(ValueError, match="does not exist"):
+        find_quotes.gather_csv_files([missing])
+
+    empty_dir = tmp_path / "empty"
+    empty_dir.mkdir()
+    with pytest.raises(ValueError, match="does not contain any CSV"):
+        find_quotes.gather_csv_files([empty_dir])
+
+    with pytest.raises(ValueError, match="no original corpora"):
+        find_quotes.gather_csv_files([])
