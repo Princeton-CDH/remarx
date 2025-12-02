@@ -15,7 +15,7 @@
 - Now supports multiple original sentence corpora as input
     - `remarx-find-quotes` script accepts one or more CSV files or directories of CSVs for original corpora; uses default original corpus location when no original path is specified
 
-### Scripts
+### Non-pacakge scripts
 
 - Add `xquery` directory with instructions and XQuery files for investigating
     & reporting on continuing paragraph and footnote content in MEGA TEI
