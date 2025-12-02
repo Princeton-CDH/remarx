@@ -19,7 +19,7 @@ DEFAULT_ORIGINAL_CORPUS_DIR = pathlib.Path.home() / "remarx-data/corpora/origina
 
 
 def gather_csv_files(original_inputs: list[pathlib.Path]) -> list[pathlib.Path]:
-    """Return original corpus CSV files and raise ValueError for missing paths or empty directories."""
+    """Return original corpus CSV files; raises ValueError when a path is missing, a directory lacks CSVs, or no inputs remain."""
 
     resolved_inputs: list[pathlib.Path] = []
     for input_path in original_inputs:
