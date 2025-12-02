@@ -85,9 +85,6 @@ def consolidate_quotes(df: pl.DataFrame) -> pl.DataFrame:
     if df.is_empty():
         raise ValueError("Cannot consolidate quotes in empty DataFrame")
 
-    # NOTE: logic currently includes single file on both sides!
-    # sorting and grouping will take filenames into account when we support
-    # multiple input files, and we will need to revise alto input handling
 
     # first identify sequential reuse sentences
     df_seq = identify_sequences(
