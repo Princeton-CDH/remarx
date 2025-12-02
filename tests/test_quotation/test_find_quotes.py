@@ -5,6 +5,7 @@ from unittest.mock import patch
 import pytest
 
 from remarx.quotation import find_quotes
+from remarx.utils import CorpusPath
 
 
 @patch("remarx.quotation.find_quotes.configure_logging")
@@ -92,8 +93,10 @@ def test_main_default_original_directory(
     default_dir.mkdir()
     default_file = default_dir / "default.csv"
     default_file.touch()
+    # Create a CorpusPath object with the test directory as the original path
+    test_corpus_paths = CorpusPath(original=default_dir)
     monkeypatch.setattr(
-        find_quotes, "DEFAULT_ORIGINAL_CORPUS_DIR", default_dir, raising=False
+        find_quotes, "DEFAULT_CORPUS_DIRS", test_corpus_paths, raising=False
     )
 
     reuse_input = tmp_path / "reuse.csv"
