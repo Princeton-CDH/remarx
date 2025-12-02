@@ -20,13 +20,6 @@ logger = logging.getLogger(__name__)
 DEFAULT_ORIGINAL_CORPUS_DIR = pathlib.Path.home() / "remarx-data/corpora/original"
 
 
-def _error_exit(message: str) -> None:
-    """Log error, write to stderr, and exit."""
-    logger.error(message)
-    sys.stderr.write(f"{message}\n")
-    raise SystemExit(1)
-
-
 def _list_original_corpora(original_inputs: list[pathlib.Path]) -> list[pathlib.Path]:
     """Return all original corpus CSV files, expanding a directory when needed."""
 
@@ -54,6 +47,13 @@ def _list_original_corpora(original_inputs: list[pathlib.Path]) -> list[pathlib.
         raise ValueError("Error: no original corpora were provided")
 
     return resolved_inputs
+
+
+def _error_exit(message: str) -> None:
+    """Log error, write to stderr, and exit."""
+    logger.error(message)
+    sys.stderr.write(f"{message}\n")
+    raise SystemExit(1)
 
 
 def run_find_quotes(
@@ -163,6 +163,7 @@ def main() -> None:
     if not reuse_corpus.exists():
         _error_exit(f"Error: input file {reuse_corpus} does not exist")
 
+    # Validate output directory exists
     output_dir = output_path.parent
     if not output_dir.exists():
         _error_exit(f"Error: output directory {output_dir} does not exist")
