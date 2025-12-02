@@ -15,16 +15,9 @@ def test_main(mock_find_quote_pairs, mock_configure_logging, tmp_path):
     orig_input.touch()
     reuse_input = tmp_path / "reuse.csv"
     reuse_input.touch()
-    # output = tmp_path / "out" / "pairs.csv"
     output = tmp_path / "pairs.csv"
-    # default options
-    args = [
-        "remarx-find-quotes",
-        "-o",
-        str(orig_input),
-        str(reuse_input),
-        str(output),
-    ]
+    # standard options
+    args = ["find-qs", "-o", str(orig_input), str(reuse_input), str(output)]
     with patch("sys.argv", args):
         find_quotes.main()
 
@@ -33,7 +26,7 @@ def test_main(mock_find_quote_pairs, mock_configure_logging, tmp_path):
     mock_find_quote_pairs.assert_called_with(
         original_corpus=[orig_input],
         reuse_corpus=reuse_input,
-        out_csv=output,
+        output_path=output,
         consolidate=True,
         benchmark=False,
     )
@@ -51,7 +44,7 @@ def test_main(mock_find_quote_pairs, mock_configure_logging, tmp_path):
     mock_find_quote_pairs.assert_called_with(
         original_corpus=[orig_input],
         reuse_corpus=reuse_input,
-        out_csv=output,
+        output_path=output,
         consolidate=False,
         benchmark=True,
     )
@@ -73,14 +66,7 @@ def test_main_check_paths(
         str(output),
     ]
     with patch("sys.argv", args):
-        # input files and output directory do not exist
-        with pytest.raises(SystemExit):
-            find_quotes.main()
-        captured = capsys.readouterr()
-        assert captured.err == f"Error: input file {orig_input} does not exist\n"
-
         # reuse input file does not exist
-        orig_input.touch()
         with pytest.raises(SystemExit):
             find_quotes.main()
         captured = capsys.readouterr()
@@ -95,37 +81,59 @@ def test_main_check_paths(
             captured.err == f"Error: output directory {output.parent} does not exist\n"
         )
 
+        # single original input file specified, does not exist
+        output.parent.mkdir()
+        with pytest.raises(SystemExit):
+            find_quotes.main()
+        captured = capsys.readouterr()
+        assert captured.err == f"Error: input file {orig_input} does not exist\n"
+
 
 @patch("remarx.quotation.find_quotes.configure_logging")
 @patch("remarx.quotation.find_quotes.find_quote_pairs")
+@patch("remarx.quotation.find_quotes.gather_csv_files")
+@patch("remarx.quotation.find_quotes.CorpusPath", spec=CorpusPath)
 def test_main_default_original_directory(
-    mock_find_quote_pairs, mock_configure_logging, tmp_path, monkeypatch
+    mock_corpus_paths,
+    mock_gather_csvs,
+    mock_find_quote_pairs,
+    mock_configure_logging,
+    tmp_path,
+    capsys,
 ):
     default_dir = tmp_path / "default"
     default_dir.mkdir()
     default_file = default_dir / "default.csv"
     default_file.touch()
-    # Create a CorpusPath object with the test directory as the original path
-    test_corpus_paths = CorpusPath(original=default_dir)
-    monkeypatch.setattr(
-        find_quotes, "DEFAULT_CORPUS_DIRS", test_corpus_paths, raising=False
-    )
 
     reuse_input = tmp_path / "reuse.csv"
     reuse_input.touch()
     output = tmp_path / "pairs.csv"
 
+    # patch corpus path object to return tmp default path
+    mock_corpus_paths.return_value.original = default_dir
+    mock_gather_csvs.return_value = [default_file]
+
     args = ["remarx-find-quotes", str(reuse_input), str(output)]
     with patch("sys.argv", args):
         find_quotes.main()
 
+    mock_gather_csvs.assert_called_with([default_dir])
+
     mock_find_quote_pairs.assert_called_with(
         original_corpus=[default_file],
         reuse_corpus=reuse_input,
-        out_csv=output,
+        output_path=output,
         consolidate=True,
         benchmark=False,
     )
+
+    # original corpus reported
+    captured = capsys.readouterr()
+    assert captured.out.startswith(
+        f"No original corpora specified; defaulting to {default_dir}"
+    )
+    assert captured.out.endswith(f"Original corpus: {default_file}\n")
 
 
 @patch("remarx.quotation.find_quotes.configure_logging")
@@ -158,7 +166,7 @@ def test_main_original_directory(
     assert mock_find_quote_pairs.called
     call_args = mock_find_quote_pairs.call_args
     assert call_args.kwargs["reuse_corpus"] == reuse_input
-    assert call_args.kwargs["out_csv"] == output
+    assert call_args.kwargs["output_path"] == output
     assert call_args.kwargs["consolidate"] is True
     assert call_args.kwargs["benchmark"] is False
 
@@ -210,8 +218,9 @@ def test_main_too_few_paths(mock_find_quote_pairs, mock_configure_logging, capsy
 
 @patch("remarx.quotation.find_quotes.configure_logging")
 @patch("remarx.quotation.find_quotes.find_quote_pairs")
+@patch("remarx.quotation.find_quotes.gather_csv_files")
 def test_main_multiple_original_files(
-    mock_find_quote_pairs, mock_configure_logging, tmp_path
+    mock_gather_csvs, mock_find_quote_pairs, mock_configure_logging, tmp_path
 ):
     orig_input = tmp_path / "orig.csv"
     second_input = tmp_path / "orig2.csv"
@@ -220,9 +229,10 @@ def test_main_multiple_original_files(
     reuse_input = tmp_path / "reuse.csv"
     reuse_input.touch()
     output = tmp_path / "pairs.csv"
+    mock_gather_csvs.return_value = [orig_input, second_input]
 
     args = [
-        "remarx-find-quotes",
+        "find-qs",
         "-o",
         str(orig_input),
         "-o",
@@ -236,10 +246,38 @@ def test_main_multiple_original_files(
     mock_find_quote_pairs.assert_called_with(
         original_corpus=[orig_input, second_input],
         reuse_corpus=reuse_input,
-        out_csv=output,
+        output_path=output,
         consolidate=True,
         benchmark=False,
     )
+
+
+def test_gather_csv_files(tmp_path):
+    # mix of files, dirs, nested dirs
+    expected_csv_files = set()
+    # single file
+    toplevel_csv = tmp_path / "single.csv"
+    toplevel_csv.touch()
+    # directory
+    expected_csv_files.add(toplevel_csv)
+    csv_dir = tmp_path / "input_files"
+    csv_dir.mkdir()
+    for name in ["file_a", "file_b", "file_c"]:
+        csv_file = csv_dir / f"{name}.csv"
+        csv_file.touch()
+        expected_csv_files.add(csv_file)
+    # non-csv file should be ignored
+    (csv_dir / "test.txt").touch()
+    # nested directory
+    nested_dir = csv_dir / "nested"
+    nested_dir.mkdir()
+    nested_csv_file = nested_dir / "another.csv"
+    nested_csv_file.touch()
+    expected_csv_files.add(nested_csv_file)
+
+    gathered_csvs = find_quotes.gather_csv_files([toplevel_csv, csv_dir])
+    # order is not guaranteed, but doesn't matter
+    assert set(gathered_csvs) == expected_csv_files
 
 
 def test_gather_csv_files_errors(tmp_path):
@@ -252,5 +290,5 @@ def test_gather_csv_files_errors(tmp_path):
     with pytest.raises(ValueError, match="does not contain any CSV"):
         find_quotes.gather_csv_files([empty_dir])
 
-    with pytest.raises(ValueError, match="no original corpora"):
+    with pytest.raises(ValueError, match="no paths specified"):
         find_quotes.gather_csv_files([])

@@ -24,7 +24,6 @@ def build_vector_index(embeddings: npt.NDArray) -> Index:
     Builds an index for a given set of embeddings with the specified
     number of trees.
     """
-    # TODO: Add relevant voyager parameters
     start = time()
     # Instantiate index using inner product / cosine similarity
     n_vecs, n_dims = embeddings.shape
@@ -174,7 +173,7 @@ def compile_quote_pairs(
 def find_quote_pairs(
     original_corpus: list[pathlib.Path],
     reuse_corpus: pathlib.Path,
-    out_csv: pathlib.Path,
+    output_path: pathlib.Path,
     score_cutoff: float = 0.225,
     consolidate: bool = True,
     show_progress_bar: bool = False,
@@ -229,8 +228,8 @@ def find_quote_pairs(
         # consolidate quotes when requested
         if consolidate:
             quote_pairs = consolidate_quotes(quote_pairs)
-        quote_pairs.write_csv(out_csv)
-        logger.info(f"Saved {len(quote_pairs):,} quote pairs to {out_csv}")
+        quote_pairs.write_csv(output_path)
+        logger.info(f"Saved {len(quote_pairs):,} quote pairs to {output_path}")
     else:
         logger.info(
             f"No sentence pairs for score cutoff={score_cutoff}; output file not created."

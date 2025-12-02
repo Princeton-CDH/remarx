@@ -22,22 +22,28 @@ import pathlib
 import sys
 
 from remarx.quotation.pairs import find_quote_pairs
-from remarx.utils import configure_logging, get_default_corpus_path
+from remarx.utils import CorpusPath, configure_logging
 
 logger = logging.getLogger(__name__)
-_, DEFAULT_CORPUS_DIRS = get_default_corpus_path()
 
 
-def gather_csv_files(original_inputs: list[pathlib.Path]) -> list[pathlib.Path]:
-    """Return original corpus CSV files; raises ValueError when a path is missing, a directory lacks CSVs, or no inputs remain."""
+def gather_csv_files(paths: list[pathlib.Path]) -> list[pathlib.Path]:
+    """
+    Takes a list of CSV files or directories and return list of CSV files,
+    including all`.csv` files included in any of the specified directories.
+    Raises ValueError if a specified path is missing, a directory has no CSV files,
+    or no input paths are specified.
+    """
+    if not paths:
+        raise ValueError("Error: no paths specified")
 
     resolved_inputs: list[pathlib.Path] = []
-    for input_path in original_inputs:
+    for input_path in paths:
         if not input_path.exists():
             raise ValueError(f"Error: input file {input_path} does not exist")
 
         if input_path.is_dir():
-            # Allow users to point at a directory of corpora
+            # If a directory is specified, find all .csv files anywhere under it
             csv_files = list(input_path.glob("**/*.csv"))
             if not csv_files:
                 raise ValueError(
@@ -47,61 +53,26 @@ def gather_csv_files(original_inputs: list[pathlib.Path]) -> list[pathlib.Path]:
         else:
             resolved_inputs.append(input_path)
 
-    if not resolved_inputs:
-        raise ValueError("Error: no original corpora were provided")
-
     return resolved_inputs
 
 
 def _error_exit(message: str) -> None:
-    """Log error, write to stderr, and exit."""
+    """Log error, write message to stderr, and exit."""
     logger.error(message)
     sys.stderr.write(f"{message}\n")
     raise SystemExit(1)
 
 
-def run_find_quotes(
-    original_corpora: list[pathlib.Path],
-    reuse_corpus: pathlib.Path,
-    output_path: pathlib.Path,
-    *,
-    consolidate: bool = True,
-    benchmark: bool = False,
-) -> pathlib.Path:
-    """Run quotation detection and write results into the output directory."""
-    logger.info("Running quotation detection")
-    if len(original_corpora) == 1:
-        logger.info("Original corpus: %s", original_corpora[0])
-    else:
-        # Provide full context when multiple sources are supplied for easier debugging.
-        logger.info(
-            "Original corpora (%s files): %s",
-            len(original_corpora),
-            ", ".join(str(path) for path in original_corpora),
-        )
-    logger.info("Reuse corpus: %s", reuse_corpus)
-    logger.info("Output file: %s", output_path)
-
-    find_quote_pairs(
-        original_corpus=original_corpora,
-        reuse_corpus=reuse_corpus,
-        out_csv=output_path,
-        consolidate=consolidate,
-        benchmark=benchmark,
-    )
-
-    return output_path
-
-
 def main() -> None:
-    """Command-line access to quotation detection for sentence corpora."""
+    """
+    Detect quotations from reuse sentence corpus across multiple original
+    sentence corpora.
+    """
+    # init default corpus path for display in help text
+    corpus_paths = CorpusPath()
+
     parser = argparse.ArgumentParser(
-        description="Find quotation pairs between sentence corpora",
-        epilog=(
-            "Usage: remarx-find-quotes [-o ORIGINAL] ... REUSE OUTPUT.\n"
-            "Repeat -o/--original for each file or directory (e.g., -o file1.csv -o file2.csv).\n"
-            "If omitted, the default originals directory is used."
-        ),
+        description="Find quotations between original and reuse sentence corpora."
     )
     parser.add_argument(
         "-o",
@@ -112,7 +83,7 @@ def main() -> None:
         default=[],
         help=(
             "Original corpus CSV file or directory. Repeat -o/--original for each file or directory "
-            "(e.g., -o file1.csv -o file2.csv). If omitted, the default originals directory is used."
+            f"(e.g., -o file1.csv -o file2.csv). If omitted, the default directory is used ({corpus_paths.original})."
         ),
     )
     parser.add_argument(
@@ -123,7 +94,7 @@ def main() -> None:
     parser.add_argument(
         "output_path",
         type=pathlib.Path,
-        help="Path where the quote pairs CSV will be written",
+        help="Path where the detected quotes CSV will be written",
     )
     parser.add_argument(
         "--consolidate",
@@ -131,7 +102,6 @@ def main() -> None:
         default=True,
         help="Consolidate quotes that are sequential in both corpora (on by default).",
     )
-
     parser.add_argument(
         "-v",
         "--verbose",
@@ -155,17 +125,10 @@ def main() -> None:
     output_path = args.output_path
 
     if not original_inputs:
-        logger.info(
-            "No original corpora specified; defaulting to %s",
-            DEFAULT_CORPUS_DIRS.original,
-        )
-        original_inputs = [DEFAULT_CORPUS_DIRS.original]
+        print(f"No original corpora specified; defaulting to {corpus_paths.original}")
+        original_inputs = [corpus_paths.original]
 
-    try:
-        original_corpora = gather_csv_files(original_inputs)
-    except ValueError as err:
-        _error_exit(str(err))
-
+    # simple checks first
     if not reuse_corpus.exists():
         _error_exit(f"Error: input file {reuse_corpus} does not exist")
 
@@ -174,8 +137,22 @@ def main() -> None:
     if not output_dir.exists():
         _error_exit(f"Error: output directory {output_dir} does not exist")
 
-    run_find_quotes(
-        original_corpora=original_corpora,
+    try:
+        original_corpora = gather_csv_files(original_inputs)
+    except ValueError as err:
+        _error_exit(str(err))
+
+    # report on collected original corpora to be used
+    original_file_count = len(original_corpora)
+    if original_file_count == 1:
+        print(f"Original corpus: {original_corpora[0]}")
+    else:
+        # Provide more details when multiple original files are used
+        file_list = ", ".join(str(path) for path in original_corpora)
+        print(f"Original corpora ({original_file_count} files): {file_list}")
+
+    find_quote_pairs(
+        original_corpus=original_corpora,
         reuse_corpus=reuse_corpus,
         output_path=output_path,
         consolidate=args.consolidate,
