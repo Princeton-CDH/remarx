@@ -21,7 +21,7 @@
 
 ### Application
 
-- Add a summary table in `Quote Finder` notebook displaying user-selected original corpora's information
+- Add summary tables in `Quote Finder` to display details for selected input corpora
 
 ## 0.4.0
 
