@@ -12,6 +12,7 @@ def identify_sequences(df: pl.DataFrame, field: str, group_field: str) -> pl.Dat
     Given a polars dataframe, identify and label rows that are sequential
     for the specified field, within the specified group field.
     Returns a modified dataframe with the following columns, prefixed by field name:
+
     -  `_sequential` : boolean indicating whether a row is in a sequence,
     - `_group` : group identifier; uses field value for first in sequence
     """
@@ -65,24 +66,28 @@ def consolidate_quotes(df: pl.DataFrame) -> pl.DataFrame:
     """
     Consolidate quotes that are sequential in both original and reuse texts.
     Required fields:
-        - `reuse_sent_index` and `original_sent_index` must be present for aggregation,
-           and must be numeric
-        - `reuse_file` and `original_file` must be present to ensure aggregation
-           only happens for sequences within specific input files
+
+    - `reuse_sent_index` and `original_sent_index` must be present for aggregation,
+       and must be numeric
+    - `reuse_file` and `original_file` must be present to ensure aggregation
+       only happens for sequences within specific input files
+
     If required fields are not present, raises `polars.exceptions.ColumnNotFoundError`.
     Raises `ValueError` when called on an empty dataframe.
 
     Consolidation only occurs when:
+
     - Sentences are sequential in both reuse and original corpora
     - All sentences within a sequence belong to a single reuse corpus and original corpus
       (seemingly sequential sentences that span multiple files are not consolidated)
 
     DataFrame is expected to include standard quote pair fields; for consolidated
     quotes, fields are aggregated as follows:
-        - `match_score` average across the group
-        - `id` and `sent_index` (both `reuse` and `original`): first value in group
-        - `reuse_text` and `original_text`: combined with whitespace delimiter
-        - For all other fields, unique values are combined, delimited by semicolon and space
+
+    - `match_score` average across the group
+    - `id` and `sent_index` (both `reuse` and `original`): first value in group
+    - `reuse_text` and `original_text`: combined with whitespace delimiter
+    - For all other fields, unique values are combined, delimited by semicolon and space
 
     The returned DataFrame includes a new column `num_sentences` which documents
     the number of sentences in a group (1 for unconsolidated quotes).
