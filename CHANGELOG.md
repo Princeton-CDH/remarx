@@ -26,7 +26,7 @@
 - Add `xquery` directory with instructions and XQuery files for investigating
     & reporting on continuing paragraph and footnote content in MEGA TEI
 
-## 0.4.0
+## [0.4.0] - 2025-11-19
 
 ### Sentence corpus creation
 
@@ -124,3 +124,4 @@ _Initial release._
 [0.1.0]: https://github.com/Princeton-CDH/remarx/tree/0.1
 [0.2.0]: https://github.com/Princeton-CDH/remarx/tree/0.2
 [0.3.0]: https://github.com/Princeton-CDH/remarx/tree/0.3
+[0.4.0]: https://github.com/Princeton-CDH/remarx/tree/0.4
