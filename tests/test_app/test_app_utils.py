@@ -1,4 +1,9 @@
+import csv
 import logging
+import os
+import pathlib
+from datetime import datetime
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import marimo
@@ -13,10 +18,13 @@ from remarx.app.utils import (
     create_header,
     create_temp_input,
     get_current_log_file,
+    handle_default_corpus_creation,
     launch_app,
     lifespan,
     redirect_root,
+    summarize_corpus_selection,
 )
+from remarx.utils import CorpusPath
 
 
 @patch("remarx.app.utils.uvicorn.run")
@@ -68,6 +76,31 @@ def test_create_temp_input(mock_upload):
         # catch thrown exception
         pass
     assert not tf.is_file()
+
+
+@patch("remarx.app.utils.FileUploadResults")
+@patch("remarx.app.utils.tempfile.NamedTemporaryFile")
+def test_create_temp_input_file_not_closed(mock_named_temp, mock_upload, tmp_path):
+    """If the temp file reports closed=False, finally should close and unlink it."""
+    # Create mock "upload" object
+    mock_upload.name = "file.txt"
+    mock_upload.contents = b"bytes"
+
+    # Simple mock file object returned by NamedTemporaryFile
+    mock_file = Mock()
+    temp_path = tmp_path / "temp.csv"
+    temp_path.touch()  # Create the file so unlink has something to delete
+    mock_file.name = str(temp_path)
+    mock_file.closed = False
+    mock_named_temp.return_value = mock_file
+
+    with create_temp_input(mock_upload) as p:
+        assert pathlib.Path(mock_file.name) == p
+        mock_file.write.assert_called_once_with(b"bytes")
+
+    # finally block: if not closed, close() is called and file is unlinked
+    assert mock_file.close.called
+    assert not temp_path.exists()
 
 
 @patch("remarx.app.utils.mo.vstack")
@@ -125,6 +158,55 @@ async def test_redirect_root():
     assert response.headers["location"] == "/corpus-builder"
 
 
+def test_summarize_corpus_selection_with_sections(tmp_path):
+    csv_path = tmp_path / "corpus.csv"
+    with csv_path.open("w", newline="", encoding="utf-8") as fh:
+        writer = csv.writer(fh)
+        writer.writerow(["sent_id", "text", "section_type"])
+        writer.writerow(["1", "foo", "text"])
+        writer.writerow(["2", "bar", "footnote"])
+        writer.writerow(["3", "baz", "text"])
+
+    timestamp = 1_234_567_890
+    os.utime(csv_path, (timestamp, timestamp))
+
+    selection = SimpleNamespace(path=csv_path)
+    summary = summarize_corpus_selection(selection)
+
+    assert summary == {
+        "filename": csv_path.name,
+        "total sentences": 3,
+        "body text sentences": 2,
+        "footnote sentences": 1,
+        "last updated": datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S"),
+    }
+
+
+def test_summarize_corpus_selection_without_sections(tmp_path):
+    csv_path = tmp_path / "no_sections.csv"
+    with csv_path.open("w", newline="", encoding="utf-8") as fh:
+        writer = csv.writer(fh)
+        writer.writerow(["sent_id", "text"])
+        writer.writerow(["1", "foo"])
+        writer.writerow(["2", "bar"])
+
+    summary = summarize_corpus_selection(SimpleNamespace(path=csv_path))
+
+    assert summary["filename"] == csv_path.name
+    assert summary["total sentences"] == 2
+    assert summary["body text sentences"] == 2
+    assert summary["footnote sentences"] == 0
+
+
+def test_summarize_corpus_selection_invalid_path(tmp_path):
+    missing = tmp_path / "missing.csv"
+    assert summarize_corpus_selection(SimpleNamespace(path=missing)) is None
+
+
+def test_summarize_corpus_selection_none_path():
+    assert summarize_corpus_selection(SimpleNamespace(path=None)) is None
+
+
 def test_get_current_log_file(tmp_path):
     logger = logging.getLogger()
     original_handlers = logger.handlers[:]
@@ -169,3 +251,45 @@ def test_launch_app_logging(tmp_path, monkeypatch):
     log_text = log_files[-1].read_text()
     assert "Remarx application starting" in log_text
     assert "Logs are being written to:" in log_text
+
+
+@patch("remarx.app.utils.get_default_corpus_path")
+def test_handle_default_corpus_creation_button_clicked(mock_get_default, tmp_path):
+    """Button click should trigger directory creation via get_default_corpus_path."""
+    button = Mock()
+    button.value = True
+
+    # Initial dirs not ready
+    initial = CorpusPath(root=tmp_path)
+    assert not initial.ready()  # Verify precondition
+
+    # Mock created dirs returned from get_default_corpus_path(create=True)
+    created = CorpusPath(root=tmp_path)
+    mock_get_default.return_value = (True, created)
+
+    ready, dirs, status_msg, kind = handle_default_corpus_creation(button, initial)
+
+    mock_get_default.assert_called_once_with(create=True)
+    assert ready is True
+    assert dirs == created
+    assert "Created default corpus folders" in status_msg
+    assert kind == "success"
+
+
+@patch("remarx.app.utils.get_default_corpus_path")
+def test_handle_default_corpus_creation_dirs_exist(mock_get_default, tmp_path):
+    """If dirs already exist and button not clicked, initial state is returned."""
+    button = Mock()
+    button.value = False
+
+    initial = CorpusPath(root=tmp_path)
+    initial.ensure_directories()
+    assert initial.ready()  # Verify precondition
+
+    ready, dirs, status_msg, kind = handle_default_corpus_creation(button, initial)
+
+    mock_get_default.assert_not_called()  # Should not be called when dirs exist
+    assert ready is True
+    assert dirs == initial
+    assert ":white_check_mark:" in status_msg
+    assert kind == "success"

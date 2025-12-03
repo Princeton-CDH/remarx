@@ -1,21 +1,31 @@
 # CHANGELOG
 
-## 0.5.0.dev
+## 0.5.0
 
 ### Sentence corpus creation
 
-- ALTO-generated corpora now include per-sentence `title` and `author` metadata derived from ALTO block tags
+- ALTO input refinements:
+    - ALTO-based sentence corpora now include `title`, `author`, and `page_number` based on block tags
+    - Footnotes now follow all main body content, with correct title, author, and page number metadata
+    - Zip file name is used as `file` field (for quote consolidation); individual ALTO filenames are
+        included as `page_file`
 
 ### Quotation detection
 
 - Add consolidation logic to group quotes that are sequential in both original and reuse texts
     - Quote consolidation is enabled by default but configurable in both app and command line script
+    - Quotes are only consolidated for sequential sentences from a single source file
 - Now supports multiple original sentence corpora as input
+    - `remarx-find-quotes` script accepts one or more CSV files or directories of CSVs for original corpora; uses default original corpus location when no original path is specified
 
-### Scripts
+### Non-package scripts
 
 - Add `xquery` directory with instructions and XQuery files for investigating
     & reporting on continuing paragraph and footnote content in MEGA TEI
+
+### Application
+
+- Add summary tables in `Quote Finder` to display details for selected input corpora
 
 ## 0.4.0
 
@@ -37,11 +47,12 @@
 
 ### Quotation detection
 
-- Add the `find_quotes.py` CLI script to run the quote finder, with a `--benchmark` flag to collect performance metrics
+- Add `remarx-find-quotes` script to run the quote finder, with a `--benchmark` option to collect performance metrics
 
 ### Application
 
 - Display logging output in real-time to show progress when building corpus
+- Configured default `~/remarx-data/corpora/original` and `~/remarx-data/corpora/reuse` folders, including in-app prompts to create them and default file browser locations when saving or selecting corpora
 
 ## [0.3.0] - 2025-10-27
 
