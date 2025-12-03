@@ -3,12 +3,51 @@ Library for generating sentence embeddings from pretrained Sentence Transformer 
 """
 
 import logging
+import pathlib
 from timeit import default_timer as time
 
+import numpy as np
 import numpy.typing as npt
 from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
+
+
+def get_cached_embeddings(
+    source_file: pathlib.Path,
+    sentences: list[str],
+    model_name: str = "paraphrase-multilingual-mpnet-base-v2",
+    show_progress_bar: bool = False,
+) -> tuple[npt.NDArray, bool]:
+    """
+    Get sentence embeddings, with file caching based on source file.
+
+    Returns a tuple of embeddings array and a boolean indicating whether
+    the data was loaded from cache.
+    """
+
+    # cache embeddings in the same location as the source file,
+    # with the same base filename
+    cache_file = source_file.parent / f"{source_file.stem}_{model_name}.npy"
+    # if file exists and has non-zero size, check modification time
+    if cache_file.exists() and cache_file.stat().st_size:
+        if cache_file.stat().st_mtime > source_file.stat().st_mtime:
+            with cache_file.open("rb") as cache_filehandle:
+                logger.info(f"Loading embeddings from {cache_file}")
+                return (np.load(cache_filehandle), True)
+        else:
+            logger.info(
+                f"Cached embeddings file {cache_file} exists but source file {source_file} is newer"
+            )
+
+    # otherwise: generate embeddings, save, and return
+    embeddings = get_sentence_embeddings(
+        sentences, model_name=model_name, show_progress_bar=show_progress_bar
+    )
+    with cache_file.open("wb") as cache_filehandle:
+        logger.info(f"Caching embeddings to {cache_file}")
+        np.save(cache_filehandle, embeddings)
+    return (embeddings, False)
 
 
 def get_sentence_embeddings(
