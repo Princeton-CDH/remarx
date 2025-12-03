@@ -2,8 +2,9 @@
 name: remarx release checklist
 about: Checklist for releasing new versions of remarx
 title: remarx release checklist
-labels: chore
+labels: ''
 assignees: ''
+
 ---
 
 ## release prep
@@ -20,6 +21,7 @@ assignees: ''
 - [ ] Check python requirements for any internal dependencies that should be released (or at least pinned to a specific git commit)
 - [ ] Confirm that all checks for the draft PR pass (e.g., unit tests, code coverage checks)
 - [ ] Build documentation on the release branch and run the server to review and make sure it is up to date.
+- [ ] Make sure code documentation covers all the files in the code.
 
 ### BEFORE acceptance testing
 
