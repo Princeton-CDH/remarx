@@ -9,6 +9,9 @@ jobs:
   check-changelog:
     name: Verify Changelog Updated
     runs-on: ubuntu-latest
+    # only run on open pull requests  (do not run if a label changes
+    # on a closed PR, e.g., when "this sprint" label is removed)
+    if: ${{ github.event.pull_request.state != "closed" }}
     steps:
       - name: Check changelog
         uses: tarides/changelog-check-action@v3
