@@ -152,8 +152,8 @@ def _(default_dirs_initial, mo):
 def _(mo):
     default_folder_choice = mo.ui.radio(
         options={
-            "the default original corpus folder": "Original corpus folder",
-            "the default reuse corpus folder": "Reuse corpus folder",
+            "the default original corpus folder": "original",
+            "the default reuse corpus folder": "reuse",
         },
         value="the default original corpus folder",
         label="Choose which folder to save the current sentence corpus in:",
@@ -276,7 +276,7 @@ Clicking anywhere else within the folder's row will cause the browser to navigat
         if default_dirs_ready:
             target = (
                 default_dirs.original
-                if default_folder_choice.value == "the default original corpus folder"
+                if default_folder_choice.value == "original"
                 else default_dirs.reuse
             )
             output_dir_path = target
