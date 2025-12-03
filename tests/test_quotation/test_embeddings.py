@@ -7,6 +7,8 @@ import logging
 import re
 from unittest.mock import Mock, patch
 
+import numpy as np
+
 from remarx.quotation.embeddings import (
     DEFAULT_MODEL,
     get_cached_embeddings,
@@ -143,3 +145,33 @@ def test_get_cached_embeddings(mock_get_sent_embeddings, mock_np, tmp_path):
     mock_get_sent_embeddings.assert_called_once_with(
         sentences, model_name=DEFAULT_MODEL, show_progress_bar=True
     )
+
+
+@patch("remarx.quotation.embeddings.get_sentence_embeddings")
+def test_get_cached_embeddings_np_integration(mock_get_sent_embeddings, tmp_path):
+    # test saving and loading cached embeddings without mocking numpy save/load
+    sample_vecs = np.array([[1], [3], [7]])
+    # create source file
+    source_file = tmp_path / "input.csv"
+    source_file.touch()
+    sentences = ["one", "two"]
+    # cache file named based on source file and model
+    expected_cachefile = tmp_path / f"input_{DEFAULT_MODEL}.npy"
+    # return sample vector data
+    mock_get_sent_embeddings.return_value = sample_vecs
+
+    # call with source file (no cache)
+    embed, from_cache = get_cached_embeddings(source_file, sentences)
+    assert not from_cache
+    assert np.array_equal(embed, sample_vecs)
+    # cache file exists
+    assert expected_cachefile.exists()
+    # cache file has expected contents
+    with expected_cachefile.open("rb") as cache_filehandle:
+        saved_vecs = np.load(cache_filehandle)
+    assert np.array_equal(saved_vecs, sample_vecs)
+
+    # call again to load from cache
+    embed, from_cache = get_cached_embeddings(source_file, sentences)
+    assert from_cache
+    assert np.array_equal(embed, sample_vecs)
