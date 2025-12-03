@@ -20,6 +20,10 @@
 - Add `xquery` directory with instructions and XQuery files for investigating
     & reporting on continuing paragraph and footnote content in MEGA TEI
 
+### Application
+
+- Add summary tables in `Quote Finder` to display details for selected input corpora
+
 ## 0.4.0
 
 ### Sentence corpus creation
