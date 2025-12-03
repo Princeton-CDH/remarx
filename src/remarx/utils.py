@@ -16,7 +16,7 @@ DEFAULT_DATA_ROOT = pathlib.Path.home() / "remarx-data"
 DEFAULT_CORPUS_ROOT = DEFAULT_DATA_ROOT / "corpora"
 
 # Default quote finder output directory
-DEFAULT_QUOTE_OUTPUT_ROOT = DEFAULT_DATA_ROOT / "quote-finder-output"
+DEFAULT_QUOTE_OUTPUT_ROOT = DEFAULT_DATA_ROOT / "quotes"
 
 
 @dataclass(slots=True)
