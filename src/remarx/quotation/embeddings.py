@@ -12,11 +12,13 @@ from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_MODEL = "paraphrase-multilingual-mpnet-base-v2"
+
 
 def get_cached_embeddings(
     source_file: pathlib.Path,
     sentences: list[str],
-    model_name: str = "paraphrase-multilingual-mpnet-base-v2",
+    model_name: str = DEFAULT_MODEL,
     show_progress_bar: bool = False,
 ) -> tuple[npt.NDArray, bool]:
     """
@@ -46,13 +48,13 @@ def get_cached_embeddings(
     )
     with cache_file.open("wb") as cache_filehandle:
         logger.info(f"Caching embeddings to {cache_file}")
-        np.save(cache_filehandle, embeddings)
+        np.save(cache_filehandle, embeddings, allow_pickle=True)
     return (embeddings, False)
 
 
 def get_sentence_embeddings(
     sentences: list[str],
-    model_name: str = "paraphrase-multilingual-mpnet-base-v2",
+    model_name: str = DEFAULT_MODEL,
     show_progress_bar: bool = False,
 ) -> npt.NDArray:
     """
