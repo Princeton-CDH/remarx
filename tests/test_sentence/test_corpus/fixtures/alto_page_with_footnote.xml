@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<alto xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns="http://www.loc.gov/standards/alto/ns-v4#"
+      xsi:schemaLocation="http://www.loc.gov/standards/alto/ns-v4# http://www.loc.gov/standards/alto/v4/alto-4-2.xsd">
+  <Description>
+    <MeasurementUnit>pixel</MeasurementUnit>
+    <sourceImageInformation>
+      <fileName>1896-97a.pdf_page_9.png</fileName>
+      <fileIdentifier>pdf//1896-97a.pdf</fileIdentifier>
+    </sourceImageInformation>
+  </Description>
+  <Tags>
+    <OtherTag ID="BT1" LABEL="Title" DESCRIPTION="block type Title"/>
+    <OtherTag ID="BT241" LABEL="text" DESCRIPTION="block type text"/>
+    <OtherTag ID="BT252" LABEL="page number" DESCRIPTION="block type page number"/>
+    <OtherTag ID="BT255" LABEL="footnote" DESCRIPTION="block type footnote"/>
+    <OtherTag ID="BT256" LABEL="author" DESCRIPTION="block type author"/>
+    <OtherTag ID="LT153" LABEL="default" DESCRIPTION="line type default"/>
+  </Tags>
+  <Layout>
+    <Page WIDTH="5153"
+          HEIGHT="7916"
+          PHYSICAL_IMG_NR="8"
+          ID="eSc_dummypage_">
+      <PrintSpace HPOS="0"
+                  VPOS="0"
+                  WIDTH="5153"
+                  HEIGHT="7916">
+        <!-- Page number -->
+        <TextBlock HPOS="4332.0"
+                   VPOS="415.0"
+                   WIDTH="186.0"
+                   HEIGHT="161.0"
+                   ID="page_num_block"
+                   TAGREFS="BT252">
+          <Shape><Polygon POINTS="4332 415 4518 415 4518 576 4332 576 4332 415"/></Shape>
+          <TextLine ID="eSc_line_page"
+                    BASELINE="4391 523 4462 514"
+                    HPOS="4378.0"
+                    VPOS="439.0"
+                    WIDTH="88.0"
+                    HEIGHT="119.0">
+            <Shape><Polygon POINTS="4422 448 4378 439 4391 523 4396 558 4466 554 4462 514 4448 448 4422 448"/></Shape>
+            <String CONTENT="9"
+                    HPOS="4378.0"
+                    VPOS="439.0"
+                    WIDTH="88.0"
+                    HEIGHT="119.0"
+                    WC="1.0"></String>
+          </TextLine>
+        </TextBlock>
+
+        <!-- Title block -->
+        <TextBlock HPOS="1025.0"
+                   VPOS="360.0"
+                   WIDTH="2769.0"
+                   HEIGHT="232.0"
+                   ID="title_block"
+                   TAGREFS="BT1">
+          <Shape><Polygon POINTS="1025 360 3794 360 3794 592 1025 592 1025 360"/></Shape>
+          <TextLine ID="eSc_line_title"
+                    BASELINE="1170 501 3683 514"
+                    HPOS="1166.0"
+                    VPOS="404.0"
+                    WIDTH="2517.0"
+                    HEIGHT="154.0">
+            <Shape><Polygon POINTS="3674 439 3670 435 3533 417 3498 417 3480 417 3397 435 3322 417 3322 417 3278 417 3234 417 3190 417 3172 417 2807 430 2772 413 2750 413 2706 413 2671 413 2349 430 2222 408 2217 408 2213 408 2209 408 2182 430 2134 408 2129 408 2125 408 2121 408 2063 430 2019 408 2002 408 1980 408 1927 426 1430 404 1425 404 1320 426 1240 408 1210 430 1170 466 1170 501 1166 540 1196 558 1201 558 1205 558 1210 558 3678 545 3683 514 3678 444 3674 439"/></Shape>
+            <String CONTENT="Ein Brief von Karl Marx an J. B. v. Schweitzer."
+                    HPOS="1166.0"
+                    VPOS="404.0"
+                    WIDTH="2517.0"
+                    HEIGHT="154.0"
+                    WC="0.9924343279067506"></String>
+          </TextLine>
+        </TextBlock>
+
+        <!-- Author block -->
+        <TextBlock HPOS="241.0"
+                   VPOS="600.0"
+                   WIDTH="2000.0"
+                   HEIGHT="120.0"
+                   ID="author_block"
+                   TAGREFS="BT256">
+          <Shape><Polygon POINTS="241 600 2241 600 2241 720 241 720 241 600"/></Shape>
+          <TextLine ID="eSc_line_author"
+                    BASELINE="690 660 2000 660"
+                    HPOS="690.0"
+                    VPOS="630.0"
+                    WIDTH="1310.0"
+                    HEIGHT="90.0">
+            <Shape><Polygon POINTS="690 660 690 720 2000 720 2000 660 690 630 690 660"/></Shape>
+            <String CONTENT="Der Herausgeber."
+                    HPOS="690.0"
+                    VPOS="630.0"
+                    WIDTH="1310.0"
+                    HEIGHT="90.0"
+                    WC="0.99"></String>
+          </TextLine>
+        </TextBlock>
+
+        <!-- Text block -->
+        <TextBlock HPOS="241.0"
+                   VPOS="637.0"
+                   WIDTH="4425.0"
+                   HEIGHT="200.0"
+                   ID="text_block"
+                   TAGREFS="BT241">
+          <Shape><Polygon POINTS="241 637 4666 637 4666 837 241 837 241 637"/></Shape>
+          <TextLine ID="eSc_line_text1"
+                    BASELINE="690 752 4479 752"
+                    HPOS="690.0"
+                    VPOS="650.0"
+                    WIDTH="3789.0"
+                    HEIGHT="163.0">
+            <Shape><Polygon POINTS="4052 650 4048 650 4044 650 3560 677 3520 650 3516 650 3511 650 3392 650 3388 650 3383 650 3322 677 3146 650 3141 650 3137 650 3075 677 2855 655 2851 655 2653 677 2486 650 2481 650 2477 650 2424 677 2385 650 2380 650 2376 650 2371 650 2187 677 2077 650 2072 650 2068 650 2063 650 1989 677 1909 650 1905 650 1901 650 1896 650 1826 677 1733 650 1729 650 1725 650 1720 650 1667 677 1614 650 1610 650 1606 650 1601 650 1540 677 1504 650 1500 650 1496 650 1491 650 1346 677 946 650 941 650 937 650 875 677 739 650 734 650 730 650 726 650 690 672 690 752 690 782 1064 809 1069 813 1408 813 1408 809 1412 809 1416 809 1452 787 2200 787 2235 809 2239 809 2244 809 2248 809 2407 787 2473 809 2477 809 2481 809 2772 787 3665 809 3670 809 3788 787 4105 809 4110 809 4114 809 4118 809 4154 787 4475 787 4479 752 4475 681 4281 650 4277 650 4272 650 4215 681 4096 681 4057 650 4052 650"/></Shape>
+            <String CONTENT="Die Auflösung des A. D. A. gab Ihnen den (historischen) Anlaß, einen"
+                    HPOS="690.0"
+                    VPOS="650.0"
+                    WIDTH="3789.0"
+                    HEIGHT="163.0"
+                    WC="0.9964657574892044"></String>
+          </TextLine>
+          <TextLine ID="eSc_line_text2"
+                    BASELINE="369 883 4475 870"
+                    HPOS="365.0"
+                    VPOS="774.0"
+                    WIDTH="4110.0"
+                    HEIGHT="149.0">
+            <Shape><Polygon POINTS="365 813 369 883 369 923 4470 905 4475 870 4466 800 3454 774 3450 774 3256 795 3194 774 3190 774 3185 774 3181 774 3093 800 2407 778 2402 778 2121 800 2050 778 2046 778 2041 778 1874 800 1738 778 1733 778 1474 804 541 782 536 782 365 809 365 813"/></Shape>
+            <String CONTENT="großen Fortschritt zu vollziehen und zu erklären."
+                    HPOS="365.0"
+                    VPOS="774.0"
+                    WIDTH="4110.0"
+                    HEIGHT="149.0"
+                    WC="0.9773491069503214"></String>
+          </TextLine>
+        </TextBlock>
+
+        <!-- Footnote block -->
+        <TextBlock HPOS="285.0"
+                   VPOS="6845.0"
+                   WIDTH="4402.0"
+                   HEIGHT="300.0"
+                   ID="footnote_block"
+                   TAGREFS="BT255">
+          <Shape><Polygon POINTS="285 6845 4687 6845 4687 7145 285 7145 285 6845"/></Shape>
+          <TextLine ID="eSc_line_footnote1"
+                    BASELINE="765 6930 4497 6917"
+                    HPOS="761.0"
+                    VPOS="6865.0"
+                    WIDTH="3736.0"
+                    HEIGHT="136.0">
+            <Shape><Polygon POINTS="765 6930 765 6970 4492 6970 4497 6917 4488 6842 761 6834 765 6930"/></Shape>
+            <String CONTENT="„Historisch&quot; ist im Original entweder unterstrichen oder durchstrichen."
+                    HPOS="761.0"
+                    VPOS="6834.0"
+                    WIDTH="3736.0"
+                    HEIGHT="136.0"
+                    WC="0.998316267895144"></String>
+          </TextLine>
+          <TextLine ID="eSc_line_footnote2"
+                    BASELINE="387 7054 4497 7040"
+                    HPOS="382.0"
+                    VPOS="6952.0"
+                    WIDTH="4115.0"
+                    HEIGHT="137.0">
+            <Shape><Polygon POINTS="4484 6966 1755 6952 1751 6952 1747 6952 1698 6974 413 6957 409 6957 404 6957 400 6957 382 6966 387 7054 387 7089 4492 7076 4497 7040 4488 6992 4484 6966"/></Shape>
+            <String CONTENT="Wahrscheinlich letzteres. Das Manuskript ist hier sehr undeutlich."
+                    HPOS="382.0"
+                    VPOS="6952.0"
+                    WIDTH="4115.0"
+                    HEIGHT="137.0"
+                    WC="0.9950653153858827"></String>
+          </TextLine>
+        </TextBlock>
+      </PrintSpace>
+    </Page>
+  </Layout>
+</alto>

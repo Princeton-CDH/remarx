@@ -3,10 +3,16 @@ import io
 import logging
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
-from remarx.utils import configure_logging
+from remarx.utils import (
+    CorpusPath,
+    configure_logging,
+    get_default_corpus_path,
+    get_default_quote_output_path,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -92,3 +98,78 @@ def test_configure_logging_with_stanza_log_level(tmp_path, monkeypatch):
     # Check that the stanza logger is set to DEBUG
     stanza_logger = logging.getLogger("stanza")
     assert stanza_logger.getEffectiveLevel() == logging.DEBUG
+
+
+@pytest.fixture
+def patched_default_corpus_paths(tmp_path):
+    data_root = tmp_path / "remarx-data"
+    corpora_root = data_root / "corpora"
+    with (
+        patch("remarx.utils.DEFAULT_DATA_ROOT", data_root),
+        patch("remarx.utils.DEFAULT_CORPUS_ROOT", corpora_root),
+    ):
+        yield corpora_root
+
+
+def test_get_default_corpus_path_reports_missing(patched_default_corpus_paths):
+    ready, dirs = get_default_corpus_path()
+    root = patched_default_corpus_paths
+
+    assert not ready
+    assert dirs.root == root
+    assert dirs.original == root / "original"
+    assert dirs.reuse == root / "reuse"
+    assert not dirs.original.exists()
+    assert not dirs.reuse.exists()
+
+
+def test_get_default_corpus_path_creates(patched_default_corpus_paths):
+    ready, dirs = get_default_corpus_path(create=True)
+
+    assert ready
+    assert dirs.original.exists()
+    assert dirs.reuse.exists()
+
+    ready_again, _ = get_default_corpus_path()
+    assert ready_again
+
+
+def test_corpus_path_post_init_sets_defaults(patched_default_corpus_paths):
+    """Test that __post_init__ sets original and reuse when they are None."""
+    root = patched_default_corpus_paths
+    dirs = CorpusPath()
+
+    assert dirs.original == root / "original"
+    assert dirs.reuse == root / "reuse"
+    assert dirs.root == root
+
+
+def test_corpus_path_ready_and_ensure_directories(patched_default_corpus_paths):
+    root = patched_default_corpus_paths
+    dirs = CorpusPath()
+
+    assert dirs.root == root
+    assert not dirs.ready()
+
+    assert not dirs.root.exists()
+    assert not dirs.original.exists()
+    assert not dirs.reuse.exists()
+
+    dirs.ensure_directories()
+
+    assert dirs.ready()
+    assert dirs.root.exists()
+    assert dirs.original.exists()
+    assert dirs.reuse.exists()
+
+
+def test_get_default_quote_output_path_creates(tmp_path):
+    data_root = tmp_path / "remarx-data"
+    quote_output_root = data_root / "quote-finder-output"
+    with (
+        patch("remarx.utils.DEFAULT_DATA_ROOT", data_root),
+        patch("remarx.utils.DEFAULT_QUOTE_OUTPUT_ROOT", quote_output_root),
+    ):
+        ready, path = get_default_quote_output_path(create=True)
+        assert ready
+        assert path.exists()
