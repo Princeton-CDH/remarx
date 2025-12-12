@@ -92,13 +92,12 @@ class FileInput:
 
                 # character index is not included in output,
                 # but may be useful for sub-chunk metadata (e.g., line number)
-
-                # specify input file name first;
-                # chunk-specific filename take precedence (e.g. alto file within zip)
+                # NOTE: we don't allow overriding filename, since it must
+                # be unique per input to consolidate quotes correctly
                 yield (
-                    {"file": self.file_name}
-                    | chunk_info
+                    chunk_info
                     | {
+                        "file": self.file_name,
                         "text": sentence,
                         "sent_index": sentence_index,
                         "sent_id": f"{self.file_name}:{sentence_index}",
