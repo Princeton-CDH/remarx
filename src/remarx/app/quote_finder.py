@@ -550,7 +550,7 @@ def _(
             find_quote_pairs(
                 original_corpus=original_csvs,
                 reuse_corpus=reuse_file_path,
-                out_csv=output_csv,
+                output_path=output_csv,
                 show_progress_bar=False,
                 consolidate=consolidate_quotes.value,
             )
