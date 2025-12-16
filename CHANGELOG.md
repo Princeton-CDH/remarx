@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.6.0
+
+### Sentence corpus creation
+
+- Sentence embeddings are now automatically cached to disk based on the source file; the app automatically reuses them when processing the same source file to speed up repeated runs.
+
 ## 0.5.0
 
 ### Sentence corpus creation
