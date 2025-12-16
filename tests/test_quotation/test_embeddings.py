@@ -174,6 +174,7 @@ def test_get_cached_embeddings_np_integration(mock_get_sent_embeddings, tmp_path
 
     # ensure cache file timestamp is newer than source file
     time.sleep(0.1)
+    expected_cachefile.touch()
 
     # call again to load from cache
     embed, from_cache = get_cached_embeddings(source_file, sentences)
