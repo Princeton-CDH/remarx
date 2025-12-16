@@ -5,6 +5,7 @@ Tests for sentence embedding functionality.
 import io
 import logging
 import re
+import time
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -170,6 +171,9 @@ def test_get_cached_embeddings_np_integration(mock_get_sent_embeddings, tmp_path
     with expected_cachefile.open("rb") as cache_filehandle:
         saved_vecs = np.load(cache_filehandle)
     assert np.array_equal(saved_vecs, sample_vecs)
+
+    # ensure cache file timestamp is newer than source file
+    time.sleep(0.1)
 
     # call again to load from cache
     embed, from_cache = get_cached_embeddings(source_file, sentences)
