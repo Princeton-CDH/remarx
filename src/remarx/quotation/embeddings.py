@@ -33,7 +33,7 @@ def get_cached_embeddings(
     cache_file = source_file.parent / f"{source_file.stem}_{model_name}.npy"
     # if file exists and has non-zero size, check modification time
     if cache_file.exists() and cache_file.stat().st_size:
-        if cache_file.stat().st_mtime > source_file.stat().st_mtime:
+        if cache_file.stat().st_mtime >= source_file.stat().st_mtime:
             with cache_file.open("rb") as cache_filehandle:
                 logger.info(f"Loading embeddings from {cache_file}")
                 return (np.load(cache_filehandle), True)
