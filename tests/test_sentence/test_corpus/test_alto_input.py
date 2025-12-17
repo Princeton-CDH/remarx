@@ -12,7 +12,6 @@ from neuxml import xmlmap
 from remarx.sentence.corpus.alto_input import (
     AltoDocument,
     ALTOInput,
-    AltoTag,
     TextBlock,
     TextLine,
 )
@@ -22,14 +21,16 @@ from test_sentence.test_corpus.test_text_input import simple_segmenter
 FIXTURE_DIR = pathlib.Path(__file__).parent / "fixtures"
 FIXTURE_ALTO_ZIPFILE = FIXTURE_DIR / "alto_sample.zip"
 FIXTURE_ALTO_PAGE = FIXTURE_DIR / "alto_page.xml"
+FIXTURE_ALTO_PAGE_WITH_FOOTNOTES = FIXTURE_DIR / "alto_page_with_footnote.xml"
+FIXTURE_ALTO_METADATA = FIXTURE_DIR / "alto_metadata.xml"
 
 # test xmlmap classes
 
 
 def test_alto_document():
     altoxml = xmlmap.load_xmlobject_from_file(FIXTURE_ALTO_PAGE, AltoDocument)
-    # sample page has 4 text blocks
-    assert len(altoxml.blocks) == 4
+    # sample page has 19 text blocks
+    assert len(altoxml.blocks) == 19
     assert isinstance(altoxml.blocks[0], TextBlock)
 
 
@@ -77,48 +78,41 @@ def test_alto_document_text_chunks():
         "Header",
         "page number",
         "text",
+        "Title",
+        "Title",
+        "author",
+        "text",
+        "Title",
         "footnote",
+        "text",
+        "Title",
+        "author",
+        "text",
+        "text",
+        "Title",
+        "section title",
+        "Title",
+        "author",
+        "text",
     ]
 
     # optionally filter by type/block tag
     content_chunks = list(altoxml.text_chunks(include={"text", "footnote"}))
-    assert len(content_chunks) == 2
-    assert content_chunks[0]["section_type"] == "text"
-    assert content_chunks[1]["section_type"] == "footnote"
+    assert len(content_chunks) == 7
+    assert [chunk["section_type"] for chunk in content_chunks] == [
+        "text",
+        "text",
+        "footnote",
+        "text",
+        "text",
+        "text",
+        "text",
+    ]
 
     # ignores irrelevant tag
     other_chunks = list(altoxml.text_chunks(include={"Header", "foo"}))
     assert len(other_chunks) == 1
     assert other_chunks[0]["section_type"] == "Header"
-
-
-def test_alto_document_tags():
-    altoxml = xmlmap.load_xmlobject_from_file(FIXTURE_ALTO_PAGE, AltoDocument)
-    # xmlobject list mapped to _tags
-    assert isinstance(altoxml._tags[0], AltoTag)
-    # dict property at named tags
-    assert isinstance(altoxml.tags, dict)
-
-    # fixture page has 13 tags
-    assert len(altoxml.tags) == 13
-    assert list(altoxml.tags.values()) == [
-        "Title",
-        "Main",
-        "Commentary",
-        "Illustration",
-        "text",
-        "Issue details",
-        "Header",
-        "page number",
-        "section title",
-        "Table",
-        "footnote",
-        "author",
-        "default",
-    ]
-    # lookup tag label by id
-    assert altoxml.tags["BT1"] == "Title"
-    assert altoxml.tags["BT255"] == "footnote"
 
 
 def test_alto_textblock():
@@ -128,6 +122,20 @@ def test_alto_textblock():
     assert alto_textblock.vertical_position == 200.0
     assert len(alto_textblock.lines) == 1
     assert isinstance(alto_textblock.lines[0], TextLine)
+    assert alto_textblock.tag_id == "BT251"
+    assert alto_textblock.tag == "Header"
+
+    # first block tag is page number
+    assert altoxml.blocks[0].tag_id == "BT252"
+    assert altoxml.blocks[0].tag == "page number"
+
+    # handles no tag id
+    # attribute is present but has no content
+    alto_textblock.tag_id = None
+    assert alto_textblock.tag is None
+    # attribute is not present
+    del alto_textblock.tag_id
+    assert alto_textblock.tag is None
 
 
 def test_alto_textblock_sorted_lines():
@@ -146,7 +154,7 @@ def test_alto_textblock_sorted_lines():
 def test_alto_textblock_text_content():
     altoxml = xmlmap.load_xmlobject_from_file(FIXTURE_ALTO_PAGE, AltoDocument)
 
-    alto_textblock = altoxml.blocks[3]
+    alto_textblock = next(block for block in altoxml.blocks if block.tag_id == "BT255")
     block_text = alto_textblock.text_content
     # check that we have the expected number of lines
     assert len(block_text.split("\n")) == len(alto_textblock.lines)
@@ -171,7 +179,14 @@ def test_alto_textline():
 
 
 def test_field_names():
-    assert ALTOInput.field_names == (*FileInput.field_names, "section_type")
+    assert ALTOInput.field_names == (
+        *FileInput.field_names,
+        "section_type",
+        "title",
+        "author",
+        "page_number",
+        "page_file",
+    )
 
 
 def test_altoinput_get_text(caplog):
@@ -191,30 +206,24 @@ def test_altoinput_get_text(caplog):
         "1896-97a.pdf_page_3.xml",
         "1896-97a.pdf_page_4.xml",
         "1896-97a.pdf_page_5.xml",
-        "empty_page.xml",
+        "empty_page.xml",  # now skipped entirely
         "unsorted_page.xml",
     ]
 
     # distinct filenames should match expected file list
     chunks_by_filename = defaultdict(list)
     for chunk in chunks:
-        chunks_by_filename[chunk["file"]].append(chunk)
+        chunks_by_filename[chunk["page_file"]].append(chunk)
 
-    assert set(chunks_by_filename.keys()) == set(expected_files)
+    # empty page should not be present since no chunks are yielded
+    assert set(chunks_by_filename.keys()) == set(expected_files) - {"empty_page.xml"}
 
     # check block tag section types for one file
     assert [
         chunk["section_type"] for chunk in chunks_by_filename["1896-97a.pdf_page_1.xml"]
     ] == ["Issue details", "Title", "text"]
 
-    # inspect text results for a few cases
-    assert (
-        chunks_by_filename["1896-97a.pdf_page_3.xml"][0]["text"]
-        == "Arbeiter und Gewerbeausstellung."
-    )
-    assert chunks_by_filename["1896-97a.pdf_page_3.xml"][2]["text"].endswith(
-        "langsamer und deshalb auch viel häßlicher und viel widerlicher. Und wie die"
-    )
+    # title/author metadata tested separately below
 
     processing_prefix = "Processing XML file "
     processed_files = [
@@ -227,7 +236,8 @@ def test_altoinput_get_text(caplog):
     # last log entry should report time to process, # of files
     summary_log_message = caplog.records[-1].getMessage()
     assert summary_log_message.startswith(
-        f"Processed {FIXTURE_ALTO_ZIPFILE.name} with 7 files (7 valid ALTO)"
+        # empty file now considered invalid
+        f"Processed {FIXTURE_ALTO_ZIPFILE.name} with 7 files (6 valid ALTO)"
     )
 
 
@@ -239,6 +249,139 @@ def test_altoinput_get_text_filtered(caplog):
     assert {chunk["section_type"] for chunk in filtered_chunks} == {"text", "Title"}
 
 
+def test_altoinput_update_current_metadata():
+    alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
+    alto_input.current_metadata = {}
+    alto_doc = xmlmap.load_xmlobject_from_file(FIXTURE_ALTO_METADATA, AltoDocument)
+
+    # page text blocks start with Header, page number, then Title.
+    # update metadata starting with title and all following blocks
+    alto_input.update_current_metadata(alto_doc.sorted_blocks[2:])
+    assert (
+        alto_input.current_metadata["title"]
+        == "Ein Brief von Karl Marx an I. B. v. Schweitzer über\n"
+        + "Lassalleanismus und Gewerkschaftskampf."
+    )
+    assert alto_input.current_metadata["author"] == "Vorbemerkung."
+
+    # if update is called  but no content is found, title/author are cleared
+    alto_input.update_current_metadata(alto_doc.sorted_blocks[-1:])
+    assert alto_input.current_metadata["title"] == ""
+    assert alto_input.current_metadata["author"] == ""
+
+    # test with other alto fixture document, which contains multiple title groups
+    alto_doc = xmlmap.load_xmlobject_from_file(FIXTURE_ALTO_PAGE, AltoDocument)
+
+    # first title / author section starts at block index 3
+    alto_input.update_current_metadata(alto_doc.sorted_blocks[3:])
+    assert (
+        alto_input.current_metadata["title"]
+        == "Ein Brief von Karl Marx an I. B. v. Schweitzer über "
+        + "Lassalleanismus und Gewerkschaftskampf."
+    )
+    assert alto_input.current_metadata["author"] == "Vorbemerkung."
+
+    # second title / author section starts at block index 7
+    alto_input.update_current_metadata(alto_doc.sorted_blocks[7:])
+    assert (
+        alto_input.current_metadata["title"]
+        == "Der zweite, weit interessantere Band enthält nicht mehr gewöhnliche Salon⸗"
+        + "\nkritiken."
+    )
+    assert alto_input.current_metadata["author"] == ""
+
+    # third title/author section starts at block index 10
+    alto_input.update_current_metadata(alto_doc.sorted_blocks[10:])
+    assert (
+        alto_input.current_metadata["title"]
+        == "Die nächsten Aufgaben der deutschen Gewerkschafts-\nbewegung."
+    )
+    assert alto_input.current_metadata["author"] == "Von G. Mauerer."
+
+    # last title/author section starts at third from last block
+    alto_input.update_current_metadata(alto_doc.sorted_blocks[-3:])
+    assert alto_input.current_metadata["title"] == "Kämpfe."
+    assert (
+        alto_input.current_metadata["author"]
+        == "Von August Strindberg. Deutsch von Gustav Lichtenstein."
+    )
+
+
+def test_altoinput_includes_title_and_author_metadata():
+    alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
+    chunks = list(alto_input.get_text())
+
+    # get first text section from page 1 file
+    first_text = next(
+        chunk
+        for chunk in chunks
+        if chunk["page_file"] == "1896-97a.pdf_page_1.xml"
+        and chunk["section_type"] == "text"
+    )
+    assert first_text["title"] == "Arbeiter und Gewerbeausstellung."
+    assert first_text["author"] == ""
+    # first page does not have a page number block
+    assert "page_number" not in first_text
+
+    # get the first text chunk from page 5 file
+    marx_text = next(
+        chunk
+        for chunk in chunks
+        if chunk["page_file"] == "1896-97a.pdf_page_5.xml"
+        and chunk["section_type"] == "text"
+    )
+    assert (
+        marx_text["title"] == "Ein Brief von Karl Marx an I. B. v. Schweitzer über\n"
+        "Lassalleanismus und Gewerkschaftskampf."
+    )
+    assert marx_text["author"] == "Vorbemerkung."
+    # page_5.xml has a text block marked as page number with text content 5
+    assert marx_text["page_number"] == "5"
+
+
+def test_footnotes_include_metadata(tmp_path: pathlib.Path):
+    archive_path = tmp_path / "alto_footnote_fixture.zip"
+    with ZipFile(archive_path, "w") as archive:
+        archive.write(
+            FIXTURE_ALTO_PAGE_WITH_FOOTNOTES, arcname="alto_page_with_footnote.xml"
+        )
+
+    alto_input = ALTOInput(input_file=archive_path)
+    chunks = list(alto_input.get_text())
+
+    # Find the first footnote chunk
+    footnote_chunk = next(
+        chunk for chunk in chunks if chunk["section_type"] == "footnote"
+    )
+    assert footnote_chunk["title"] == "Ein Brief von Karl Marx an J. B. v. Schweitzer."
+    assert footnote_chunk["author"] == "Der Herausgeber."
+    assert footnote_chunk["page_number"] == "9"
+    assert "Historisch" in footnote_chunk["text"]
+    assert "Manuskript" in footnote_chunk["text"]
+
+    # Verify that text blocks also have the same metadata
+    text_chunk = next(chunk for chunk in chunks if chunk["section_type"] == "text")
+    assert text_chunk["title"] == "Ein Brief von Karl Marx an J. B. v. Schweitzer."
+    assert text_chunk["author"] == "Der Herausgeber."
+    assert text_chunk["page_number"] == "9"
+
+
+def test_altoinput_footnotes_emitted_last(tmp_path: pathlib.Path):
+    archive_path = tmp_path / "alto_footnote_order.zip"
+    with ZipFile(archive_path, "w") as archive:
+        archive.write(
+            FIXTURE_ALTO_PAGE_WITH_FOOTNOTES,
+            arcname="alto_page_with_footnote.xml",
+        )
+
+    alto_input = ALTOInput(input_file=archive_path)
+    sections = [chunk["section_type"] for chunk in alto_input.get_text()]
+
+    first_footnote_idx = sections.index("footnote")
+    assert "footnote" not in sections[:first_footnote_idx]
+    assert set(sections[first_footnote_idx:]) == {"footnote"}
+
+
 def test_altoinput_warn_no_text(caplog):
     alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE)
     with caplog.at_level(logging.WARNING, logger="remarx.sentence.corpus.alto_input"):
@@ -246,7 +389,7 @@ def test_altoinput_warn_no_text(caplog):
 
     warning_messages = [record.getMessage() for record in caplog.records]
     assert any(
-        message == "No text lines found in ALTO XML file: empty_page.xml"
+        message == "No text lines in ALTO XML file: empty_page.xml"
         for message in warning_messages
     )
 
@@ -335,8 +478,8 @@ def test_get_sentences_sequential(mock_segment_text: Mock):
     sentences = list(alto_input.get_sentences())
     num_sentences = len(sentences)
     # currently with this fixture data and simple segmenter,
-    # and filtering by section type expect 16 sentences
-    assert num_sentences == 20
+    # and filtering by section type expect 18 sentences
+    assert num_sentences == 18
 
     # sentence indexes should start at 0 and continue across all sentences
     indexes = [sentence["sent_index"] for sentence in sentences]

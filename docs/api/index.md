@@ -33,4 +33,6 @@ hide: [navigation]
 
 ### ::: remarx.quotation.embeddings
 
+### ::: remarx.quotation.consolidate
+
 ### ::: remarx.quotation.pairs

@@ -9,8 +9,11 @@ import tempfile
 import webbrowser
 from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager
+from datetime import datetime
+from typing import Protocol, runtime_checkable
 
 import marimo as mo
+import polars as pl
 import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
@@ -19,7 +22,7 @@ from fastapi.responses import RedirectResponse
 from marimo._plugins.ui._impl.input import FileUploadResults
 
 import remarx
-from remarx.utils import configure_logging
+from remarx.utils import CorpusPath, configure_logging, get_default_corpus_path
 
 # Server configuration
 HOST = "localhost"
@@ -102,6 +105,13 @@ def create_header() -> None:
     )
 
 
+@runtime_checkable
+class _HasPath(Protocol):
+    """Protocol for objects that expose a filesystem path via a ``path`` attribute."""
+
+    path: str | pathlib.Path | None
+
+
 @contextlib.contextmanager
 def create_temp_input(
     file_upload: FileUploadResults,
@@ -125,3 +135,82 @@ def create_temp_input(
         if not temp_file.closed:
             temp_file.close()
         pathlib.Path.unlink(temp_file.name)
+
+
+def summarize_corpus_selection(
+    selection: _HasPath | str | pathlib.Path | None,
+) -> dict[str, int | str] | None:
+    """
+    Summarize a sentence corpus CSV selected in the UI.
+
+    Accepts either a file-browser selection (with a ``path`` attribute) or a
+    filesystem path and returns corpus statistics that can be displayed in the
+    Marimo table.
+    """
+
+    path_value = getattr(selection, "path", selection)
+    if path_value is None:
+        return None
+
+    path = pathlib.Path(path_value)
+    if not path.is_file():
+        return None
+
+    # Use lazy scanning so even large corpora only require lightweight
+    # aggregations while collecting summary statistics.
+    corpus = pl.scan_csv(path, infer_schema_length=0)
+    total_sentences = corpus.select(pl.len()).collect().item()
+
+    if "section_type" in corpus.collect_schema():
+        counts = (
+            corpus.group_by("section_type").agg(pl.len().alias("sentences")).collect()
+        )
+        body_sentences = int(
+            counts.filter(pl.col("section_type") == "text")["sentences"].sum()
+        )
+        footnote_sentences = int(
+            counts.filter(pl.col("section_type") == "footnote")["sentences"].sum()
+        )
+    else:
+        body_sentences = total_sentences
+        footnote_sentences = 0
+
+    last_updated = datetime.fromtimestamp(path.stat().st_mtime).strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+
+    return {
+        "filename": path.name,
+        "total sentences": int(total_sentences),
+        "body text sentences": body_sentences,
+        "footnote sentences": footnote_sentences,
+        "last updated": last_updated,
+    }
+
+
+def handle_default_corpus_creation(
+    button: mo.ui.run_button,
+    default_dirs_initial: CorpusPath,
+    *,
+    ready_message: str = ":white_check_mark: Default corpus folders are ready.",
+    missing_message: str = ":x: Default corpus folders were not found.",
+) -> tuple[bool, CorpusPath, str, str]:
+    """
+    Update default corpus directory state based on the create button.
+
+    :returns: Tuple of (ready flag, directories object, status message, callout kind)
+    """
+
+    default_dirs = default_dirs_initial
+    default_dirs_ready_initial = default_dirs_initial.ready()
+    default_dirs_ready = default_dirs_ready_initial
+
+    status_msg = ready_message if default_dirs_ready_initial else missing_message
+    callout_kind = "success" if default_dirs_ready_initial else "warn"
+
+    if button.value and not default_dirs_ready_initial:
+        default_dirs_ready, default_dirs = get_default_corpus_path(create=True)
+        status_msg = f"Created default corpus folders under `{default_dirs.root}`"
+        callout_kind = "success"
+
+    return default_dirs_ready, default_dirs, status_msg, callout_kind

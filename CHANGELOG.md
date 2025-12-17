@@ -1,6 +1,32 @@
 # CHANGELOG
 
-## 0.4.0
+## 0.5.0
+
+### Sentence corpus creation
+
+- ALTO input refinements:
+    - ALTO-based sentence corpora now include `title`, `author`, and `page_number` based on block tags
+    - Footnotes now follow all main body content, with correct title, author, and page number metadata
+    - Zip file name is used as `file` field (for quote consolidation); individual ALTO filenames are
+        included as `page_file`
+
+### Quotation detection
+
+- Add consolidation logic to group quotes that are sequential in both original and reuse texts
+    - Quote consolidation is enabled by default but configurable in both app and command line script
+    - Quotes are only consolidated for sentences that are sequential in both original and reuse sentence corpora
+    - Quotes are only consolidated within a single original corpus file
+- Now supports multiple original sentence corpora as input
+    - `remarx-find-quotes` script accepts one or more CSV files or directories of CSVs for original corpora; uses default original corpus location when no original path is specified
+    - `Quote Finder` allows selecting multiple original files or all files in a directory
+- `Quote Finder` displays tables with summary information for selected input corpora
+
+### Non-package scripts
+
+- Add `xquery` directory with instructions and XQuery files for investigating
+    & reporting on continuing paragraph and footnote content in MEGA TEI
+
+## [0.4.0] - 2025-11-19
 
 ### Sentence corpus creation
 
@@ -20,11 +46,12 @@
 
 ### Quotation detection
 
-- Add the `find_quotes.py` CLI script to run the quote finder, with a `--benchmark` flag to collect performance metrics
+- Add `remarx-find-quotes` script to run the quote finder, with a `--benchmark` option to collect performance metrics
 
 ### Application
 
 - Display logging output in real-time to show progress when building corpus
+- Configured default `~/remarx-data/corpora/original` and `~/remarx-data/corpora/reuse` folders, including in-app prompts to create them and default file browser locations when saving or selecting corpora
 
 ## [0.3.0] - 2025-10-27
 
@@ -97,3 +124,4 @@ _Initial release._
 [0.1.0]: https://github.com/Princeton-CDH/remarx/tree/0.1
 [0.2.0]: https://github.com/Princeton-CDH/remarx/tree/0.2
 [0.3.0]: https://github.com/Princeton-CDH/remarx/tree/0.3
+[0.4.0]: https://github.com/Princeton-CDH/remarx/tree/0.4
