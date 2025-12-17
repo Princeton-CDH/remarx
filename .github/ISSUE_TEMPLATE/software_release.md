@@ -45,3 +45,4 @@ assignees: ''
 - [ ] Increase the develop branch version so it is set to the next expected release (i.e., if you just released `0.5` then develop will probably be `0.6.dev0` unless you are working on a major update, in which case it will be `1.0.dev0`)
 - [ ] Push all updates to GitHub (main branch, develop branch, tags)
 - [ ] Create a GitHub release for the new tag, to trigger package publication on PyPI (and eventually Zenodo DOI)
+- [ ] Close the associated milestone on GitHub, if there is one
