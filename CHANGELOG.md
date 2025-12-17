@@ -20,20 +20,19 @@
 
 - Add consolidation logic to group quotes that are sequential in both original and reuse texts
     - Quote consolidation is enabled by default but configurable in both app and command line script
-    - Quotes are only consolidated for sequential sentences from a single source file
+    - Quotes are only consolidated for sentences that are sequential in both original and reuse sentence corpora
+    - Quotes are only consolidated within a single original corpus file
 - Now supports multiple original sentence corpora as input
     - `remarx-find-quotes` script accepts one or more CSV files or directories of CSVs for original corpora; uses default original corpus location when no original path is specified
+    - `Quote Finder` allows selecting multiple original files or all files in a directory
+- `Quote Finder` displays tables with summary information for selected input corpora
 
 ### Non-package scripts
 
 - Add `xquery` directory with instructions and XQuery files for investigating
     & reporting on continuing paragraph and footnote content in MEGA TEI
 
-### Application
-
-- Add summary tables in `Quote Finder` to display details for selected input corpora
-
-## 0.4.0
+## [0.4.0] - 2025-11-19
 
 ### Sentence corpus creation
 
@@ -131,3 +130,4 @@ _Initial release._
 [0.1.0]: https://github.com/Princeton-CDH/remarx/tree/0.1
 [0.2.0]: https://github.com/Princeton-CDH/remarx/tree/0.2
 [0.3.0]: https://github.com/Princeton-CDH/remarx/tree/0.3
+[0.4.0]: https://github.com/Princeton-CDH/remarx/tree/0.4

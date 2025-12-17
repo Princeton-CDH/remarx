@@ -8,7 +8,10 @@ The primary purpose of this software is to identify quotes of Karl Marx's _Manif
 der Kommunistischen Partei_ and the first volume of _Das Kapital_ within articles
 published in _Die Neue Zeit_ between 1891 and 1918.
 
+[![PyPI - Version](https://img.shields.io/pypi/v/remarx)](https://pypi.org/project/remarx/)
 [![Unit Tests](https://github.com/Princeton-CDH/remarx/actions/workflows/unit_tests.yml/badge.svg)](https://github.com/Princeton-CDH/remarx/actions/workflows/unit_tests.yml)
+[![codecov](https://codecov.io/gh/Princeton-CDH/remarx/graph/badge.svg?token=waqNjbHV8d)](https://codecov.io/gh/Princeton-CDH/remarx)
+[![Apache 2 License](https://img.shields.io/badge/license-Apache%20License%202.0-blue)](#license)
 
 ## Basic Usage
 
@@ -29,6 +32,12 @@ uv venv --python 3.12
 ```
 
 #### Install `remarx`
+
+To install the most recent release published on PyPIi:
+
+```
+uv pip install remarx
+```
 
 remarx as a python package directly from GitHub. Use a branch or tag name, e.g.
 `@develop` or `@0.1` if you need to install a specific version.

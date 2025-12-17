@@ -21,7 +21,12 @@ DEFAULT_QUOTE_OUTPUT_ROOT = DEFAULT_DATA_ROOT / "quotes"
 
 @dataclass(slots=True)
 class CorpusPath:
-    """Paths for the default corpus directory structure."""
+    """
+    Paths for the default corpus directory structure.
+
+    Populates unspecified directories based on the default data folder.
+    Supports expansion of "~" or "~user" paths.
+    """
 
     root: pathlib.Path | None = None
     original: pathlib.Path | None = None
