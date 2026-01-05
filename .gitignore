@@ -175,3 +175,6 @@ cython_debug/
 
 # built mkdocs site
 site/
+
+# marimo session state
+/src/remarx/app/__marimo__/session
