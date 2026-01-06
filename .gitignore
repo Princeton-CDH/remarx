@@ -177,4 +177,4 @@ cython_debug/
 site/
 
 # marimo session state
-/src/remarx/app/__marimo__/session
+src/remarx/app/__marimo__/
