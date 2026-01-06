@@ -5,7 +5,7 @@
 ### Sentence corpus creation
 
 - Sentence embeddings are now automatically cached to disk based on the source file; the app automatically reuses them when processing the same source file to speed up repeated runs.
-- Changed the sentence tokenizer model from Stanza to spaCy’s `de_core_news_sm`.
+- Changed the sentence tokenizer from Stanza to spaCy, with default model `de_core_news_sm`.
 
 ## 0.5.0
 
