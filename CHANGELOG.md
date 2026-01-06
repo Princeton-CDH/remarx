@@ -6,6 +6,7 @@
 
 - Sentence embeddings are now automatically cached to disk based on the source file; the app automatically reuses them when processing the same source file to speed up repeated runs.
 - Changed the sentence tokenizer from Stanza to spaCy, with default model `de_core_news_sm`.
+- Added `pip` as a dependency so spaCy models can be downloaded automatically when missing.
 - Added sentence filtering to exclude 1-2 word sentences and punctuation-only sentences from corpora to improve quote detection quality.
 
 ## 0.5.0

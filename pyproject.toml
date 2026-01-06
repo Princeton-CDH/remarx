@@ -35,6 +35,7 @@ dependencies = [
   "fastapi",
   "uvicorn",
   "natsort>=8.4.0",
+  "pip", # required for downloading spaCy model in uv-created virtualenvs
 ]
 
 [project.optional-dependencies]
