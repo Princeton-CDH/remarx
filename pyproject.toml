@@ -30,11 +30,14 @@ dependencies = [
   "ruff",
   "sentence-transformers",
   "spacy",
+  "de-core-news-sm @ https://github.com/explosion/spacy-models/releases/download/de_core_news_sm-3.8.0/de_core_news_sm-3.8.0-py3-none-any.whl",
   "transformers[torch]",
   "voyager>=2.1.0",
   "fastapi",
   "uvicorn",
   "natsort>=8.4.0",
+  "typer>=0.21.1",
+  "msgspec>=0.20.0",
 ]
 
 [project.optional-dependencies]

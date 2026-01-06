@@ -75,39 +75,3 @@ class TestSegmentTextIntoSentences:
         # Test with default model (should be "de_core_news_sm")
         segment_text("Hallo Welt.")
         mock_spacy_load.assert_called_with("de_core_news_sm")
-
-    @patch("remarx.sentence.segment.logger")
-    @patch("remarx.sentence.segment.download")
-    @patch("remarx.sentence.segment.spacy.load")
-    def test_segment_text_downloads_model_if_missing(
-        self,
-        mock_spacy_load: Mock,
-        mock_spacy_download: Mock,
-        mock_logger: Mock,
-    ) -> None:
-        """Test that the model is downloaded automatically if not installed."""
-        # First call to spacy.load -> simulate missing model
-        # Second call -> simulate successful load after download
-        mock_sentence = Mock(spec=Span, text="Erster Satz.", start_char=0)
-        mock_doc = Mock()
-        mock_doc.sents = [mock_sentence]
-
-        # Configure load() to fail once, then succeed
-        mock_spacy_load.side_effect = [
-            OSError("model not installed"),  # first call raises
-            Mock(return_value=mock_doc),  # second call returns nlp()
-        ]
-
-        result = segment_text("Erster Satz.")
-        assert result == [(0, "Erster Satz.")]
-
-        # spacy.load called twice: before and after download
-        assert mock_spacy_load.call_count == 2
-
-        # download called once with default model
-        mock_spacy_download.assert_called_once_with("de_core_news_sm")
-
-        # logger.info called once with download message
-        mock_logger.info.assert_called_once_with(
-            "Downloading spaCy model: 'de_core_news_sm'"
-        )
