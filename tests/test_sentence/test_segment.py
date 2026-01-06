@@ -76,7 +76,7 @@ class TestSegmentTextIntoSentences:
         segment_text("Hallo Welt.")
         mock_spacy_load.assert_called_with("de_core_news_sm")
 
-    @patch("remarx.sentence.segment.spacy.cli.download")
+    @patch("remarx.sentence.segment.download")
     @patch("remarx.sentence.segment.spacy.load")
     def test_segment_text_downloads_model_if_missing(
         self,
