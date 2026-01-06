@@ -4,8 +4,12 @@ sentences and return them as tuples containing the character index where each
 sentence begins and the sentence text itself.
 """
 
+import logging
+
 import spacy
 from spacy.cli import download
+
+logger = logging.getLogger(__name__)
 
 
 def segment_text(text: str, model: str = "de_core_news_sm") -> list[tuple[int, str]]:
@@ -23,6 +27,7 @@ def segment_text(text: str, model: str = "de_core_news_sm") -> list[tuple[int, s
         nlp = spacy.load(model)
     except OSError:
         # If the model is not pre-installed, download and retry
+        logger.info(f"Downloading spaCy model: '{model}'")
         download(model)
         nlp = spacy.load(model)
 
