@@ -16,6 +16,7 @@ they are found as available input classes.
 
 """
 
+import logging
 import pathlib
 from collections.abc import Generator
 from dataclasses import dataclass
@@ -24,6 +25,8 @@ from functools import cached_property
 from typing import Any, ClassVar, Self
 
 from remarx.sentence.segment import segment_text
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -48,6 +51,25 @@ class FileInput:
         Input file name. Associated with sentences in generated corpus.
         """
         return self.filename_override or self.input_file.name
+
+    def _is_valid_sentence(self, sentence: str) -> bool:
+        """
+        Check if a sentence should be included in the corpus.
+
+        Drops sentences that are:
+        - Punctuation-only (no alphanumeric characters)
+        - 1 or 2 words long (after filtering tokens with alphanumeric characters)
+
+        :param sentence: The sentence text to validate
+        :returns: True if the sentence should be kept, False if it should be dropped
+        """
+        # Drop punctuation-only sentences
+        if not any(ch.isalnum() for ch in sentence):
+            return False
+
+        # Count tokens with an alphanumeric character
+        tokens = [t for t in sentence.split() if any(ch.isalnum() for ch in t)]
+        return len(tokens) > 2
 
     def get_text(self) -> Generator[dict[str, str]]:
         """
@@ -87,6 +109,15 @@ class FileInput:
             # contains text for that chunk; it may include other metadata
             chunk_text = chunk_info["text"]
             for _char_idx, sentence in segment_text(chunk_text):
+                # Filter out invalid sentences (1-2 words, punctuation-only)
+                if not self._is_valid_sentence(sentence):
+                    logger.debug(
+                        "Dropping short/punct-only sentence from %s: %r",
+                        self.file_name,
+                        sentence,
+                    )
+                    continue
+
                 # for each sentence, yield text, filename, and sentence index
                 # with any other metadata included in chunk_info
 
