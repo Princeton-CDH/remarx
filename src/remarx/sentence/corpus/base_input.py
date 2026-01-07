@@ -18,6 +18,7 @@ they are found as available input classes.
 
 import logging
 import pathlib
+import re
 from collections.abc import Generator
 from dataclasses import dataclass
 from enum import StrEnum
@@ -27,6 +28,9 @@ from typing import Any, ClassVar, Self
 from remarx.sentence.segment import segment_text
 
 logger = logging.getLogger(__name__)
+
+# Regex matching strings made only of punctuation and/or digits (no letters)
+_PUNCT_DIGITS_ONLY_RE = re.compile(r"^[\W\d]+$")
 
 
 @dataclass
@@ -44,6 +48,7 @@ class FileInput:
 
     file_type: ClassVar[str]
     "Supported file extension; subclasses must define"
+    min_words: ClassVar[int] = 3
 
     @cached_property
     def file_name(self) -> str:
@@ -52,24 +57,20 @@ class FileInput:
         """
         return self.filename_override or self.input_file.name
 
-    def _is_valid_sentence(self, sentence: str) -> bool:
+    def include_sentence(self, sentence: str) -> bool:
         """
-        Check if a sentence should be included in the corpus.
+        Return True if a sentence should be included in the corpus.
 
         Drops sentences that are:
-        - Punctuation-only (no alphanumeric characters)
-        - 1 or 2 words long (after filtering tokens with alphanumeric characters)
-
-        :param sentence: The sentence text to validate
-        :returns: True if the sentence should be kept, False if it should be dropped
+        - Punctuation/digits-only
+        - Fewer than `min_words` tokens (whitespace split)
         """
-        # Drop punctuation-only sentences
-        if not any(ch.isalnum() for ch in sentence):
+        # Drop sentences consisting only of punctuation and/or digits
+        if _PUNCT_DIGITS_ONLY_RE.match(sentence):
             return False
 
-        # Count tokens with an alphanumeric character
-        tokens = [t for t in sentence.split() if any(ch.isalnum() for ch in t)]
-        return len(tokens) > 2
+        # Simple token count (fast): keep only sentences with >= min_words tokens
+        return len(sentence.split()) >= self.min_words
 
     def get_text(self) -> Generator[dict[str, str]]:
         """
@@ -104,13 +105,15 @@ class FileInput:
         """
         # zero-based sentence index for this file, across all chunks
         sentence_index = 0
+        omitted_count = 0
         for chunk_info in self.get_text():
             # each chunk of text is a dictionary that at minimum
             # contains text for that chunk; it may include other metadata
             chunk_text = chunk_info["text"]
             for _char_idx, sentence in segment_text(chunk_text):
-                # Filter out invalid sentences (1-2 words, punctuation-only)
-                if not self._is_valid_sentence(sentence):
+                # Filter out invalid sentences (short or punctuation-only)
+                if not self.include_sentence(sentence):
+                    omitted_count += 1
                     logger.debug(
                         "Dropping short/punct-only sentence from %s: %r",
                         self.file_name,
@@ -139,6 +142,12 @@ class FileInput:
 
                 # increment sentence index
                 sentence_index += 1
+        if omitted_count:
+            logger.info(
+                "Omitted %d short/punct-only sentences from %s",
+                omitted_count,
+                self.file_name,
+            )
 
     @classmethod
     def subclasses(cls) -> list[type[Self]]:

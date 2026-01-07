@@ -143,39 +143,39 @@ class TestSentenceValidation:
         base_input = FileInput(input_file=txt_file)
 
         # Test various punctuation-only sentences
-        assert not base_input._is_valid_sentence("...")
-        assert not base_input._is_valid_sentence("!!!")
-        assert not base_input._is_valid_sentence("?")
-        assert not base_input._is_valid_sentence("—")
-        assert not base_input._is_valid_sentence(".")
+        assert not base_input.include_sentence("...")
+        assert not base_input.include_sentence("!!!")
+        assert not base_input.include_sentence("?")
+        assert not base_input.include_sentence("—")
+        assert not base_input.include_sentence(".")
 
     def test_single_word_sentences_dropped(self, tmp_path: pathlib.Path):
         """Test that single-word sentences are dropped."""
         txt_file = tmp_path / "test.txt"
         base_input = FileInput(input_file=txt_file)
 
-        assert not base_input._is_valid_sentence("Ja.")
-        assert not base_input._is_valid_sentence("Nein")
-        assert not base_input._is_valid_sentence("Hello")
-        assert not base_input._is_valid_sentence("123")
+        assert not base_input.include_sentence("Ja.")
+        assert not base_input.include_sentence("Nein")
+        assert not base_input.include_sentence("Hello")
+        assert not base_input.include_sentence("123")
 
     def test_two_word_sentences_dropped(self, tmp_path: pathlib.Path):
         """Test that two-word sentences are dropped."""
         txt_file = tmp_path / "test.txt"
         base_input = FileInput(input_file=txt_file)
 
-        assert not base_input._is_valid_sentence("Hello world")
-        assert not base_input._is_valid_sentence("Good morning")
-        assert not base_input._is_valid_sentence("One two")
+        assert not base_input.include_sentence("Hello world")
+        assert not base_input.include_sentence("Good morning")
+        assert not base_input.include_sentence("One two")
 
     def test_three_plus_word_sentences_kept(self, tmp_path: pathlib.Path):
         """Test that sentences with 3+ words are kept."""
         txt_file = tmp_path / "test.txt"
         base_input = FileInput(input_file=txt_file)
 
-        assert base_input._is_valid_sentence("This is a test sentence.")
-        assert base_input._is_valid_sentence("Hello world, how are you?")
-        assert base_input._is_valid_sentence("The quick brown fox jumps.")
+        assert base_input.include_sentence("This is a test sentence.")
+        assert base_input.include_sentence("Hello world, how are you?")
+        assert base_input.include_sentence("The quick brown fox jumps.")
 
     def test_sentences_with_numbers_kept_if_enough_words(self, tmp_path: pathlib.Path):
         """Test that sentences with numbers are treated as valid words."""
@@ -183,20 +183,20 @@ class TestSentenceValidation:
         base_input = FileInput(input_file=txt_file)
 
         # Three words with numbers should be kept
-        assert base_input._is_valid_sentence("The year 2023 was")
-        assert base_input._is_valid_sentence("Page 1 of 10")
+        assert base_input.include_sentence("The year 2023 was")
+        assert base_input.include_sentence("Page 1 of 10")
 
         # But still drop if only 1-2 valid tokens
-        assert not base_input._is_valid_sentence("2023")
-        assert not base_input._is_valid_sentence("Page 1")
+        assert not base_input.include_sentence("2023")
+        assert not base_input.include_sentence("Page 1")
 
     def test_sentences_with_mixed_alphanumeric_kept(self, tmp_path: pathlib.Path):
         """Test sentences with mixed alphanumeric content."""
         txt_file = tmp_path / "test.txt"
         base_input = FileInput(input_file=txt_file)
 
-        assert base_input._is_valid_sentence("The 2nd amendment is")
-        assert base_input._is_valid_sentence("Chapter 3 discusses the")
+        assert base_input.include_sentence("The 2nd amendment is")
+        assert base_input.include_sentence("Chapter 3 discusses the")
 
 
 @patch("remarx.sentence.corpus.base_input.segment_text")
