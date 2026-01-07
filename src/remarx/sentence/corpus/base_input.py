@@ -29,9 +29,8 @@ from remarx.sentence.segment import segment_text
 
 logger = logging.getLogger(__name__)
 
-# Regex matching strings made only of punctuation and/or digits (no letters),
-# or the letter 'p'. This filters out noises like "p. 56, 57." or "1862, p. 56.)" early.
-_PUNCT_DIGITS_ONLY_RE = re.compile(r"^[\W\dPp]+$")
+# Regex matching strings made only of punctuation and/or digits (no letters)
+_PUNCT_DIGITS_ONLY_RE = re.compile(r"^[\W\d]+$")
 
 
 @dataclass
@@ -63,14 +62,14 @@ class FileInput:
         Return True if a sentence should be included in the corpus.
 
         Drops sentences that are:
-        - Punctuation/digits-only (or the letter 'p' alone, e.g. `p.`)
+        - Punctuation/digits-only
         - Fewer than `min_words` tokens (whitespace split)
         """
         # Drop sentences consisting only of punctuation and/or digits
         if _PUNCT_DIGITS_ONLY_RE.match(sentence):
             return False
 
-        # Keep the sentence only if the number of resulting tokens is >= min_words
+        # Simple token count (fast): keep only sentences with >= min_words tokens
         return len(sentence.split()) >= self.min_words
 
     def get_text(self) -> Generator[dict[str, str]]:

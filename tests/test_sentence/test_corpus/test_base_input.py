@@ -198,15 +198,6 @@ class TestSentenceValidation:
         assert base_input.include_sentence("The 2nd amendment is")
         assert base_input.include_sentence("Chapter 3 discusses the")
 
-    def test_exclude_p_abbreviation(self, tmp_path: pathlib.Path):
-        """Sentences consisting only of punctuation/digits and 'p' should be dropped."""
-        txt_file = tmp_path / "test.txt"
-        base_input = FileInput(input_file=txt_file)
-
-        assert not base_input.include_sentence("1862, p. 56.)")
-        assert not base_input.include_sentence("1848“, p. 113.)")
-        assert not base_input.include_sentence("p. 56, 57.")
-
 
 @patch("remarx.sentence.corpus.base_input.segment_text")
 @patch.object(FileInput, "get_text")
