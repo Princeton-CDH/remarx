@@ -6,6 +6,7 @@ with the goal of creating a sentence corpus with associated metadata from ALTO.
 import contextlib
 import logging
 import pathlib
+import re
 from collections.abc import Generator
 from dataclasses import dataclass
 from functools import cached_property
@@ -20,6 +21,15 @@ from neuxml import xmlmap
 from remarx.sentence.corpus.base_input import FileInput, SectionType
 
 logger = logging.getLogger(__name__)
+
+_REJOIN_HYPHEN_REGEX = re.compile(r"[-\u2014\u2e17]\s*\n\s*")
+
+
+def _rejoin_hyphenated_words(text: str) -> str:
+    """
+    Remove hyphen+newline sequences to rejoin split words in ALTO text.
+    """
+    return _REJOIN_HYPHEN_REGEX.sub("", text)
 
 
 ALTO_NAMESPACE_V4: str = "http://www.loc.gov/standards/alto/ns-v4#"
@@ -155,7 +165,11 @@ class AltoDocument(AltoXmlObject):
             # currently includes if section type is unset
             if include is not None and section is not None and section not in include:
                 continue
-            yield {"text": block.text_content, "section_type": section}
+            # Rejoin words split by end-of-line hyphenation for body text only
+            block_text = block.text_content
+            if section == SectionType.TEXT.value:
+                block_text = _rejoin_hyphenated_words(block_text)
+            yield {"text": block_text, "section_type": section}
 
 
 @dataclass

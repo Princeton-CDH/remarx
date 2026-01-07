@@ -115,6 +115,91 @@ def test_alto_document_text_chunks():
     assert other_chunks[0]["section_type"] == "Header"
 
 
+def test_rejoin_hyphenated_words_helper():
+    """Test the _rejoin_hyphenated_words helper function directly."""
+    from remarx.sentence.corpus.alto_input import _rejoin_hyphenated_words
+
+    # Basic ASCII hyphen+newline removal
+    text = "exam-\nple"
+    result = _rejoin_hyphenated_words(text)
+    assert result == "example"
+
+    # Unicode hyphen (U+2E17) + newline removal
+    text = "Vorschuß⸗\nLorbeerkronen"
+    result = _rejoin_hyphenated_words(text)
+    assert result == "VorschußLorbeerkronen"
+
+    # Em dash (U+2014) + newline removal
+    text = "Some—\nText"
+    result = _rejoin_hyphenated_words(text)
+    assert result == "SomeText"
+
+    # Multiple hyphens (only those followed by newline)
+    text = "exam-\nple and\nanoth-\ner"
+    result = _rejoin_hyphenated_words(text)
+    assert result == "example and\nanother"
+
+    # Hyphen with surrounding whitespace
+    text = "exam- \n  ple"
+    result = _rejoin_hyphenated_words(text)
+    assert result == "example"
+
+    # Compound words with hyphens (not at line end) should be preserved
+    text = "Vorschuß⸗Lorbeerkronen"
+    result = _rejoin_hyphenated_words(text)
+    assert result == "Vorschuß⸗Lorbeerkronen"
+
+    # No hyphen to remove
+    text = "no hyphen here"
+    result = _rejoin_hyphenated_words(text)
+    assert result == "no hyphen here"
+
+    # Empty string
+    text = ""
+    result = _rejoin_hyphenated_words(text)
+    assert result == ""
+
+
+def test_rejoin_hyphenated_words_by_block_type():
+    """Test that hyphen rejoin applies only to body text blocks."""
+    from remarx.sentence.corpus.alto_input import AltoDocument
+
+    # Create a mock AltoDocument with minimal required attributes
+    alto_doc = AltoDocument.__new__(AltoDocument)  # Create without calling __init__
+
+    # Mock sorted_blocks with different block types
+    class FakeBlock:
+        def __init__(self, tag, text_content):
+            self.tag = tag
+            self.text_content = text_content
+
+    # Body text block with hyphen - should be rejoined
+    body_block = FakeBlock(None, "exam-\nple text")  # tag=None -> section='text'
+
+    # Title block with hyphen - should NOT be rejoined
+    title_block = FakeBlock("Title", "Some-\nTitle")
+
+    # Footnote block with hyphen - should NOT be rejoined
+    footnote_block = FakeBlock("footnote", "foot-\nnote")
+
+    alto_doc.sorted_blocks = [body_block, title_block, footnote_block]
+
+    chunks = list(alto_doc.text_chunks())
+
+    # Find chunks by section type
+    body_chunk = next(c for c in chunks if c["section_type"] == "text")
+    title_chunk = next(c for c in chunks if c["section_type"] == "Title")
+    footnote_chunk = next(c for c in chunks if c["section_type"] == "footnote")
+
+    # Body text should have hyphen removed
+    assert "example text" in body_chunk["text"]
+    assert "-\n" not in body_chunk["text"]
+
+    # Title and footnote should retain hyphens
+    assert "Some-\nTitle" in title_chunk["text"]
+    assert "foot-\nnote" in footnote_chunk["text"]
+
+
 def test_alto_textblock():
     altoxml = xmlmap.load_xmlobject_from_file(FIXTURE_ALTO_PAGE, AltoDocument)
     alto_textblock = altoxml.blocks[1]
