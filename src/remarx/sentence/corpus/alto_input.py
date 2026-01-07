@@ -24,21 +24,16 @@ logger = logging.getLogger(__name__)
 
 # Match three types of end-of-line hyphens that split words across lines in ALTO
 # 1. - (ASCII hyphen), 2. — (em dash U+2014), 3. ⸗ (double oblique hyphen U+2E17)
-# Example: "Vorschuß⸗\nLorbeerkronen" -> "VorschußLorbeerkronen"
+# Example: "Geschichts⸗\nauffassung" -> "Geschichtsauffassung"
 _REJOIN_HYPHEN_REGEX = re.compile(r"[-\u2014\u2e17]\s*\n\s*")
 
 
 def _rejoin_hyphenated_words(text: str) -> str:
     """
     Remove hyphen+newline sequences to rejoin words split across lines in ALTO text.
-
     This handles end-of-line hyphenation where words are broken across text lines
     due to OCR/page layout constraints. Only removes hyphens that are immediately
     followed by a newline, preserving legitimate compound words.
-
-    Examples:
-        "Geschichts-\nauffassung" -> "Geschichtsauffassung"
-        "Vorschuß⸗Lorbeerkronen" -> "Vorschuß⸗Lorbeerkronen" (unchanged - not at line end)
     """
     return _REJOIN_HYPHEN_REGEX.sub("", text)
 
@@ -177,7 +172,6 @@ class AltoDocument(AltoXmlObject):
             if include is not None and section is not None and section not in include:
                 continue
             # Rejoin words split by end-of-line hyphenation for body text only
-            # (titles, footnotes, etc. may contain intentional hyphenation that should be preserved)
             block_text = block.text_content
             if section == SectionType.TEXT.value:
                 block_text = _rejoin_hyphenated_words(block_text)
