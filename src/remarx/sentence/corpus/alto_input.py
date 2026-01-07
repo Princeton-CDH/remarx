@@ -22,10 +22,9 @@ from remarx.sentence.corpus.base_input import FileInput, SectionType
 
 logger = logging.getLogger(__name__)
 
-# Regex to match end-of-line hyphens that split words across lines in ALTO text
-# Matches: - (ASCII hyphen), — (em dash U+2014), ⸗ (double oblique hyphen U+2E17)
-# Examples from corpus: "Geschichts-\nauffassung" -> "Geschichtsauffassung"
-#                      "Vorschuß⸗\nLorbeerkronen" -> "VorschußLorbeerkronen"
+# Match three types of end-of-line hyphens that split words across lines in ALTO
+# 1. - (ASCII hyphen), 2. — (em dash U+2014), 3. ⸗ (double oblique hyphen U+2E17)
+# Example: "Vorschuß⸗\nLorbeerkronen" -> "VorschußLorbeerkronen"
 _REJOIN_HYPHEN_REGEX = re.compile(r"[-\u2014\u2e17]\s*\n\s*")
 
 
