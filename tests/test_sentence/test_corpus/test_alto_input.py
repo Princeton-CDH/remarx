@@ -119,32 +119,33 @@ def test_rejoin_hyphenated_words_helper():
     """Test the _rejoin_hyphenated_words helper function directly."""
     from remarx.sentence.corpus.alto_input import _rejoin_hyphenated_words
 
-    # Basic ASCII hyphen+newline removal
+    # Basic ASCII hyphen+newline removal (most common case in ALTO data)
     text = "exam-\nple"
     result = _rejoin_hyphenated_words(text)
     assert result == "example"
 
-    # Unicode hyphen (U+2E17) + newline removal
+    # Unicode hyphen (U+2E17) + newline removal (found in corpus like "Vorschuß⸗\nLorbeerkronen")
     text = "Vorschuß⸗\nLorbeerkronen"
     result = _rejoin_hyphenated_words(text)
     assert result == "VorschußLorbeerkronen"
 
-    # Em dash (U+2014) + newline removal
+    # Em dash (U+2014) + newline removal (less common but present in some texts)
     text = "Some—\nText"
     result = _rejoin_hyphenated_words(text)
     assert result == "SomeText"
 
-    # Multiple hyphens (only those followed by newline)
+    # Multiple hyphens (only those followed by newline are removed)
     text = "exam-\nple and\nanoth-\ner"
     result = _rejoin_hyphenated_words(text)
     assert result == "example and\nanother"
 
-    # Hyphen with surrounding whitespace
+    # Hyphen with surrounding whitespace (handles OCR spacing variations)
     text = "exam- \n  ple"
     result = _rejoin_hyphenated_words(text)
     assert result == "example"
 
     # Compound words with hyphens (not at line end) should be preserved
+    # Example: "Vorschuß⸗Lorbeerkronen" from corpus should remain unchanged
     text = "Vorschuß⸗Lorbeerkronen"
     result = _rejoin_hyphenated_words(text)
     assert result == "Vorschuß⸗Lorbeerkronen"
@@ -161,7 +162,11 @@ def test_rejoin_hyphenated_words_helper():
 
 
 def test_rejoin_hyphenated_words_by_block_type():
-    """Test that hyphen rejoin applies only to body text blocks."""
+    """Test that hyphen rejoin applies only to body text blocks (section_type='text').
+
+    This ensures that titles, footnotes, and other structured content preserve
+    their intentional hyphenation, while only body text has line-end hyphens removed.
+    """
     from remarx.sentence.corpus.alto_input import AltoDocument
 
     # Create a mock AltoDocument with minimal required attributes
@@ -173,13 +178,13 @@ def test_rejoin_hyphenated_words_by_block_type():
             self.tag = tag
             self.text_content = text_content
 
-    # Body text block with hyphen - should be rejoined
-    body_block = FakeBlock(None, "exam-\nple text")  # tag=None -> section='text'
+    # Body text block with hyphen - should be rejoined (tag=None -> section='text')
+    body_block = FakeBlock(None, "exam-\nple text")
 
-    # Title block with hyphen - should NOT be rejoined
+    # Title block with hyphen - should NOT be rejoined (preserves title formatting)
     title_block = FakeBlock("Title", "Some-\nTitle")
 
-    # Footnote block with hyphen - should NOT be rejoined
+    # Footnote block with hyphen - should NOT be rejoined (preserves footnote content)
     footnote_block = FakeBlock("footnote", "foot-\nnote")
 
     alto_doc.sorted_blocks = [body_block, title_block, footnote_block]
@@ -191,11 +196,11 @@ def test_rejoin_hyphenated_words_by_block_type():
     title_chunk = next(c for c in chunks if c["section_type"] == "Title")
     footnote_chunk = next(c for c in chunks if c["section_type"] == "footnote")
 
-    # Body text should have hyphen removed
+    # Body text should have hyphen removed (main content where line breaks occur)
     assert "example text" in body_chunk["text"]
     assert "-\n" not in body_chunk["text"]
 
-    # Title and footnote should retain hyphens
+    # Title and footnote should retain hyphens (preserve original formatting/structure)
     assert "Some-\nTitle" in title_chunk["text"]
     assert "foot-\nnote" in footnote_chunk["text"]
 
