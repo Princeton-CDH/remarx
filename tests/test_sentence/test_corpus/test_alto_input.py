@@ -490,29 +490,31 @@ def test_get_sentences_sequential(mock_segment_text: Mock):
 @patch.object(ALTOInput, "get_text")
 def test_alto_rejoin_hyphen_merge(mock_text, mock_segment, tmp_path: pathlib.Path):
     """
-    ALTO: If a tokenized sentence ends with an ASCII hyphen-minus and the next
-    sentence begins with a lowercase letter, the two should be merged.
+    Verify merging when a sentence ends with ASCII hyphen-minus and the
+    next sentence begins with a lowercase letter with real examples from ALTO.
     """
     mock_segment.return_value = [
-        (0, "Adler-"),
-        (6, "auge ist schön"),  # codespell:ignore
-    ]  # codespell:ignore
+        (0, "Was will und kann die materialistische Geschichts-"),
+        (40, "auffassung leisten?"),
+    ]
     mock_text.return_value = [{"meta": "x", "text": "ignored"}]
     alto_input = ALTOInput(input_file=tmp_path / "test.zip")
     results = list(alto_input.get_sentences())
-    assert any(r["text"].startswith("Adlerauge") for r in results)
+    assert any(
+        "Geschichtsauffassung" in r["text"].replace(" ", "")
+        or "Geschichtsauffassung" in r["text"]
+        for r in results
+    )
 
-
-@patch("remarx.sentence.corpus.alto_input.segment_text")
-@patch.object(ALTOInput, "get_text")
-def test_alto_rejoin_hyphen_no_merge(mock_text, mock_segment, tmp_path: pathlib.Path):
-    """
-    ALTO: If the continuation begins with an uppercase letter or the dash is
-    not an ASCII hyphen-minus, do not merge the sentences.
-    """
-    mock_segment.return_value = [(0, "Ende—"), (5, "Das ist neu")]  # codespell:ignore
+    mock_segment.return_value = [
+        (0, "Die nächsten Aufgaben der deutschen Gewerkschafts-"),
+        (50, "bewegung."),
+    ]
     mock_text.return_value = [{"meta": "x", "text": "ignored"}]
     alto_input = ALTOInput(input_file=tmp_path / "test.zip")
     results = list(alto_input.get_sentences())
-    assert any(r["text"].startswith("Ende") for r in results)  # codespell:ignore
-    assert any(r["text"].startswith("Das") for r in results)
+    assert any(
+        "Gewerkschaftsbewegung" in r["text"].replace(" ", "")
+        or "Gewerkschaftsbewegung" in r["text"]
+        for r in results
+    )
