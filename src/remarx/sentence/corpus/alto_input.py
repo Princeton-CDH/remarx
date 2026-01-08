@@ -240,6 +240,8 @@ class ALTOInput(FileInput):
                         collected_metadata = True
 
                     block_text = block.text_content
+                    # Clean up hyphenated line breaks from ALTO physical layout
+                    block_text = block_text.replace("-\n", "")
                     chunk = {
                         "text": block_text,
                         "section_type": section,
