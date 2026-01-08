@@ -8,6 +8,7 @@
 - Changed the sentence tokenizer from Stanza to spaCy, with default model `de_core_news_sm`.
 - Added `pip` as a dependency so spaCy models can be downloaded automatically when missing.
 - Added sentence filtering to exclude 1-2 word sentences and punctuation-only sentences from corpora to improve quote detection quality.
+- Rejoin end-of-line ASCII hyphenated words in ALTO text extraction to improve corpus quality for embeddings and matching.
 
 ## 0.5.0
 
