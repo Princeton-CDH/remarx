@@ -469,7 +469,7 @@ def test_altoinput_error_empty_zip(tmp_path: pathlib.Path):
         list(alto_input.get_text())
 
 
-@patch("remarx.sentence.corpus.base_input.segment_text")
+@patch("remarx.sentence.corpus.alto_input.segment_text")
 def test_get_sentences_sequential(mock_segment_text: Mock):
     # patch in simple segmenter to split each input text in two
     mock_segment_text.side_effect = simple_segmenter
