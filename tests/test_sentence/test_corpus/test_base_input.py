@@ -237,8 +237,5 @@ def test_get_sentences_filters_invalid_sentences(
     assert results[1]["text"] == "Another good sentence here."
     assert results[1]["sent_index"] == 1
 
-    # Check that debug messages were logged for dropped sentences
-    assert "Dropping short/punct-only sentence" in caplog.text
-    assert "Short." in caplog.text
-    assert "Two words." in caplog.text
-    assert "..." in caplog.text
+    # Check that a summary info message was logged for omitted sentences
+    assert "Omitted 3 short/punct-only sentences" in caplog.text
