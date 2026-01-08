@@ -115,11 +115,6 @@ class FileInput:
                 # Filter out invalid sentences (short or punctuation-only)
                 if not self.include_sentence(sentence):
                     omitted_count += 1
-                    logger.debug(
-                        "Dropping short/punct-only sentence from %s: %r",
-                        self.file_name,
-                        sentence,
-                    )
                     continue
 
                 # for each sentence, yield text, filename, and sentence index
