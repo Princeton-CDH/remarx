@@ -375,8 +375,7 @@ class ALTOInput(FileInput):
         self, sents: list[tuple[int, str]]
     ) -> list[tuple[int, str]]:
         """
-        Merge adjacent tokenized sentence tuples when the first ends with an ASCII
-        hyphen and the next sentence begins with a lowercase alphabetic character.
+        Merge adjacent tokenized sentence tuples when the first ends with an ASCII hyphen.
         """
         merged: list[tuple[int, str]] = []
         i = 0
@@ -386,22 +385,13 @@ class ALTOInput(FileInput):
             text_i_stripped = text_i.rstrip()
             did_merge = False
             if i + 1 < n and text_i_stripped.endswith("-"):
-                # Candidate: next sentence exists and current ends with ASCII hyphen
+                # Join fragments split by end-of-line ASCII hyphen-minus.
                 _, next_text = sents[i + 1]
-                first_alpha = None
-                for ch in next_text[:256]:
-                    if ch.isalpha():
-                        first_alpha = ch
-                        break
-                # Only join when the continuation looks like a word fragment (first alpha exists and is lowercase)
-                if first_alpha is not None and first_alpha.islower():
-                    # Remove trailing hyphen and any whitespace, then join
-                    new_prefix = re.sub(r"-\s*$", "", text_i_stripped)
-                    new_text = new_prefix + next_text.lstrip()
-                    merged.append((start_i, new_text))
-                    # Skip the next sentence since it's been merged
-                    i += 2
-                    did_merge = True
+                new_prefix = re.sub(r"-\s*$", "", text_i_stripped)
+                new_text = new_prefix + next_text.lstrip()
+                merged.append((start_i, new_text))
+                i += 2
+                did_merge = True
             if not did_merge:
                 merged.append((start_i, text_i))
                 i += 1
