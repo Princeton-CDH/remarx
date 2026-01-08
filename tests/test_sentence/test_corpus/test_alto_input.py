@@ -469,6 +469,22 @@ def test_altoinput_error_empty_zip(tmp_path: pathlib.Path):
         list(alto_input.get_text())
 
 
+def test_alto_text_cleaning():
+    """Test that ALTO text extraction cleans up hyphenated line breaks."""
+
+    # Example 1: Geschichtsauffassung
+    text1 = "Was will und kann die materialistische Geschichts-\nauffassung leisten?"
+    cleaned1 = text1.replace("-\n", "")
+    expected1 = "Was will und kann die materialistische Geschichtsauffassung leisten?"
+    assert cleaned1 == expected1
+
+    # Example 2: Socialdemocrat
+    text2 = '„Social-\ndemocrat".'
+    cleaned2 = text2.replace("-\n", "")
+    expected2 = '„Socialdemocrat".'
+    assert cleaned2 == expected2
+
+
 @patch("remarx.sentence.corpus.base_input.segment_text")
 def test_get_sentences_sequential(mock_segment_text: Mock):
     # patch in simple segmenter to split each input text in two
