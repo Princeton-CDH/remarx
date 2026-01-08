@@ -207,6 +207,11 @@ class TestSentenceValidation:
         assert not base_input.include_sentence("1848“, p. 113.)")
         assert not base_input.include_sentence("p. 56, 57.")
 
+        # Test that sentences with 'p' in valid sentences are included
+        assert base_input.include_sentence("The word p should be included.")
+        assert base_input.include_sentence("Please pass the salt.")
+        assert base_input.include_sentence("The letter p appears here.")
+
 
 @patch("remarx.sentence.corpus.base_input.segment_text")
 @patch.object(FileInput, "get_text")
