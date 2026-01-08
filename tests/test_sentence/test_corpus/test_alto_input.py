@@ -20,6 +20,7 @@ from test_sentence.test_corpus.test_text_input import simple_segmenter
 
 FIXTURE_DIR = pathlib.Path(__file__).parent / "fixtures"
 FIXTURE_ALTO_ZIPFILE = FIXTURE_DIR / "alto_sample.zip"
+FIXTURE_ALTO_HYPHENATED_ZIPFILE = FIXTURE_DIR / "alto_hyphenated_test.zip"
 FIXTURE_ALTO_PAGE = FIXTURE_DIR / "alto_page.xml"
 FIXTURE_ALTO_PAGE_WITH_FOOTNOTES = FIXTURE_DIR / "alto_page_with_footnote.xml"
 FIXTURE_ALTO_METADATA = FIXTURE_DIR / "alto_metadata.xml"
@@ -471,18 +472,28 @@ def test_altoinput_error_empty_zip(tmp_path: pathlib.Path):
 
 def test_alto_text_cleaning():
     """Test that ALTO text extraction cleans up hyphenated line breaks."""
+    alto_input = ALTOInput(
+        input_file=FIXTURE_ALTO_HYPHENATED_ZIPFILE, filter_sections=False
+    )
+    chunks = list(alto_input.get_text())
 
-    # Example 1: Geschichtsauffassung
-    text1 = "Was will und kann die materialistische Geschichts-\nauffassung leisten?"
-    cleaned1 = text1.replace("-\n", "")
-    expected1 = "Was will und kann die materialistische Geschichtsauffassung leisten?"
-    assert cleaned1 == expected1
+    chunk_texts = [chunk["text"] for chunk in chunks]
 
-    # Example 2: Socialdemocrat
-    text2 = '„Social-\ndemocrat".'
-    cleaned2 = text2.replace("-\n", "")
-    expected2 = '„Socialdemocrat".'
-    assert cleaned2 == expected2
+    # Should not find the original hyphenated versions
+    assert not any("Geschichts-\nauffassung" in text for text in chunk_texts), (
+        "Geschichts-\nauffassung should have been cleaned up"
+    )
+    assert not any("Social-\ndemocrat" in text for text in chunk_texts), (
+        "Social-\ndemocrat should have been cleaned up"
+    )
+
+    # Should find the rejoined text in the output
+    assert any("Geschichtsauffassung" in text for text in chunk_texts), (
+        "Geschichtsauffassung should be properly rejoined"
+    )
+    assert any("Socialdemocrat" in text for text in chunk_texts), (
+        "Socialdemocrat should be properly rejoined"
+    )
 
 
 @patch("remarx.sentence.corpus.base_input.segment_text")
