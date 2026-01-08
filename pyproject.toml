@@ -29,12 +29,13 @@ dependencies = [
   "polars>=0.20.4",
   "ruff",
   "sentence-transformers",
-  "stanza",
+  "spacy",
   "transformers[torch]",
   "voyager>=2.1.0",
   "fastapi",
   "uvicorn",
   "natsort>=8.4.0",
+  "pip", # required for downloading spaCy model in uv-created virtualenvs
 ]
 
 [project.optional-dependencies]

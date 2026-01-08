@@ -6,6 +6,7 @@ with the goal of creating a sentence corpus with associated metadata from ALTO.
 import contextlib
 import logging
 import pathlib
+import re
 from collections.abc import Generator
 from dataclasses import dataclass
 from functools import cached_property
@@ -240,6 +241,9 @@ class ALTOInput(FileInput):
                         collected_metadata = True
 
                     block_text = block.text_content
+                    # Clean up hyphenated line breaks from ALTO physical layout
+                    # Rejoin words split by ASCII hyphen (-) or double oblique hyphen (⸗) followed by newline
+                    block_text = re.sub(r"[⸗-]\n", "", block_text)
                     chunk = {
                         "text": block_text,
                         "section_type": section,

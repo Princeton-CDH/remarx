@@ -52,7 +52,8 @@ def simple_segmenter(text: str):
 @patch("remarx.sentence.corpus.base_input.segment_text")
 def test_get_sentences(mock_segment_text: Mock, tmp_path: pathlib.Path):
     txt_file = tmp_path / "input.txt"
-    text_content = "more placeholder content"
+    # Use longer text that creates valid sentences after segmentation
+    text_content = "This is the first sentence with enough words. This is the second sentence with enough words."
     txt_file.write_text(text_content)
     # call simple segmenter to split input text in two
     mock_segment_text.side_effect = simple_segmenter

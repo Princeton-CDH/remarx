@@ -4,30 +4,33 @@ sentences and return them as tuples containing the character index where each
 sentence begins and the sentence text itself.
 """
 
-import stanza
-from stanza import DownloadMethod
+import logging
+
+import spacy
+from spacy.cli import download
+
+logger = logging.getLogger(__name__)
 
 
-def segment_text(text: str, language: str = "de") -> list[tuple[int, str]]:
+def segment_text(text: str, model: str = "de_core_news_sm") -> list[tuple[int, str]]:
     """
     Segment a string of text into sentences with character indices.
 
+    Automatically downloads the spaCy model on first use if it is not installed.
+
     :param text: Input text to be segmented into sentences
-    :param language: Language code for the Stanza pipeline
+    :param model: spaCy model name, defaulted to "de_core_news_sm"
     :return: List of tuples where each tuple contains (start_char_index, sentence_text)
     """
-    # Initialize the NLP pipeline for sentence segmentation
-    # Use minimal processors (tokenize) for sentence segmentation only
-    segmenter = stanza.Pipeline(
-        lang=language,
-        processors="tokenize",
-        download_method=DownloadMethod.REUSE_RESOURCES,
-    )
 
-    processed_doc = segmenter(text)
+    try:
+        nlp = spacy.load(model)
+    except OSError:
+        # If the model is not pre-installed, download and retry
+        logger.info(f"Downloading spaCy model: '{model}'")
+        download(model)
+        nlp = spacy.load(model)
 
-    # Extract sentences with character-level indices
-    return [
-        (sentence.tokens[0].start_char, sentence.text)
-        for sentence in processed_doc.sentences
-    ]
+    doc = nlp(text)
+
+    return [(sent.start_char, sent.text) for sent in doc.sents]

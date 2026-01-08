@@ -14,7 +14,7 @@ import polars as pl
 from voyager import Index, Space
 
 from remarx.quotation.consolidate import consolidate_quotes
-from remarx.quotation.embeddings import get_sentence_embeddings
+from remarx.quotation.embeddings import get_cached_embeddings
 
 logger = logging.getLogger(__name__)
 
@@ -132,13 +132,14 @@ def load_sent_corpus(
         .rename({"sent_id": "id"})
     )
     start = time()
-    vectors = get_sentence_embeddings(
-        df["text"].to_list(), show_progress_bar=show_progress_bar
+    vectors, from_cache = get_cached_embeddings(
+        sentence_corpus, df["text"].to_list(), show_progress_bar=show_progress_bar
     )
     elapsed = time() - start
-    logger.info(
-        f"Generated {len(vectors):,} sentence embeddings from {sentence_corpus} in {elapsed:.1f} seconds"
-    )
+    if not from_cache:
+        logger.info(
+            f"Generated {len(vectors):,} sentence embeddings from {sentence_corpus} in {elapsed:.1f} seconds"
+        )
     if col_pfx:
         df = df.rename(lambda x: f"{col_pfx}{x}")
     return (df, vectors)
