@@ -375,9 +375,8 @@ class ALTOInput(FileInput):
         self, sents: list[tuple[int, str]]
     ) -> list[tuple[int, str]]:
         """
-        ALTO-only: merge adjacent tokenized sentence tuples when the first ends
-        with an ASCII hyphen-minus and the next sentence begins (after optional
-        punctuation/quotes) with a lowercase alphabetic character.
+        Merge adjacent tokenized sentence tuples when the first ends with an ASCII
+        hyphen and the next sentence begins with a lowercase alphabetic character.
         """
         merged: list[tuple[int, str]] = []
         i = 0
