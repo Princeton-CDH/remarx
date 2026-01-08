@@ -472,27 +472,25 @@ def test_altoinput_error_empty_zip(tmp_path: pathlib.Path):
 
 def test_alto_text_cleaning():
     """Test that ALTO text extraction cleans up hyphenated line breaks."""
-    alto_input = ALTOInput(
-        input_file=FIXTURE_ALTO_HYPHENATED_ZIPFILE, filter_sections=False
-    )
+    alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE, filter_sections=False)
     chunks = list(alto_input.get_text())
 
     chunk_texts = [chunk["text"] for chunk in chunks]
 
-    # Should not find the original hyphenated versions
-    assert not any("Geschichts-\nauffassung" in text for text in chunk_texts), (
-        "Geschichts-\nauffassung should have been cleaned up"
+    # Should not find the original hyphenated versions (ASCII hyphen and two-em dash)
+    assert not any("Gewerkschafts-\nbewegung" in text for text in chunk_texts), (
+        "Gewerkschafts-\nbewegung should have been cleaned up"
     )
-    assert not any("Social-\ndemocrat" in text for text in chunk_texts), (
-        "Social-\ndemocrat should have been cleaned up"
+    assert not any("europäisch⸗\ndemokratischen" in text for text in chunk_texts), (
+        "europäisch⸗\ndemokratischen should have been cleaned up"
     )
 
     # Should find the rejoined text in the output
-    assert any("Geschichtsauffassung" in text for text in chunk_texts), (
-        "Geschichtsauffassung should be properly rejoined"
+    assert any("Gewerkschaftsbewegung" in text for text in chunk_texts), (
+        "Gewerkschaftsbewegung should be properly rejoined"
     )
-    assert any("Socialdemocrat" in text for text in chunk_texts), (
-        "Socialdemocrat should be properly rejoined"
+    assert any("europäischdemokratischen" in text for text in chunk_texts), (
+        "europäischdemokratischen should be properly rejoined"
     )
 
 
