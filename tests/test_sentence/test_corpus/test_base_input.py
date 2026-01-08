@@ -56,8 +56,11 @@ def test_get_text(tmp_path: pathlib.Path):
 @patch("remarx.sentence.corpus.base_input.segment_text")
 @patch.object(FileInput, "get_text")
 def test_get_sentences(mock_text, mock_segment, tmp_path: pathlib.Path):
+    # Use valid sentences that won't be filtered out (3+ words)
     mock_segment.side_effect = lambda x: [(0, x)]
-    mock_text.return_value = [{"id": i, "text": f"s{i}"} for i in range(3)]
+    mock_text.return_value = [
+        {"id": i, "text": f"This is sentence {i} with enough words."} for i in range(3)
+    ]
     txt_file = tmp_path / "test.txt"
     base_input = FileInput(input_file=txt_file)
 
@@ -66,7 +69,7 @@ def test_get_sentences(mock_text, mock_segment, tmp_path: pathlib.Path):
     for i in range(3):
         assert results[i] == {
             "id": i,
-            "text": f"s{i}",
+            "text": f"This is sentence {i} with enough words.",
             "file": "test.txt",
             "sent_index": i,
             "sent_id": f"test.txt:{i}",
@@ -129,3 +132,115 @@ def test_create_unsupported(tmp_path: pathlib.Path):
         match="\\.test is not a supported input type \\(must be one of \\.txt, \\.xml, \\.zip\\)",
     ):
         FileInput.create(input_file=test_file)
+
+
+class TestSentenceValidation:
+    """Test sentence filtering functionality."""
+
+    def test_punctuation_only_sentences_dropped(self, tmp_path: pathlib.Path):
+        """Test that punctuation-only sentences are dropped."""
+        txt_file = tmp_path / "test.txt"
+        base_input = FileInput(input_file=txt_file)
+
+        # Test various punctuation-only sentences
+        assert not base_input.include_sentence("...")
+        assert not base_input.include_sentence("!!!")
+        assert not base_input.include_sentence("?")
+        assert not base_input.include_sentence("—")
+        assert not base_input.include_sentence(".")
+
+    def test_single_word_sentences_dropped(self, tmp_path: pathlib.Path):
+        """Test that single-word sentences are dropped."""
+        txt_file = tmp_path / "test.txt"
+        base_input = FileInput(input_file=txt_file)
+
+        assert not base_input.include_sentence("Ja.")
+        assert not base_input.include_sentence("Nein")
+        assert not base_input.include_sentence("Hello")
+        assert not base_input.include_sentence("123")
+
+    def test_two_word_sentences_dropped(self, tmp_path: pathlib.Path):
+        """Test that two-word sentences are dropped."""
+        txt_file = tmp_path / "test.txt"
+        base_input = FileInput(input_file=txt_file)
+
+        assert not base_input.include_sentence("Hello world")
+        assert not base_input.include_sentence("Good morning")
+        assert not base_input.include_sentence("One two")
+
+    def test_three_plus_word_sentences_kept(self, tmp_path: pathlib.Path):
+        """Test that sentences with 3+ words are kept."""
+        txt_file = tmp_path / "test.txt"
+        base_input = FileInput(input_file=txt_file)
+
+        assert base_input.include_sentence("This is a test sentence.")
+        assert base_input.include_sentence("Hello world, how are you?")
+        assert base_input.include_sentence("The quick brown fox jumps.")
+
+    def test_sentences_with_numbers_kept_if_enough_words(self, tmp_path: pathlib.Path):
+        """Test that sentences with numbers are treated as valid words."""
+        txt_file = tmp_path / "test.txt"
+        base_input = FileInput(input_file=txt_file)
+
+        # Three words with numbers should be kept
+        assert base_input.include_sentence("The year 2023 was")
+        assert base_input.include_sentence("Page 1 of 10")
+
+        # But still drop if only 1-2 valid tokens
+        assert not base_input.include_sentence("2023")
+        assert not base_input.include_sentence("Page 1")
+
+    def test_sentences_with_mixed_alphanumeric_kept(self, tmp_path: pathlib.Path):
+        """Test sentences with mixed alphanumeric content."""
+        txt_file = tmp_path / "test.txt"
+        base_input = FileInput(input_file=txt_file)
+
+        assert base_input.include_sentence("The 2nd amendment is")
+        assert base_input.include_sentence("Chapter 3 discusses the")
+
+    def test_exclude_p_abbreviation(self, tmp_path: pathlib.Path):
+        """Sentences consisting only of punctuation/digits and 'p' should be dropped."""
+        txt_file = tmp_path / "test.txt"
+        base_input = FileInput(input_file=txt_file)
+
+        assert not base_input.include_sentence("1862, p. 56.)")
+        assert not base_input.include_sentence("1848“, p. 113.)")
+        assert not base_input.include_sentence("p. 56, 57.")
+
+        # Test that sentences with 'p' in valid sentences are included
+        assert base_input.include_sentence("The word p should be included.")
+        assert base_input.include_sentence("Please pass the salt.")
+        assert base_input.include_sentence("The letter p appears here.")
+
+
+@patch("remarx.sentence.corpus.base_input.segment_text")
+@patch.object(FileInput, "get_text")
+def test_get_sentences_filters_invalid_sentences(
+    mock_text, mock_segment, tmp_path: pathlib.Path, caplog
+):
+    """Test that get_sentences filters out invalid sentences."""
+    # Mock segment_text to return various sentences
+    mock_segment.side_effect = lambda x: [
+        (0, "Short."),  # 1 word - should be dropped
+        (8, "Two words."),  # 2 words - should be dropped
+        (20, "..."),  # punctuation only - should be dropped
+        (24, "This is a valid sentence."),  # 5 words - should be kept
+        (52, "Another good sentence here."),  # 4 words - should be kept
+    ]
+    mock_text.return_value = [{"text": "Mock text chunk"}]
+
+    txt_file = tmp_path / "test.txt"
+    base_input = FileInput(input_file=txt_file)
+
+    with caplog.at_level("DEBUG"):
+        results = list(base_input.get_sentences())
+
+    # Should only get the 2 valid sentences
+    assert len(results) == 2
+    assert results[0]["text"] == "This is a valid sentence."
+    assert results[0]["sent_index"] == 0
+    assert results[1]["text"] == "Another good sentence here."
+    assert results[1]["sent_index"] == 1
+
+    # Check that a summary info message was logged for omitted sentences
+    assert "Omitted 3 short/punct-only sentences" in caplog.text

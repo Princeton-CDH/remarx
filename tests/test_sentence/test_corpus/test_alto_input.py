@@ -478,8 +478,8 @@ def test_get_sentences_sequential(mock_segment_text: Mock):
     sentences = list(alto_input.get_sentences())
     num_sentences = len(sentences)
     # currently with this fixture data and simple segmenter,
-    # and filtering by section type expect 18 sentences
-    assert num_sentences == 18
+    # filtering by section type, and sentence filtering expect 13 sentences
+    assert num_sentences == 13
 
     # sentence indexes should start at 0 and continue across all sentences
     indexes = [sentence["sent_index"] for sentence in sentences]
