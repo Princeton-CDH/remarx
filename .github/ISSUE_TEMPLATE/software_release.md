@@ -2,8 +2,9 @@
 name: remarx release checklist
 about: Checklist for releasing new versions of remarx
 title: remarx release checklist
-labels: chore
+labels: ''
 assignees: ''
+
 ---
 
 ## release prep
@@ -20,6 +21,7 @@ assignees: ''
 - [ ] Check python requirements for any internal dependencies that should be released (or at least pinned to a specific git commit)
 - [ ] Confirm that all checks for the draft PR pass (e.g., unit tests, code coverage checks)
 - [ ] Build documentation on the release branch and run the server to review and make sure it is up to date.
+- [ ] Make sure code documentation covers all the files in the code.
 
 ### BEFORE acceptance testing
 
@@ -43,3 +45,4 @@ assignees: ''
 - [ ] Increase the develop branch version so it is set to the next expected release (i.e., if you just released `0.5` then develop will probably be `0.6.dev0` unless you are working on a major update, in which case it will be `1.0.dev0`)
 - [ ] Push all updates to GitHub (main branch, develop branch, tags)
 - [ ] Create a GitHub release for the new tag, to trigger package publication on PyPI (and eventually Zenodo DOI)
+- [ ] Close the associated milestone on GitHub, if there is one
