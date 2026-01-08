@@ -242,7 +242,7 @@ class ALTOInput(FileInput):
 
                     block_text = block.text_content
                     # Clean up hyphenated line breaks from ALTO physical layout
-                    # Rejoin words split by ASCII hyphen (-) or two-em dash (⸗) followed by newline
+                    # Rejoin words split by ASCII hyphen (-) or double oblique hyphen (⸗) followed by newline
                     block_text = re.sub(r"[⸗-]\n", "", block_text)
                     chunk = {
                         "text": block_text,
