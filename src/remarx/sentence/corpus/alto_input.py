@@ -6,11 +6,12 @@ with the goal of creating a sentence corpus with associated metadata from ALTO.
 import contextlib
 import logging
 import pathlib
+import re
 from collections.abc import Generator
 from dataclasses import dataclass
 from functools import cached_property
 from timeit import default_timer as time
-from typing import ClassVar
+from typing import Any, ClassVar
 from zipfile import ZipFile, ZipInfo
 
 from lxml import etree
@@ -18,6 +19,7 @@ from natsort import natsorted
 from neuxml import xmlmap
 
 from remarx.sentence.corpus.base_input import FileInput, SectionType
+from remarx.sentence.segment import segment_text
 
 logger = logging.getLogger(__name__)
 
@@ -270,6 +272,32 @@ class ALTOInput(FileInput):
         if num_valid_files == 0:
             raise ValueError(f"No valid ALTO XML files found in {self.file_name}")
 
+    def get_sentences(self) -> Generator[dict[str, Any], None, None]:
+        """
+        ALTO-specific get_sentences: tokenize each text chunk, rejoin ASCII
+        hyphen-minus line-break hyphenations using `rejoin_tokenized_hyphenations`,
+        then yield sentences with metadata.
+        """
+        sentence_index = 0
+        for chunk_info in self.get_text():
+            chunk_text = chunk_info["text"]
+            tokenized = segment_text(chunk_text)
+            tokenized = self.rejoin_tokenized_hyphenations(tokenized)
+            for _char_idx, sentence in tokenized:
+                if not self.include_sentence(sentence):
+                    continue
+                yield (
+                    chunk_info
+                    | {
+                        "file": self.file_name,
+                        "text": sentence,
+                        "sent_index": sentence_index,
+                        "sent_id": f"{self.file_name}:{sentence_index}",
+                    }
+                    | self.get_extra_metadata(chunk_info, _char_idx, sentence)
+                )
+                sentence_index += 1
+
     def update_current_metadata(self, blocks: list[TextBlock]) -> None:
         """Update current article metadata."""
         # iterate over blocks and update article metadata
@@ -342,3 +370,36 @@ class ALTOInput(FileInput):
             return
 
         return alto_xmlobj
+
+    def rejoin_tokenized_hyphenations(
+        self, sents: list[tuple[int, str]]
+    ) -> list[tuple[int, str]]:
+        """
+        ALTO-only: merge adjacent tokenized sentence tuples when the first ends
+        with an ASCII hyphen-minus and the next sentence begins (after optional
+        punctuation/quotes) with a lowercase alphabetic character.
+        """
+        merged: list[tuple[int, str]] = []
+        i = 0
+        n = len(sents)
+        while i < n:
+            start_i, text_i = sents[i]
+            text_i_stripped = text_i.rstrip()
+            did_merge = False
+            if i + 1 < n and text_i_stripped.endswith("-"):
+                _, next_text = sents[i + 1]
+                first_alpha = None
+                for ch in next_text[:256]:
+                    if ch.isalpha():
+                        first_alpha = ch
+                        break
+                if first_alpha is not None and first_alpha.islower():
+                    new_prefix = re.sub(r"-\s*$", "", text_i_stripped)
+                    new_text = new_prefix + next_text.lstrip()
+                    merged.append((start_i, new_text))
+                    i += 2
+                    did_merge = True
+            if not did_merge:
+                merged.append((start_i, text_i))
+                i += 1
+        return merged
