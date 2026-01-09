@@ -3,120 +3,38 @@ title: Technical Design
 hide: [navigation]
 ---
 
-# Technical Design Document
-
-*This serves as a living document to record the current design decisions for this project. The expectation is not a comprehensive listing of issues or tasks, but rather a recording of the key structural and process elements, as well as primary deliverables, that will guide development.*
-
-*The primary audience for this document is internal to the development team.*
-
-*Note: This document was originally written for planning. It will be updated during development, but it may be out of date.*
-
-______________________________________________________________________
-
-## `remarx`
-
-**Project Title:** Citing Marx: Die Neue Zeit, 1891-1918
-
-**RSE Lead:** Rebecca Koeser
-
-**RSE Team Members:** Laure Thompson, Hao Tan, Mary Naydan, Jeri Wieringa
-
-**Faculty PI:** Edward Baring
-
-**Development Start Date:** 2025-08-04
-
-**Target Release Date:** Fall 2025
+# Technical Design
 
 ______________________________________________________________________
 
 ### Statement of Purpose
 
-*Primary goals for the software*
+The `remarx` software package was developed to provide a simple user interface to enable researchers to find quotations in German-language content, and supports generating a dataset of similar passages (i.e., quotations or partial quotations) between the two sets of texts.
 
-The primary goal of this software tool is to provide a simple user interface to enable researchers to upload files for two sets of German language content to be compared, and download a dataset of similar passages between the two sets of content.
+The immediate use case motivating the development of this software was to identify direct quotes of Karl Marx's _Manifest der Kommunistischen Partei_ (Communist Manifesto) and the first volume of _Das Kapital_ (Kapital) within a subset of _Die Neue Zeit_ (DNZ) articles.
 
-The primary use case for this tool is to identify direct quotes of Karl Marx's *Manifest der Kommunistischen Partei* (Communist Manifesto) and the first volume of *Das Kapital* (Kapital) within a subset of *Die Neue Zeit* (DNZ) articles.
+Core functionality: takes text content as input from _original_ (i.e., source of quotes) and _reuse_ (i.e., where quotations occur) texts, and builds a sentence or passage level quotation corpus.
 
-### Task Identification and Definition
-
-| **Task**                 | **Definition**                                                                                 |
-| :----------------------- | :--------------------------------------------------------------------------------------------- |
-| Quotation Identification | Determine which passages of text quote a source text and identify the passages that are quoted |
-
-### Out of Scope
-
-- Non-German quote detection
-- Cross-lingual quote detection is out of scope for this phase, but the tool will be built with an eye towards future expansion/support of other languages
-- Paraphrase / indirect quote detection
-- Attribution, citation, and named-reference detection
-
-## Requirements
-
-### Functional Requirements
-
-*What the software must do*
-
-- Reads plaintext files corresponding to original (i.e., source of quotes) and reuse (i.e., where quotations occur) texts
-- Builds a quotation corpus that operates at a sentence-level granularity
-
-### Non-Functional Requirements
-
-*How the software must behave*
-
-- Assumes input content is written in German (will be built with an eye towards supporting other languages in future, but not in this version)
-- Is optimized for the DNZ-Marx use case
-- Can be adapted to other monolingual and crosslingual settings, but with no quality guarantees
-- Compatible with any *German* original (e.g., other texts written by Marx) and reuse texts (e.g., earlier/later issues of DNZ, other journals)
-- Uses sentence embeddings as a core data representation
-- For sentence embedding construction, uses a preexisting model available through sentence-transformers or huggingface
-- Developed and tested on Python 3.12
-- If this software is run locally it should be compatible with macOS, linux, and windows based operating systems; and be compatible with both x86 and ARM architectures.
-
-### System Architecture
-
-*High-level description of the system and its components*
+### Application Architecture
 
 ![System Architecture](images/system-architecture.svg)
 
-The system is composed of two separate software programs: the sentence corpus builder and the core pipeline.
+The application has two main components: Sentence Corpus Builder and Quote Finder.
 
-The sentence corpus builder is a program for creating the input CSV files for the core pipeline.
-It takes as input some number of texts and outputs a CSV file containing sentence-level text and metadata for these input texts.
-This program will have custom solutions for the primary use case of the tool (TEI-XML, ALTO-XML) as well as plaintext for general use.
+The Sentence Corpus Builder is used to convert input content into the format needed for the Quote Finder.
+It takes a single file in a supported format (TEI XML, ALTO XML, plain text) and outputs a CSV file containing a sentence-level text corpus generated from the input text.
 
-The core pipeline has two key inputs: reuse and original sentence corpora. Each of these inputs are one or more CSV files where each row corresponds to a sentence from a reuse or original text (i.e., as produced by the sentence corpus builder). Ultimately, the system will output a CSV file containing the identified quotations which will be called the quoted corpus.
+The Quote Finder requires two sets of inputs: reuse and original sentence corpora. Each input is a CSV file as generated by the Sentence Corpus Builder, where each row corresponds to a sentence from a reuse or original text. Currently, the system allows selecting multiple original corpora and one reuse corpus. The quote finder generates a CSV file with identified quotations found when comparing the reuse and original corpora.
 
-The core pipeline can be broken down into two key components:
+The Quote Finder has two key components:
 
-1. Sentence-Level Quote Detection
-2. Quote Compilation
+- **Sentence-Level Quote Detection.** This component takes an original and reuse sentence corpus as input and outputs a corpus of sentence-pairs corresponding to quotes.
 
-**Sentence-Level Quote Detection.** This component takes an original and reuse sentence corpus as input and outputs a corpus of sentence-pairs corresponding to quotes.
-
-**Quote Compilation.** In this step, the quote sentence pairs from the last step are refined into our final quotes corpus. Since quotes can be more than one sentence long, the primary goal of this component is to merge quote sentence-pairs that correspond to the same multi-sentence quote.
-
-- Minimum functionality: merge passages with sequential pairs of sentences from both corpora
-
-#### Infrastructure and Deployment
-
-*Where the software will run; includes all different environments expected for development, staging/testing, and production, and any additional resources needed or expected (e.g., new VMs, OnDemand developer access, HPC, TigerData, etc).*
-
-**Environments:**
-
-- Development: RSE local machines as possible; della as needed
-- Staging: della
-    - To ensure software works on a common environment, we plan to use della as our staging environment for acceptance testing & quality assurance testing
-- Production: researcher machines (via installable python package, using uv and uv run if possible) or della via a shared Open OnDemand app (to be determined based on scale of data and compute requirements)
-
-**Resources:**
-
-- TigerData project partition
-- Della access
-- OnDemand developer access
+- **Quote Consolidation.** In this optional step, detected sentence pairs that are sequential in both original and reuse corpora are consolidated into multi-sentence passages.
 
 ### Component Details
 
-*Description of each component and its functionality*
+_Description of each component and its functionality_
 
 #### Sentence Corpus Builder
 
@@ -152,6 +70,29 @@ Additionally, if the quote-sentence pair corpus does not include original and re
 
 The initial implementation will be based on sequential sentences in both corpora; this will be refined based on project team testing and feedback, as time and priorities allow. Potentially revisions include skipped sentences and alternate order within some context window (e.g., for quotations that re-order content from the same paragraph).
 
+#### Out of Scope
+
+For this phase of the project, the following features are considered to be out of scope:
+
+- Non-German quote detection
+- Cross-lingual quote detection
+- Paraphrase / indirect quote detection
+- Attribution, citation, and named-reference detection
+
+The tool is built with an eye towards future expansion to support other languages, and preliminary results do include some cross-lingual quotes in the output, but it has not been tested thoroughly, and sentence corpus creation currently assumes German language.
+
+### Assumptions
+
+- Assumes input content is written in German (support for other languages will be added in future versions)
+- Is optimized for the DNZ-Marx use case
+- Can be adapted to other monolingual and crosslingual settings, but with no quality guarantees
+- Compatible with any _German_ original (e.g., other texts written by Marx) and reuse texts (e.g., earlier/later issues of DNZ, other journals)
+- Uses sentence embeddings as a core data representation
+- For sentence embedding construction, uses a pre-existing model available through `sentence-transformers` or `huggingface`
+- Developed and tested on Python 3.12
+- Can be installed and run on researcher machines (via installable python package, with support and documentation for use with `uv` and `uv run`)
+- Is OS and architecture agnostic (compatible with OSX, Linux, and Windows operating systems; runs on both x86 and ARM architectures).
+
 #### Application Interface
 
 This component is a Marimo notebook designed to run in application mode, which will provide a graphical user interface to the `remarx` software.
@@ -183,9 +124,7 @@ We aim for data compilation to be done without custom development effort, and wi
 
 ### Data Design
 
-*Description of the data structures used by the software, with expected or required fields*
-
-#### Original/Reuse Sentence Corpus
+#### Sentence Corpus
 
 A CSV file with each row corresponding to a single sentence in either an original or reuse text. This corpus may include additional data (e.g., document metadata for citation); this will be ignored by the system but preserved and passed through in the generated corpus.
 
@@ -259,71 +198,9 @@ This CSV file is a tailored version of the Quotes Corpus produced by the core so
 
 Note: article and marx naming convention could be altered to something more general. Should have the research team confirm desired form and field names and check if there are any additional fields that should be added (e.g., page vs. footnote).
 
-### Work Plan for Additional Data Work (if needed)
-
-*Describe the data work that needs to be done and include proposed deadlines.*
-
-#### Kapital Texts
-
-The text of Kapital needs to be extracted from the MEGA TEI XML file. To properly handle sentence spanning page boundaries, the main text and footnotes will be split into separate text files.
-
-#### Communist Manifesto Text
-
-The text of the Communist Manifesto may need to be transformed into plaintext files. The scope of this effort is dependent on how the text is being acquired.
-
-#### DNZ Text
-
-The text of DNZ articles must be extracted from the ALTO-XML transcription files. For simplicity, each article should be separated into separate text files. If the article has footnotes, footnotes will be split into a separate text file.
-
-#### Evaluation Dataset(s)
-
-A dataset of identified direct quote annotations from Kapital and/or the Communist Manifesto must be constructed. This will be used as the evaluation reference during development to measure the performance of the software pipeline, and to provide an estimate for the expected scale of the dataset.
-
-Derivative versions of the text reuse data will be created as needed to compare passages identified as text reuse with sentence level matches.
-
-### Data Management Plan
-
-#### Datasets
-
-*Describe input and output data formats*
-
-| **Name**                       | **Description of how generated**                                                                                                                  | **Data type** | **Format** | **Stability** |
-| :----------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------ | :------------ | :--------- | :------------ |
-| Kapital XML                    | MEGAdigital’s MEGA II/5 digital copy. This text corresponds to the first edition of the first volume of *Das Kapital* (Berlin: Dietz-Verlag 1983) | Input         | TEI XML    |               |
-| Communist Manifesto text       | For this phase, we will use content from this [online edition](https://www.marxists.org/deutsch/archiv/marx-engels/1848/manifest/index.htm)       | Input         | HTML       |               |
-| DNZ transcriptions             | Transcriptions of DNZ volumes with specialized text segment labels. These were created using eScriptorium and YALTAI.                             | Input         | ALTO XML   |               |
-| Kapital sentences              | Corpora of sentences from Kapital. At least two: main text, footnotes.                                                                            | Input         | CSV        |               |
-| Communist Manifesto sentences  | Corpora of sentences from the Communist Manifesto.                                                                                                | Input         | CSV        |               |
-| DNZ article sentences          | Corpora of sentences from DNZ articles. Articles may correspond to multiple corpora.                                                              | Input         | CSV        |               |
-| Kapital embeddings             | Sentence embeddings for Kapital. For development only.                                                                                            | Intermediate  | .npy       |               |
-| Communist Manifesto embeddings | Sentence embeddings for Communist Manifesto. For development.                                                                                     | Intermediate  | .npy       |               |
-| DNZ embeddings                 | Sentence embeddings for DNZ articles. For development.                                                                                            | Intermediate  | .npy       |               |
-| Quote Sentence Pairs           | Identified quote sentence-pairs. Primarily for development.                                                                                       | Intermediate  | CSV        |               |
-| Quotes Corpus                  | Identified quotes corpus.                                                                                                                         | Intermediate  | CSV        |               |
-| Final Citation Corpus          | The final corpus of identified citations.                                                                                                         | Output        | CSV        |               |
-
-#### Access
-
-*Where will data be stored; back up plan?*
-
-**GitHub.** If the data is small enough, a public GitHub repository will be used. This repository would be used to store the final dataset.
-
-**TigerData.** Copies of all datasets will be stored in TigerData. Assuming GitHub is an option, this will be a copy of the GitHub data repo. If the data is too large, TigerData will be the primary data source for development.
-Directories should be named meaningfully and include a brief readme documenting contents and how data was generated or acquired. We will use GitHub issues for light-weight review of data structuring and documentation.
-
-**GoogleDrive.** The initial text inputs will be stored in the project’s GoogleDrive folder. Any intermediate files that should be reviewed by the research team will also be uploaded to this folder.
-
-#### Archiving and Publication
-
-*What is the plan for publication or archiving of the data? What license will be applied?*
-
-The final dataset will be published on Zenodo and/or the Princeton Data Commons depending on the terms of use / copyright status of the data. If possible, an additional copy will be published on GitHub.
-
-Q: What license will be applied for the data?
-
 ## Interface Functionality
 
-*Description of user-facing functionality directly accessible through the user interface and its components*
+_Description of user-facing functionality directly accessible through the user interface and its components_
 
 As possible, there will be two types of interfaces for two different types of users.
 
@@ -399,7 +276,7 @@ We will use Ruff’s linter using the following rule sets:
 
 #### Notebook Development
 
-We will use marimo for any notebook development. The application notebook will be included in the source code package and made available as package command-line executable. If needed, analysis notebooks will be organized in a top-level “notebooks” folder. Any meaningful code (i.e., methods) for all notebooks should be located within the python source code *not* the notebook.
+We will use marimo for any notebook development. The application notebook will be included in the source code package and made available as package command-line executable. If needed, analysis notebooks will be organized in a top-level “notebooks” folder. Any meaningful code (i.e., methods) for all notebooks should be located within the python source code _not_ the notebook.
 
 Notebooks will be used both as the application interface and as needed for data analysis for development.
 
@@ -430,22 +307,6 @@ Our repository will include the following GitHubActions:
 - Check mkdoc documentation coverage
 - Check change log has been updated
 - Python package publication on PyPI (triggered by new release on GitHub)
-
-## Final Acceptance Criteria
-
-*Define the requirements the deliverable must meet to be considered complete and accepted. These criteria should be testable.*
-
-### Functionality
-
-- Using evaluation dataset as a reference. The software must identify at least 90% of the expected quotations (i.e., 90% recall).
-    - Tolerance for false positives will be determined in conversation with the research team after reviewing preliminary results. If necessary, we will decrease the recall threshold to avoid too many false positives in the final dataset.
-- Faculty collaborator can successfully run software without assistance.
-
-## Sign Offs
-
-Reviewed by: Jeri Wieringa
-
-Signatures / Date
 
 ## References
 
