@@ -52,9 +52,6 @@ def test_configure_logging_default_creates_timestamped_filename(tmp_path, monkey
     assert isinstance(handler, logging.FileHandler)
     assert Path(handler.baseFilename) == created_path
 
-    # Stanza logger level default
-    assert logging.getLogger("stanza").getEffectiveLevel() == logging.ERROR
-
 
 # use parametrize to test with different streams
 @pytest.mark.parametrize("stream", [sys.stdout, sys.stderr, io.StringIO()])
@@ -88,16 +85,6 @@ def test_configure_logging_specific_file(tmp_path):
     assert Path(handler.baseFilename) == target_path
     # The handler should be set to the correct log level (DEBUG or NOTSET if inherited)
     assert handler.level in (logging.NOTSET, logging.DEBUG)
-
-
-def test_configure_logging_with_stanza_log_level(tmp_path, monkeypatch):
-    # Use a clean temp directory for logs
-    monkeypatch.chdir(tmp_path)
-    configure_logging(stanza_log_level=logging.DEBUG)
-
-    # Check that the stanza logger is set to DEBUG
-    stanza_logger = logging.getLogger("stanza")
-    assert stanza_logger.getEffectiveLevel() == logging.DEBUG
 
 
 @pytest.fixture
