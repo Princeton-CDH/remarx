@@ -49,7 +49,7 @@ def test_build_vector_index(mock_index_class, caplog):
     assert re.fullmatch(expected_msg, caplog.record_tuples[0][2])
 
 
-@patch("remarx.quotation.pairs.get_sentence_embeddings")
+@patch("remarx.quotation.pairs.get_cached_embeddings")
 @patch("remarx.quotation.pairs.build_vector_index")
 def test_get_sentence_pairs(mock_build_index, mock_embeddings, caplog):
     # setup mock index
@@ -97,8 +97,8 @@ def test_get_sentence_pairs(mock_build_index, mock_embeddings, caplog):
     assert "Identified 1 sentence pair with distance less than 0.2" in log_messages
 
 
-@patch("remarx.quotation.pairs.get_sentence_embeddings")
-def test_load_sent_corpus(mock_get_sentence_embed, tmp_path):
+@patch("remarx.quotation.pairs.get_cached_embeddings")
+def test_load_sent_corpus(mock_get_cached_embed, tmp_path):
     # Setup test sentence corpus
     test_csv = tmp_path / "sent_corpus.csv"
     test_data = {
@@ -118,18 +118,25 @@ def test_load_sent_corpus(mock_get_sentence_embed, tmp_path):
         "text": test_data["text"],
     }
     expected = pl.DataFrame(expected_data)
+    # returns embeddings vector and boolean indicating if from cache
+    mock_vectors = [1, 2, 3]
+    mock_get_cached_embed.return_value = (mock_vectors, False)
     result, vec = load_sent_corpus(test_csv)
-    assert vec == mock_get_sentence_embed.return_value
-    mock_get_sentence_embed.assert_called_with(test_text, show_progress_bar=False)
+    assert vec == mock_vectors
+    mock_get_cached_embed.assert_called_with(
+        test_csv, test_text, show_progress_bar=False
+    )
     assert_frame_equal(result, expected, check_dtypes=False)
 
     ## With prefix
-    mock_get_sentence_embed.reset_mock()
+    mock_get_cached_embed.reset_mock()
     pfx_expected = pl.DataFrame({f"test_{k}": v for k, v in expected_data.items()})
     result, vec = load_sent_corpus(test_csv, "test_")
     assert_frame_equal(result, pfx_expected, check_dtypes=False)
     # embeddings still called correctly with text content
-    mock_get_sentence_embed.assert_called_with(test_text, show_progress_bar=False)
+    mock_get_cached_embed.assert_called_with(
+        test_csv, test_text, show_progress_bar=False
+    )
 
     # Case additional metadata fields
     test_df = test_df.with_columns(
@@ -155,7 +162,9 @@ def test_load_sent_corpus(mock_get_sentence_embed, tmp_path):
 
     # test with progress bar enabled
     load_sent_corpus(test_csv, show_progress_bar=True)
-    mock_get_sentence_embed.assert_called_with(test_text, show_progress_bar=True)
+    mock_get_cached_embed.assert_called_with(
+        test_csv, test_text, show_progress_bar=True
+    )
 
 
 def test_compile_quote_pairs():

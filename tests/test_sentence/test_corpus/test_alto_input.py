@@ -20,6 +20,7 @@ from test_sentence.test_corpus.test_text_input import simple_segmenter
 
 FIXTURE_DIR = pathlib.Path(__file__).parent / "fixtures"
 FIXTURE_ALTO_ZIPFILE = FIXTURE_DIR / "alto_sample.zip"
+FIXTURE_ALTO_HYPHENATED_ZIPFILE = FIXTURE_DIR / "alto_hyphenated_test.zip"
 FIXTURE_ALTO_PAGE = FIXTURE_DIR / "alto_page.xml"
 FIXTURE_ALTO_PAGE_WITH_FOOTNOTES = FIXTURE_DIR / "alto_page_with_footnote.xml"
 FIXTURE_ALTO_METADATA = FIXTURE_DIR / "alto_metadata.xml"
@@ -469,6 +470,30 @@ def test_altoinput_error_empty_zip(tmp_path: pathlib.Path):
         list(alto_input.get_text())
 
 
+def test_alto_text_cleaning():
+    """Test that ALTO text extraction cleans up hyphenated line breaks."""
+    alto_input = ALTOInput(input_file=FIXTURE_ALTO_ZIPFILE, filter_sections=False)
+    chunks = list(alto_input.get_text())
+
+    chunk_texts = [chunk["text"] for chunk in chunks]
+
+    # Should not find the original hyphenated versions (ASCII hyphen and two-em dash)
+    assert not any("Gewerkschafts-\nbewegung" in text for text in chunk_texts), (
+        "Gewerkschafts-\nbewegung should have been cleaned up"
+    )
+    assert not any("europäisch⸗\ndemokratischen" in text for text in chunk_texts), (
+        "europäisch⸗\ndemokratischen should have been cleaned up"
+    )
+
+    # Should find the rejoined text in the output
+    assert any("Gewerkschaftsbewegung" in text for text in chunk_texts), (
+        "Gewerkschaftsbewegung should be properly rejoined"
+    )
+    assert any("europäischdemokratischen" in text for text in chunk_texts), (
+        "europäischdemokratischen should be properly rejoined"
+    )
+
+
 @patch("remarx.sentence.corpus.base_input.segment_text")
 def test_get_sentences_sequential(mock_segment_text: Mock):
     # patch in simple segmenter to split each input text in two
@@ -478,8 +503,8 @@ def test_get_sentences_sequential(mock_segment_text: Mock):
     sentences = list(alto_input.get_sentences())
     num_sentences = len(sentences)
     # currently with this fixture data and simple segmenter,
-    # and filtering by section type expect 18 sentences
-    assert num_sentences == 18
+    # filtering by section type, and sentence filtering expect 13 sentences
+    assert num_sentences == 13
 
     # sentence indexes should start at 0 and continue across all sentences
     indexes = [sentence["sent_index"] for sentence in sentences]

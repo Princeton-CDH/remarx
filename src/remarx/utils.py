@@ -94,7 +94,6 @@ def get_default_quote_output_path(
 def configure_logging(
     log_destination: pathlib.Path | TextIO | None = None,
     log_level: int = logging.INFO,
-    stanza_log_level: int = logging.ERROR,
 ) -> pathlib.Path | None:
     """
     Configure logging for the remarx application.
@@ -105,7 +104,6 @@ def configure_logging(
         - pathlib.Path: Write to the specified file path
         - Any io.TextIOBase (e.g., sys.stdout, sys.stderr, or any io.TextIOBase): Write to the given stream
     :param log_level: Logging level for remarx logger (default to logging.INFO)
-    :param stanza_log_level: Logging level for stanza logger (default to logging.ERROR)
     :return: Path to the created log file if file logging is used, None if stream logging
     """
 
@@ -127,9 +125,8 @@ def configure_logging(
         log_file_path.parent.mkdir(parents=True, exist_ok=True)
         config_output_opts = {"filename": log_file_path, "encoding": "utf-8"}
 
-    # Use the lowest of the requested levels so debug logs are captured when any
-    # component (e.g., stanza) is set to DEBUG
-    effective_level = min(log_level, stanza_log_level)
+    # Set the effective logging level
+    effective_level = log_level
 
     logging.basicConfig(
         level=effective_level,
@@ -138,8 +135,5 @@ def configure_logging(
         force=True,
         **config_output_opts,
     )
-
-    # Configure stanza logging level
-    logging.getLogger("stanza").setLevel(stanza_log_level)
 
     return log_file_path
