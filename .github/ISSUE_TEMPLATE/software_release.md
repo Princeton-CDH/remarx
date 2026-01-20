@@ -4,7 +4,6 @@ about: Checklist for releasing new versions of remarx
 title: remarx release checklist
 labels: ''
 assignees: ''
-
 ---
 
 ## release prep

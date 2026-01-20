@@ -1,6 +1,11 @@
 # CHANGELOG
 
-## 1.0 (combined with 0.6.0)
+## [1.0.1] - 2026-01-20
+
+- Updated technical design document to reflect 1.0 functionality
+- Revise pyproject.toml and pre-commit hooks based on [repo-review](https://learn.scientific-python.org/development/guides/repo-review/)
+
+## [1.0] - 2026-01-12
 
 ### Sentence corpus creation
 
@@ -10,7 +15,7 @@
 - Added sentence filtering to exclude 1-2 word sentences and punctuation-only sentences from corpora to improve quote detection quality.
 - Rejoin end-of-line hyphenated words (ASCII hyphen-minus `-` and double oblique hyphen `⸗`) in ALTO text extraction to improve corpus quality for embeddings and matching.
 
-## 0.5.0
+## [0.5.0] - 2025-12-17
 
 ### Sentence corpus creation
 
@@ -135,3 +140,6 @@ _Initial release._
 [0.2.0]: https://github.com/Princeton-CDH/remarx/tree/0.2
 [0.3.0]: https://github.com/Princeton-CDH/remarx/tree/0.3
 [0.4.0]: https://github.com/Princeton-CDH/remarx/tree/0.4
+[0.5.0]: https://github.com/Princeton-CDH/remarx/tree/0.5
+[1.0]: https://github.com/Princeton-CDH/remarx/tree/1.0
+[1.0.1]: https://github.com/Princeton-CDH/remarx/tree/1.0.1
