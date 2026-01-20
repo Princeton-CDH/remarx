@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 0.6.0
+## 1.0 (combined with 0.6.0)
 
 ### Sentence corpus creation
 
