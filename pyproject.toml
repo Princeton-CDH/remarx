@@ -10,7 +10,7 @@ authors = [
 ]
 requires-python = ">=3.12"
 readme = "README.md"
-license = {text = "Apache-2"}
+license = {text = "Apache-2.0"}
 dynamic = ["version"]
 classifiers = [
   "Programming Language :: Python :: 3",
@@ -73,6 +73,11 @@ path = "src/remarx/__init__.py"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+minversion = "8"
+log_level = "INFO"
+xfail_strict = true
+addopts = ["-ra", "--strict-config", "--strict-markers"]
+filterwarnings = ["error"]
 
 [tool.coverage.run]
 branch = true
@@ -94,10 +99,7 @@ exclude_lines = [
 directory = "coverage_html_report"
 
 [tool.ruff]
-# Always generate Python 3.12-compatible code
-target-version = "py312"
-# Configure src path so ruff import fixes can identify local imports
-src = [ "src" ]
+# uses python version from project.requires-python (3.13)
 # Also ignore the app notebook
 extend-exclude = [
   "src/remarx/app/corpus_builder.py",

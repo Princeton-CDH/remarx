@@ -3,6 +3,7 @@
 ## 1.0.1
 
 - Updated technical design document to reflect 1.0 functionality
+- Revise pyproject.toml and pre-commit hooks based on [repo-review](https://learn.scientific-python.org/development/guides/repo-review/)
 
 ## 1.0
 
