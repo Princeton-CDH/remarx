@@ -1,6 +1,10 @@
 # CHANGELOG
 
-## 1.0 (combined with 0.6.0)
+## 1.0.1
+
+- Updated technical design document to reflect 1.0 functionality
+
+## 1.0
 
 ### Sentence corpus creation
 
