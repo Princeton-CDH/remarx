@@ -36,6 +36,7 @@ theme:
 nav:
   - Overview: index.md
   - Technical Design: technical-design.md
+  - TigerFlow Pipeline: tigerflow.md
   - Developer Notes: devnotes.md
   - Code Documentation: api/index.md
 plugins:
