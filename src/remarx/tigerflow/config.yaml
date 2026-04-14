@@ -1,5 +1,7 @@
 tasks:
   - name: embed_sentences
+    # To run locally (e.g. for testing), change kind to "local" and remove
+    # max_workers, worker_resources, and setup_commands entirely.
     kind: slurm
     module: ./embed_sentences.py
     input_ext: .csv
@@ -11,16 +13,13 @@ tasks:
       gpus: 1
       memory: "16G"
       time: "01:00:00"
+      sbatch_options:
+        - --account=ebaring  # Slurm account on della; change to your account
     params:
       model_name: paraphrase-multilingual-mpnet-base-v2
-    worker_resources:
-      cpus: 4
-      gpus: 1
-      memory: "16G"
-      time: "01:00:00"
-      sbatch_options:
-        - --account=ebaring
     setup_commands:
+      # Commands to activate the conda environment on the cluster before the task runs.
+      # Update these to match your cluster environment.
       - module purge
       - module load anaconda3/2024.6
       - conda activate remarx
