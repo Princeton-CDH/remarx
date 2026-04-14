@@ -5,9 +5,8 @@ hide: [navigation]
 
 # TigerFlow Pipeline
 
-The `src/remarx/tigerflow/` directory contains a [TigerFlow](https://github.com/Princeton-CDH/tigerflow) pipeline for running sentence embedding at scale on a Slurm HPC cluster (e.g. Princeton's della).
+The `src/remarx/tigerflow/` directory contains a [TigerFlow](https://github.com/princeton-ddss/tigerflow) pipeline for running sentence embedding at scale on a Slurm HPC cluster like Della.
 
-TigerFlow is a framework for running file-based, embarrassingly-parallel pipelines on Slurm clusters. Each input CSV is processed independently as a Slurm job: the model loads once per worker, then processes files one at a time.
 
 ### Pipeline
 
@@ -39,29 +38,9 @@ tigerflow report /path/to/embeddings/
 
 ### Local testing
 
-To run locally without Slurm, change `kind` to `local` in `config.yaml` and remove `max_workers`, `worker_resources`, and `setup_commands`:
+To run locally without Slurm, change `kind` to `local` in `config.yaml` and remove `max_workers`, `worker_resources`, and `setup_commands`.
 
-```yaml
-tasks:
-  - name: embed_sentences
-    kind: local
-    module: ./embed_sentences.py
-    input_ext: .csv
-    output_ext: .npy
-    keep_output: true
-    params:
-      model_name: paraphrase-multilingual-mpnet-base-v2
-```
 
 ### Using the output
 
-Each `{name}.npy` file corresponds to the `{name}.csv` input. Row order is preserved, so embeddings can be used directly with `find_quote_pairs()`:
-
-```python
-import numpy as np
-import polars as pl
-
-df = pl.read_csv("corpora/my_doc.csv")
-embeddings = np.load("embeddings/my_doc.npy")
-# embeddings[i] is the vector for df["text"][i]
-```
+Each `{name}.npy` file corresponds to the `{name}.csv` input. Row order is preserved, so embeddings can be used directly with `find_quote_pairs()`.
