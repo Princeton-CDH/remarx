@@ -5,7 +5,7 @@
 ### TigerFlow pipeline
 
 - Add TigerFlow pipeline for running sentence embedding at scale on Slurm (`src/remarx/tigerflow/`)
-- Add pipeline documentation
+- Add Tigerflow pipeline documentation
 
 ## [1.0.1] - 2026-01-20
 
