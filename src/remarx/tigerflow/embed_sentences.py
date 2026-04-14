@@ -1,21 +1,27 @@
+"""TigerFlow task for generating sentence embeddings from corpus CSVs."""
+
 from pathlib import Path
 from typing import Annotated
 
 import typer
-
 from tigerflow.tasks import SlurmTask
 from tigerflow.utils import SetupContext
 
 
 class EmbedSentences(SlurmTask):
+    """TigerFlow task that encodes a sentence corpus CSV into a numpy embedding file."""
+
     class Params:
+        """Configurable parameters for the embedding task."""
+
         model_name: Annotated[
             str,
             typer.Option(help="SentenceTransformers model name"),
         ] = "paraphrase-multilingual-mpnet-base-v2"
 
     @staticmethod
-    def setup(context: SetupContext):
+    def setup(context: SetupContext) -> None:
+        """Load the sentence-transformers model once per worker."""
         from sentence_transformers import SentenceTransformer
 
         # Model is loaded once per worker and stored on the context,
@@ -24,7 +30,8 @@ class EmbedSentences(SlurmTask):
         print(f"Model '{context.model_name}' loaded successfully")
 
     @staticmethod
-    def run(context: SetupContext, input_file: Path, output_file: Path):
+    def run(context: SetupContext, input_file: Path, output_file: Path) -> None:
+        """Encode sentences from input CSV and write L2-normalized embeddings to output."""
         import numpy as np
         import polars as pl
 
@@ -42,7 +49,7 @@ class EmbedSentences(SlurmTask):
         # TigerFlow's LocalTask/SlurmTask already wraps run() in atomic_write,
         # so output_file is a temp path that gets renamed on success.
         # We open it as a binary file to avoid np.save appending an extra .npy suffix.
-        with open(output_file, "wb") as f:
+        with output_file.open("wb") as f:
             np.save(f, embeddings)
         print(f"Saved {len(sentences)} embeddings for {input_file.name}")
 
