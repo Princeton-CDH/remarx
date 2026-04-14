@@ -1,6 +1,6 @@
 # TigerFlow Pipeline
 
-The `src/remarx/pipeline/` directory contains a [TigerFlow](https://github.com/Princeton-CDH/tigerflow)
+The `src/remarx/tigerflow/` directory contains a [TigerFlow](https://github.com/Princeton-CDH/tigerflow)
 pipeline for running sentence embedding at scale on a Slurm HPC cluster (e.g. Princeton's della).
 
 ## How it works
@@ -23,7 +23,7 @@ The model loads once per worker in `setup()`, then `run()` is called once per fi
 2. Run the pipeline:
 
 ```bash
-cd src/remarx/pipeline/
+cd src/remarx/tigerflow/
 
 tigerflow run config.yaml \
   /path/to/corpora/ \
