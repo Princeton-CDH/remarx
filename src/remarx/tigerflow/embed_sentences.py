@@ -19,9 +19,25 @@ class EmbedSentences(SlurmTask):
             typer.Option(help="SentenceTransformers model name"),
         ] = "paraphrase-multilingual-mpnet-base-v2"
 
+        hf_home: Annotated[
+            str | None,
+            typer.Option(help="Path to HuggingFace cache directory (HF_HOME)"),
+        ] = None
+
     @staticmethod
     def setup(context: SetupContext) -> None:
         """Load the sentence-transformers model once per worker."""
+        import os
+
+        # On clusters where worker nodes lack internet access, point HuggingFace
+        # to a pre-populated cache directory and disable all network requests.
+        # These must be set before importing sentence_transformers, as the library
+        # may attempt network access at import time.
+        if context.hf_home:
+            os.environ["HF_HOME"] = context.hf_home
+            os.environ["HF_HUB_CACHE"] = f"{context.hf_home}/hub"
+            os.environ["HF_HUB_OFFLINE"] = "1"
+
         from sentence_transformers import SentenceTransformer
 
         # Model is loaded once per worker and stored on the context,
