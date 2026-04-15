@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from tigerflow.logconfig import logger
 from tigerflow.tasks import SlurmTask
 from tigerflow.utils import SetupContext
 
@@ -43,7 +44,7 @@ class EmbedSentences(SlurmTask):
         # Model is loaded once per worker and stored on the context,
         # so it is reused across all files processed by the same worker.
         context.model = SentenceTransformer(context.model_name)
-        print(f"Model '{context.model_name}' loaded successfully")
+        logger.info("Model '{}' loaded successfully", context.model_name)
 
     @staticmethod
     def run(context: SetupContext, input_file: Path, output_file: Path) -> None:
@@ -67,7 +68,7 @@ class EmbedSentences(SlurmTask):
         # We open it as a binary file to avoid np.save appending an extra .npy suffix.
         with output_file.open("wb") as f:
             np.save(f, embeddings)
-        print(f"Saved {len(sentences)} embeddings for {input_file.name}")
+        logger.info("Saved {} embeddings for {}", len(sentences), input_file.name)
 
 
 EmbedSentences.cli()

@@ -19,6 +19,26 @@ The default model is `paraphrase-multilingual-mpnet-base-v2`, configurable via `
 
 ### Running on della
 
+#### Setup
+
+Install the `slurm` optional dependency:
+
+```bash
+pip install "remarx[slurm]"
+```
+
+Edit `config.yaml`: set `--account` in `sbatch_options` to your Slurm account, and update `setup_commands` to activate your conda environment.
+
+If worker nodes lack internet access (as on Della), pre-download the model to a shared cache directory before running:
+
+```bash
+python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('paraphrase-multilingual-mpnet-base-v2')"
+```
+
+Then set `hf_home` in `params` to the cache directory (defaults to `~/.cache/huggingface`). TigerFlow will configure HuggingFace to load from the cache without making network requests.
+
+#### Running
+
 ```bash
 cd src/remarx/tigerflow/
 
@@ -26,10 +46,6 @@ tigerflow run config.yaml \
   /path/to/corpora/ \
   /path/to/embeddings/
 ```
-
-Before running, update `setup_commands` in `config.yaml` to activate the correct conda environment on the cluster, and set `--account` in `sbatch_options` to your Slurm account.
-
-If worker nodes lack internet access (as on Della), pre-download the model to a shared cache directory and set `hf_home` in `params` to that path. TigerFlow will configure HuggingFace to load from the cache without making network requests.
 
 Monitor progress:
 

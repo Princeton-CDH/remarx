@@ -35,7 +35,6 @@ dependencies = [
   "fastapi",
   "uvicorn",
   "natsort>=8.4.0",
-  "tigerflow",
   "pip", # required for downloading spaCy model in uv-created virtualenvs
 ]
 
@@ -60,6 +59,7 @@ docs = [
   "mkdocstrings[python]",
 ]
 html = [ "bs4" ]
+slurm = [ "tigerflow" ]
 
 [dependency-groups]
 dev = [ "remarx[dev]" ]

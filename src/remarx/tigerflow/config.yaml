@@ -9,12 +9,15 @@ tasks:
     keep_output: true
     max_workers: 4
     worker_resources:
+      # 4 CPUs match the default encoding batch parallelism in sentence-transformers.
+      # 1 GPU and 16G memory are sufficient for paraphrase-multilingual-mpnet-base-v2
+      # (768-dim, ~420MB). Adjust time based on corpus size.
       cpus: 4
       gpus: 1
       memory: "16G"
       time: "01:00:00"
       sbatch_options:
-        - --account=ebaring # Slurm account on della; change to your account
+        - --account=#### # Slurm account on della; change to your account
     params:
       model_name: paraphrase-multilingual-mpnet-base-v2
       # hf_home: /path/to/huggingface-cache  # Set if worker nodes lack internet access

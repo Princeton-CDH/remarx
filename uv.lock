@@ -2238,7 +2238,6 @@ dependencies = [
     { name = "ruff" },
     { name = "sentence-transformers" },
     { name = "spacy" },
-    { name = "tigerflow" },
     { name = "transformers", extra = ["torch"] },
     { name = "uvicorn" },
     { name = "voyager" },
@@ -2265,6 +2264,9 @@ docs = [
 ]
 html = [
     { name = "bs4" },
+]
+slurm = [
+    { name = "tigerflow" },
 ]
 test = [
     { name = "coverage" },
@@ -2310,12 +2312,12 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "sentence-transformers" },
     { name = "spacy" },
-    { name = "tigerflow" },
+    { name = "tigerflow", marker = "extra == 'slurm'" },
     { name = "transformers", extras = ["torch"] },
     { name = "uvicorn" },
     { name = "voyager", specifier = ">=2.1.0" },
 ]
-provides-extras = ["dev", "docs", "html", "test"]
+provides-extras = ["dev", "docs", "html", "slurm", "test"]
 
 [package.metadata.requires-dev]
 dev = [{ name = "remarx", extras = ["dev"] }]
