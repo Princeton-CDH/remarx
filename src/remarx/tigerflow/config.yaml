@@ -20,7 +20,7 @@ tasks:
         - --account=#### # FACULTY_NETID
     params:
       model_name: paraphrase-multilingual-mpnet-base-v2
-      # hf_home: /path/to/huggingface-cache  # Set if worker nodes lack internet access
+      # hf_home: /path/to/huggingface-cache  # Set if worker nodes lack internet access (like Della)
     setup_commands:
       # Commands to activate the conda environment on the cluster before the task runs.
       # Update these to match your cluster environment.
