@@ -55,7 +55,17 @@ tigerflow report /path/to/embeddings/
 
 ### Local testing
 
-To run locally without Slurm, change `kind` to `local` in `config.yaml` and remove `max_workers`, `worker_resources`, and `setup_commands`.
+To run locally without Slurm, make two changes:
+
+In `embed_sentences.py`, change the import and class definition to use `LocalTask` instead of `SlurmTask`:
+
+```python
+from tigerflow.tasks import LocalTask
+
+class EmbedSentences(LocalTask):
+```
+
+In `config.yaml`, set `kind: local` and remove `max_workers`, `worker_resources`, and `setup_commands`.
 
 ### Using the output
 
