@@ -27,7 +27,7 @@ Install the `slurm` optional dependency:
 pip install "remarx[slurm]"
 ```
 
-Edit `config.yaml`: set `--account` in `sbatch_options` to your Slurm account, and update `setup_commands` to activate your conda environment.
+Edit `config.yaml`: ensure `kind: slurm`, set `--account` in `sbatch_options` to your Slurm account, and update `setup_commands` to activate your conda environment.
 
 If worker nodes lack internet access (as on Della), pre-download the model to a shared cache directory before running:
 
