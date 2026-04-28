@@ -36,7 +36,6 @@ class EmbedSentences(SlurmTask):
         # may attempt network access at import time.
         if context.hf_home:
             os.environ["HF_HOME"] = context.hf_home
-            os.environ["HF_HUB_CACHE"] = f"{context.hf_home}/hub"
             os.environ["HF_HUB_OFFLINE"] = "1"
 
         from sentence_transformers import SentenceTransformer
@@ -65,9 +64,7 @@ class EmbedSentences(SlurmTask):
 
         # TigerFlow's LocalTask/SlurmTask already wraps run() in atomic_write,
         # so output_file is a temp path that gets renamed on success.
-        # We open it as a binary file to avoid np.save appending an extra .npy suffix.
-        with output_file.open("wb") as f:
-            np.save(f, embeddings)
+        np.save(output_file, embeddings)
         logger.info("Saved {} embeddings for {}", len(sentences), input_file.name)
 
 
