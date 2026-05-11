@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [develop]
+
+### Bug fixes
+
+- Fixed a bug where using multiple original corpus files produced incorrect quote pairs. When files were concatenated, each file's row index restarted from 0, creating duplicate values in `original_index`. The Voyager search returns globally unique positions, so the join matched against the wrong rows. Fixed by reassigning `original_index` as a globally unique range after concatenation. Introduced in #321, fixed in #362.
+
 ## [1.0.1] - 2026-01-20
 
 - Updated technical design document to reflect 1.0 functionality
