@@ -253,7 +253,15 @@ def test_find_quote_pairs(
     assert mock_sent_pairs.call_args.args[2] == 0.225
     assert mock_sent_pairs.call_args.kwargs == {"show_progress_bar": False}
 
-    mock_compile_pairs.assert_called_once_with(orig_df, reuse_df, ["sent_pairs"])
+    # orig_df passed to compile_quote_pairs has original_index reassigned to be
+    # globally unique; check that the other columns match and index is correct
+    actual_orig_df = mock_compile_pairs.call_args.args[0]
+    assert (
+        actual_orig_df["original_text"].to_list() == orig_df["original_text"].to_list()
+    )
+    assert actual_orig_df["original_index"].to_list() == [0, 1]
+    assert mock_compile_pairs.call_args.args[1].equals(reuse_df)
+    assert mock_compile_pairs.call_args.args[2] == ["sent_pairs"]
     mock_consolidate_quotes.assert_not_called()
 
     # Consolidate enabled: should be called with result of compile pairs method
