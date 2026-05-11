@@ -133,7 +133,7 @@ ignore = []
 # for test files, don't require docstrings or return type annotations
 "tests/**.py" = ["D", "ANN"]
 # marimo notebook: @app.cell wrapper functions can't carry type annotations
-"visualize_embeddings_notebook.py" = ["ANN"]
+"visualize_embeddings_notebook.py" = ["ANN", "B018"]
 
 [tool.marimo.display]
 cell_output = "below"
