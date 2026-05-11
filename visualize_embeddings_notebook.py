@@ -8,6 +8,7 @@ app = marimo.App(width="medium", app_title="Embedding Visualizations | remarx")
 
 @app.cell
 def _():
+    import os
     import textwrap
 
     import matplotlib.patches as mpatches
@@ -17,7 +18,9 @@ def _():
     from sentence_transformers import SentenceTransformer
     from sklearn.manifold import TSNE
 
-    return TSNE, SentenceTransformer, mpatches, np, pl, plt, textwrap
+    os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+    return TSNE, SentenceTransformer, mpatches, np, os, pl, plt, textwrap
 
 
 @app.cell
