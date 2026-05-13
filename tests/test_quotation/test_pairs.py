@@ -411,11 +411,13 @@ def test_find_quote_pairs_integration(tmp_path):
 
 def test_find_quote_pairs_integration_multifile(tmp_path):
     # same as above, but with multiple files for original content
+    # the match (sentence "A") is in the SECOND file, so its global index
+    # exceeds the first file's index range — this would silently fail before the fix
     test_orig1 = pl.DataFrame(
-        data={"sent_id": ["B", "A"], "text": orig_sentences[:2]}
+        data={"sent_id": ["B", "C"], "text": [orig_sentences[0], orig_sentences[2]]}
     ).with_columns(corpus=pl.lit("original"))
     test_orig2 = pl.DataFrame(
-        data={"sent_id": ["C"], "text": orig_sentences[2:]}
+        data={"sent_id": ["A"], "text": [orig_sentences[1]]}
     ).with_columns(corpus=pl.lit("original"))
 
     test_reuse = pl.DataFrame(
