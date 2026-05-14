@@ -207,7 +207,7 @@ def find_quote_pairs(
     # replace per-file index with a globally unique one across all files
     original_df = (
         pl.concat(original_dfs, how="diagonal")
-        .drop("original_index", strict=False)
+        .drop("original_index")
         .with_row_index("original_index")
     )
     original_vecs = np.concatenate(original_vecs)

@@ -232,7 +232,9 @@ def test_find_quote_pairs(
     orig_vecs = np.array([[5], [10]])
     reuse_vecs = np.array([[0], [1], [2]])
     # - mock sentence data
-    orig_df = pl.DataFrame({"original_text": ["some", "text"]})
+    orig_df = pl.DataFrame(
+        {"original_text": ["some", "text"], "original_index": [0, 1]}
+    )
     reuse_df = pl.DataFrame({"reuse_text": ["some", "other", "texts"]})
     mock_load_corpus.side_effect = [(orig_df, orig_vecs), (reuse_df, reuse_vecs)]
     mock_sent_pairs.return_value = ["sent_pairs"]
@@ -321,7 +323,7 @@ def test_find_quote_pairs(
 def test_find_quote_pairs_benchmark_logs(
     mock_load_corpus, mock_sent_pairs, mock_compile_pairs, caplog, tmp_path
 ):
-    df = pl.DataFrame({"text": ["some text"]})
+    df = pl.DataFrame({"text": ["some text"], "original_index": 1})
     # mock embeddings
     vecs = np.array([[5], [10]])
 
