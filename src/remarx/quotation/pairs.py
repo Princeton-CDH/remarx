@@ -205,9 +205,10 @@ def find_quote_pairs(
     # combine dataframes and vectors, preserving order
     # use diagonal concat method, since fields may vary by input type
     # replace per-file index with a globally unique one across all files
-    combined_df = pl.concat(original_dfs, how="diagonal")
-    original_df = combined_df.with_columns(
-        pl.int_range(pl.len(), dtype=pl.UInt32).alias("original_index")
+    original_df = (
+        pl.concat(original_dfs, how="diagonal")
+        .drop("original_index", strict=False)
+        .with_row_index("original_index")
     )
     original_vecs = np.concatenate(original_vecs)
     reuse_df, reuse_vecs = load_sent_corpus(
