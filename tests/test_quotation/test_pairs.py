@@ -376,6 +376,7 @@ def test_find_quote_pairs_integration(tmp_path):
     library work as expected in combination. This tests behavior that is otherwise
     masked by mocking.
     """
+    # second text in orig_sentences matches first in reuse_sentences
     test_orig = pl.DataFrame(
         data={"sent_id": ["B", "A", "C"], "text": orig_sentences}
     ).with_columns(corpus=pl.lit("original"))
@@ -412,14 +413,14 @@ def test_find_quote_pairs_integration(tmp_path):
 
 
 def test_find_quote_pairs_integration_multifile(tmp_path):
-    # same as above, but with multiple files for original content
-    # the match (sentence "A") is in the SECOND file, so its global index
-    # exceeds the first file's index range — this would silently fail before the fix
+    # same as above, but with original sentences split across multiple files
+    # - the second text in orig_sentences matches first in reuse_sentences
+    # - the match should be found regardless of input file order
     test_orig1 = pl.DataFrame(
-        data={"sent_id": ["B", "C"], "text": [orig_sentences[0], orig_sentences[2]]}
+        data={"sent_id": ["B", "A"], "text": orig_sentences[:2]}
     ).with_columns(corpus=pl.lit("original"))
     test_orig2 = pl.DataFrame(
-        data={"sent_id": ["A"], "text": [orig_sentences[1]]}
+        data={"sent_id": ["C"], "text": [orig_sentences[2]]}
     ).with_columns(corpus=pl.lit("original"))
 
     test_reuse = pl.DataFrame(
@@ -438,8 +439,15 @@ def test_find_quote_pairs_integration_multifile(tmp_path):
     find_quote_pairs([orig1_csv, orig2_csv], reuse_csv, out_csv, consolidate=False)
     # load and inspect to check for our one expected match
     results_df = pl.read_csv(out_csv)
+    assert results_df.height == 1
     result = results_df.to_dicts()[0]
-    assert result["reuse_id"] == "a"
-    assert result["original_id"] == "A"
+    assert (result["original_id"], result["reuse_id"]) == ("A", "a")
     # check with tolerance because 0 is a special case
     assert float(result["match_score"]) == pytest.approx(0, rel=1e-6, abs=1e-6)
+
+    # should get the same result no matter what order the input files are loaded
+    find_quote_pairs([orig2_csv, orig1_csv], reuse_csv, out_csv, consolidate=False)
+    results_df = pl.read_csv(out_csv)
+    assert results_df.height == 1
+    result = results_df.to_dicts()[0]
+    assert (result["original_id"], result["reuse_id"]) == ("A", "a")
