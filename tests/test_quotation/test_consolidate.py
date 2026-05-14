@@ -13,7 +13,6 @@ def test_identify_sequences():
         }
     )
     df_seq = identify_sequences(df, "idx", "group")
-    print(df_seq)
     # adds a group field based on the specified field
     assert "idx_group" in df_seq.columns
     assert "idx_sequential" in df_seq.columns
