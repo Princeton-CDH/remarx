@@ -2,9 +2,7 @@
 
 ## [1.0.2]
 
-### Bug fixes
-
-- Fixed a bug where using multiple original corpus files produced incorrect quote pairs (#362)
+- Bug fix: correct indexing for quotation detection when multiple original corpus files are selected as input ([#362](https://github.com/Princeton-CDH/remarx/issues/362))
 
 ## [1.0.1] - 2026-01-20
 

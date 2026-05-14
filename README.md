@@ -13,6 +13,9 @@ published in _Die Neue Zeit_ between 1891 and 1918.
 [![codecov](https://codecov.io/gh/Princeton-CDH/remarx/graph/badge.svg?token=waqNjbHV8d)](https://codecov.io/gh/Princeton-CDH/remarx)
 [![Apache 2 License](https://img.shields.io/badge/license-Apache%20License%202.0-blue)](#license)
 
+> [!WARNING]
+> A bug in versions prior to 1.0.2 means that quotation candidates generated with multiple original files selected are not reliable. We *recommend upgrading to v1.0.2* and regenerating any data based on multiple original files.
+
 ## Basic Usage
 
 ### Installation
