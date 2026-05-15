@@ -232,7 +232,9 @@ def test_find_quote_pairs(
     orig_vecs = np.array([[5], [10]])
     reuse_vecs = np.array([[0], [1], [2]])
     # - mock sentence data
-    orig_df = pl.DataFrame({"original_text": ["some", "text"]})
+    orig_df = pl.DataFrame(
+        {"original_text": ["some", "text"], "original_index": [0, 1]}
+    )
     reuse_df = pl.DataFrame({"reuse_text": ["some", "other", "texts"]})
     mock_load_corpus.side_effect = [(orig_df, orig_vecs), (reuse_df, reuse_vecs)]
     mock_sent_pairs.return_value = ["sent_pairs"]
@@ -253,7 +255,15 @@ def test_find_quote_pairs(
     assert mock_sent_pairs.call_args.args[2] == 0.225
     assert mock_sent_pairs.call_args.kwargs == {"show_progress_bar": False}
 
-    mock_compile_pairs.assert_called_once_with(orig_df, reuse_df, ["sent_pairs"])
+    # orig_df passed to compile_quote_pairs has original_index reassigned to be
+    # globally unique; check that the other columns match and index is correct
+    actual_orig_df = mock_compile_pairs.call_args.args[0]
+    assert (
+        actual_orig_df["original_text"].to_list() == orig_df["original_text"].to_list()
+    )
+    assert actual_orig_df["original_index"].to_list() == [0, 1]
+    assert mock_compile_pairs.call_args.args[1].equals(reuse_df)
+    assert mock_compile_pairs.call_args.args[2] == ["sent_pairs"]
     mock_consolidate_quotes.assert_not_called()
 
     # Consolidate enabled: should be called with result of compile pairs method
@@ -313,7 +323,7 @@ def test_find_quote_pairs(
 def test_find_quote_pairs_benchmark_logs(
     mock_load_corpus, mock_sent_pairs, mock_compile_pairs, caplog, tmp_path
 ):
-    df = pl.DataFrame({"text": ["some text"]})
+    df = pl.DataFrame({"text": ["some text"], "original_index": 1})
     # mock embeddings
     vecs = np.array([[5], [10]])
 
@@ -366,6 +376,7 @@ def test_find_quote_pairs_integration(tmp_path):
     library work as expected in combination. This tests behavior that is otherwise
     masked by mocking.
     """
+    # second text in orig_sentences matches first in reuse_sentences
     test_orig = pl.DataFrame(
         data={"sent_id": ["B", "A", "C"], "text": orig_sentences}
     ).with_columns(corpus=pl.lit("original"))
@@ -402,12 +413,14 @@ def test_find_quote_pairs_integration(tmp_path):
 
 
 def test_find_quote_pairs_integration_multifile(tmp_path):
-    # same as above, but with multiple files for original content
+    # same as above, but with original sentences split across multiple files
+    # - the second text in orig_sentences matches first in reuse_sentences
+    # - the match should be found regardless of input file order
     test_orig1 = pl.DataFrame(
         data={"sent_id": ["B", "A"], "text": orig_sentences[:2]}
     ).with_columns(corpus=pl.lit("original"))
     test_orig2 = pl.DataFrame(
-        data={"sent_id": ["C"], "text": orig_sentences[2:]}
+        data={"sent_id": ["C"], "text": [orig_sentences[2]]}
     ).with_columns(corpus=pl.lit("original"))
 
     test_reuse = pl.DataFrame(
@@ -426,8 +439,15 @@ def test_find_quote_pairs_integration_multifile(tmp_path):
     find_quote_pairs([orig1_csv, orig2_csv], reuse_csv, out_csv, consolidate=False)
     # load and inspect to check for our one expected match
     results_df = pl.read_csv(out_csv)
+    assert results_df.height == 1
     result = results_df.to_dicts()[0]
-    assert result["reuse_id"] == "a"
-    assert result["original_id"] == "A"
+    assert (result["original_id"], result["reuse_id"]) == ("A", "a")
     # check with tolerance because 0 is a special case
     assert float(result["match_score"]) == pytest.approx(0, rel=1e-6, abs=1e-6)
+
+    # should get the same result no matter what order the input files are loaded
+    find_quote_pairs([orig2_csv, orig1_csv], reuse_csv, out_csv, consolidate=False)
+    results_df = pl.read_csv(out_csv)
+    assert results_df.height == 1
+    result = results_df.to_dicts()[0]
+    assert (result["original_id"], result["reuse_id"]) == ("A", "a")
