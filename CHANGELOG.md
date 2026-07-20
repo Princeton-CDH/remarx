@@ -15,6 +15,8 @@ Maintenance release. Updates to python dependencies flagged by security scans.
 - Bump urllib3 from 2.5.0 to 2.7.0
 - Bump ujson from 5.11.0 to 5.13.0
 - Bump starlette from 0.48.0 to 1.3.1
+- Bump lxml from 6.0.2 to 6.1.0
+- Bump soupsieve from 2.8 to 2.8.4
 
 ## [1.0.2]
 
