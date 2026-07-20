@@ -2281,9 +2281,9 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'test'" },
     { name = "ruff" },
     { name = "ruff", marker = "extra == 'dev'" },
-    { name = "sentence-transformers" },
+    { name = "sentence-transformers", specifier = ">=5.5.0" },
     { name = "spacy" },
-    { name = "transformers", extras = ["torch"] },
+    { name = "transformers", extras = ["torch"], specifier = ">=5.5.0" },
     { name = "uvicorn" },
     { name = "voyager", specifier = ">=2.1.0" },
 ]
