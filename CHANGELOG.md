@@ -4,10 +4,17 @@
 
 Maintenance release. Updates to python dependencies flagged by security scans.
 
-- Bump marimo minimum version to 0.23.9 (python deps + uv.lock)
-- Bump transformers from 4.56.2 to 5.5.0 (python deps + uv.lock)
-- Bump sentence-transformers minimum version to 5.5.0 (python deps + uv.lock)
-- Bump urllib3 from 2.5.0 to 2.7.0 (uv.lock only)
+## Direct dependencies (python deps + uv.lock)
+
+- Bump marimo minimum version to 0.23.9
+- Bump transformers from 4.56.2 to 5.5.0
+- Bump sentence-transformers minimum version to 5.5.0
+
+## Indirect dependencies (uv.lock only)
+
+- Bump urllib3 from 2.5.0 to 2.7.0
+- Bump ujson from 5.11.0 to 5.13.0
+- Bump starlette from 0.48.0 to 1.3.1
 
 ## [1.0.2]
 
