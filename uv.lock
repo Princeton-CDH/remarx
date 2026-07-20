@@ -2247,7 +2247,7 @@ requires-dist = [
     { name = "coverage", extras = ["toml"], marker = "extra == 'test'" },
     { name = "fastapi" },
     { name = "ipython" },
-    { name = "marimo", specifier = ">=0.13.11" },
+    { name = "marimo", specifier = ">=0.23.9" },
     { name = "marimo", extras = ["lsp"], marker = "extra == 'dev'" },
     { name = "mkdocs", marker = "extra == 'dev'" },
     { name = "mkdocs", marker = "extra == 'docs'" },
