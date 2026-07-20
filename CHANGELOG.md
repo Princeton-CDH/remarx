@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [1.0.3]
+
+Maintenance release. Updates to python dependencies flagged by security scans.
+
+- Bump marimo minimum version to 0.23.9 (python deps, uv.lock)
+- Bump urllib3 from 2.5.0 to 2.7.0 (uv.lock)
+
 ## [1.0.2]
 
 - Bug fix: correct indexing for quotation detection when multiple original corpus files are selected as input ([#362](https://github.com/Princeton-CDH/remarx/issues/362))
