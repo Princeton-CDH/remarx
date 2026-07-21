@@ -7,7 +7,7 @@ Maintenance release. Updates to python dependencies flagged by security scans.
 ## Direct dependencies (python deps + uv.lock)
 
 - Bump marimo minimum version to 0.23.9
-- Bump transformers from 4.56.2 to 5.5.0
+- Bump transformers from 4.56.2 to 5.6.0
 - Bump sentence-transformers minimum version to 5.5.0
 
 ## Indirect dependencies (uv.lock only)

@@ -30,7 +30,7 @@ dependencies = [
   "ruff",
   "sentence-transformers>=5.5.0",
   "spacy",
-  "transformers[torch]>=5.5.0",
+  "transformers[torch]>=5.6.0",
   "voyager>=2.1.0",
   "fastapi",
   "uvicorn",
