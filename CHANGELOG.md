@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [1.0.3]
+## [1.0.3] - 2026-7-21
 
 Maintenance release. Updates to python dependencies flagged by security scans.
 
@@ -18,7 +18,7 @@ Maintenance release. Updates to python dependencies flagged by security scans.
 - Bump lxml from 6.0.2 to 6.1.0
 - Bump soupsieve from 2.8 to 2.8.4
 
-## [1.0.2]
+## [1.0.2] - 2026-05-15
 
 - Bug fix: correct indexing for quotation detection when multiple original corpus files are selected as input ([#362](https://github.com/Princeton-CDH/remarx/issues/362))
 
@@ -165,3 +165,5 @@ _Initial release._
 [0.5.0]: https://github.com/Princeton-CDH/remarx/tree/0.5
 [1.0]: https://github.com/Princeton-CDH/remarx/tree/1.0
 [1.0.1]: https://github.com/Princeton-CDH/remarx/tree/1.0.1
+[1.0.2]: https://github.com/Princeton-CDH/remarx/tree/1.0.2
+[1.0.3]: https://github.com/Princeton-CDH/remarx/tree/1.0.3
